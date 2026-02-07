@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Wallet, Payment } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
+import { encodeXrplCurrency } from "@/lib/xrpl/currency";
 import type { IssueCurrencyRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
@@ -26,8 +27,9 @@ export async function POST(request: NextRequest) {
       ledger_index: "validated",
     });
 
+    const encoded = encodeXrplCurrency(body.currencyCode);
     const hasTrustLine = accountLines.result.lines.some(
-      (line) => line.currency === body.currencyCode,
+      (line) => line.currency === encoded,
     );
 
     if (!hasTrustLine) {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
       Account: issuerWallet.address,
       Destination: body.recipientAddress,
       Amount: {
-        currency: body.currencyCode,
+        currency: encoded,
         issuer: issuerWallet.address,
         value: body.amount,
       },

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Wallet, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
+import { encodeXrplCurrency } from "@/lib/xrpl/currency";
 import type { TrustLineRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function GET(
@@ -59,7 +60,7 @@ export async function POST(
       TransactionType: "TrustSet",
       Account: wallet.address,
       LimitAmount: {
-        currency: body.currency,
+        currency: encodeXrplCurrency(body.currency),
         issuer: body.issuer,
         value: body.limit,
       },

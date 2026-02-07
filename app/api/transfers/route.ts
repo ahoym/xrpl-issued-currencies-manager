@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Wallet, Payment } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
+import { encodeXrplCurrency } from "@/lib/xrpl/currency";
 import type { TransferRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       Account: senderWallet.address,
       Destination: body.recipientAddress,
       Amount: {
-        currency: body.currencyCode,
+        currency: encodeXrplCurrency(body.currencyCode),
         issuer: body.issuerAddress,
         value: body.amount,
       },
