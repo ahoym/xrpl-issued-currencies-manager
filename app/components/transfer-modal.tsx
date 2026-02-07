@@ -47,6 +47,7 @@ export function TransferModal({
   const [success, setSuccess] = useState(false);
   const [trustLineOk, setTrustLineOk] = useState<boolean | null>(null);
   const [checkingTrustLine, setCheckingTrustLine] = useState(false);
+  const [ripplingOk, setRipplingOk] = useState<boolean | null>(null);
 
   const otherRecipients = recipients.filter((r) => r.address !== sender.address);
 
@@ -85,16 +86,18 @@ export function TransferModal({
   const destinationAddress =
     recipientMode === "known" ? selectedRecipient : customRecipient.trim();
 
-  // Check if the recipient has a trust line for the selected issued currency
+  // Check if the recipient has a trust line and the issuer has rippling enabled
   useEffect(() => {
     if (!selectedBalance || selectedBalance.currency === "XRP" || !destinationAddress) {
       setTrustLineOk(null);
+      setRipplingOk(null);
       return;
     }
 
     let cancelled = false;
     setCheckingTrustLine(true);
     setTrustLineOk(null);
+    setRipplingOk(null);
 
     (async () => {
       try {
@@ -114,6 +117,23 @@ export function TransferModal({
               decodeCurrencyHex(l.currency) === selectedBalance.currency),
         );
         if (!cancelled) setTrustLineOk(match);
+
+        // If trust line exists and sender is not the issuer, check rippling
+        if (match && selectedBalance.issuer && sender.address !== selectedBalance.issuer) {
+          try {
+            const issuerRes = await fetch(
+              `/api/accounts/${selectedBalance.issuer}?network=${network}`,
+            );
+            if (issuerRes.ok && !cancelled) {
+              const issuerData = await issuerRes.json();
+              const flags: number = issuerData.account_data?.Flags ?? 0;
+              // lsfDefaultRipple = 0x00800000
+              if (!cancelled) setRipplingOk((flags & 0x00800000) !== 0);
+            }
+          } catch {
+            // non-fatal — leave as null
+          }
+        }
       } catch {
         if (!cancelled) setTrustLineOk(null);
       } finally {
@@ -122,7 +142,7 @@ export function TransferModal({
     })();
 
     return () => { cancelled = true; };
-  }, [selectedBalance, destinationAddress, network]);
+  }, [selectedBalance, destinationAddress, network, sender.address]);
 
   const currencyLabel = (b: BalanceEntry) => {
     if (b.currency === "XRP") return `XRP (${b.value})`;
@@ -139,9 +159,10 @@ export function TransferModal({
 
   const isIssuedCurrency = selectedBalance !== null && selectedBalance.currency !== "XRP";
   const trustLineBlocked = isIssuedCurrency && trustLineOk === false;
+  const ripplingBlocked = isIssuedCurrency && trustLineOk === true && ripplingOk === false;
 
   const canSubmit =
-    !submitting && amountValid && destinationAddress.length > 0 && selectedBalance !== null && !trustLineBlocked;
+    !submitting && amountValid && destinationAddress.length > 0 && selectedBalance !== null && !trustLineBlocked && !ripplingBlocked;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -331,7 +352,13 @@ export function TransferModal({
                   Recipient does not have a trust line for {selectedBalance?.currency}. Set one up on the Setup page first.
                 </p>
               ) : trustLineOk === true ? (
-                <p className="text-xs text-green-600 dark:text-green-400">Trust line verified</p>
+                ripplingOk === false ? (
+                  <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    Trust line exists, but the issuer does not have rippling enabled. Enable it on the Setup page to allow peer-to-peer transfers.
+                  </p>
+                ) : (
+                  <p className="text-xs text-green-600 dark:text-green-400">Trust line verified</p>
+                )
               ) : null
             )}
 

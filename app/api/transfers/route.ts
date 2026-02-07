@@ -6,7 +6,7 @@ import { encodeXrplCurrency } from "@/lib/xrpl/currency";
 import type { TransferRequest, ApiError } from "@/lib/xrpl/types";
 
 const tecMessages: Record<string, string> = {
-  tecPATH_DRY: "The recipient does not have a trust line for this currency. Set one up on the Setup page first.",
+  tecPATH_DRY: "No payment path found. The recipient may not have a trust line for this currency, or the issuer may not have rippling enabled (required for peer-to-peer transfers).",
   tecPATH_PARTIAL: "Only part of the amount could be delivered due to insufficient liquidity.",
   tecNO_LINE: "The recipient does not have a trust line for this currency.",
   tecNO_LINE_INSUF_RESERVE: "The recipient cannot create the required trust line due to insufficient XRP reserve.",

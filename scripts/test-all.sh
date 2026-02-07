@@ -14,6 +14,7 @@ SCRIPTS=(
   "test-transactions.sh"
   "test-issue-currency.sh"
   "test-transfer.sh"
+  "test-rippling.sh"
   "test-dex-offers.sh"
 )
 

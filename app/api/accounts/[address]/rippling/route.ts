@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, AccountSet, AccountSetAsfFlags } from "xrpl";
+import { Wallet, AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import type { ApiError } from "@/lib/xrpl/types";
@@ -29,15 +29,45 @@ export async function POST(
       );
     }
 
+    // Enable DefaultRipple on the account
     const accountSet: AccountSet = {
       TransactionType: "AccountSet",
       Account: wallet.address,
       SetFlag: AccountSetAsfFlags.asfDefaultRipple,
     };
 
-    const result = await client.submitAndWait(accountSet, { wallet });
+    await client.submitAndWait(accountSet, { wallet });
 
-    return Response.json({ result: result.result }, { status: 200 });
+    // Clear NoRipple on any existing trust lines so they can also ripple.
+    // DefaultRipple only affects newly created trust lines — existing ones
+    // retain their NoRipple flag and must be updated individually.
+    const accountLines = await client.request({
+      command: "account_lines",
+      account: wallet.address,
+      ledger_index: "validated",
+    });
+
+    const noRippleLines = accountLines.result.lines.filter(
+      (line) => line.no_ripple === true,
+    );
+
+    for (const line of noRippleLines) {
+      const trustSet: TrustSet = {
+        TransactionType: "TrustSet",
+        Account: wallet.address,
+        LimitAmount: {
+          currency: line.currency,
+          issuer: line.account,
+          value: line.limit,
+        },
+        Flags: 0x00040000, // tfClearNoRipple
+      };
+      await client.submitAndWait(trustSet, { wallet });
+    }
+
+    return Response.json({
+      result: { message: "Rippling enabled", trustLinesUpdated: noRippleLines.length },
+    }, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to enable rippling";
     return Response.json({ error: message } satisfies ApiError, { status: 500 });

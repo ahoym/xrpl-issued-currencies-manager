@@ -5,12 +5,12 @@ BASE_URL="${BASE_URL:-http://localhost:3000}"
 
 echo "=== End-to-End: Transfer Issued Currency ==="
 
-# Step 1: Generate issuer account
+# Step 1: Generate issuer account (with DefaultRipple enabled)
 echo ""
 echo "--- Step 1: Generate issuer account ---"
 ISSUER=$(curl -s -X POST "${BASE_URL}/api/accounts/generate" \
   -H "Content-Type: application/json" \
-  -d '{"network":"testnet"}')
+  -d '{"network":"testnet","isIssuer":true}')
 
 ISSUER_ADDRESS=$(echo "$ISSUER" | jq -r '.address')
 ISSUER_SEED=$(echo "$ISSUER" | jq -r '.seed')

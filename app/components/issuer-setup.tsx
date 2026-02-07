@@ -29,7 +29,7 @@ export function IssuerSetup({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSeed, setShowSeed] = useState(false);
-  const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done">("idle");
+  const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done" | "needs_repair">("idle");
 
   const checkRippling = useCallback(async () => {
     if (!issuer) return;
@@ -40,7 +40,17 @@ export function IssuerSetup({
       const flags: number = data.account_data?.Flags ?? 0;
       // lsfDefaultRipple = 0x00800000
       if (flags & 0x00800000) {
-        setRipplingStatus("done");
+        // DefaultRipple is set, but check if existing trust lines still have NoRipple
+        const tlRes = await fetch(`/api/accounts/${issuer.address}/trustlines?network=${network}`);
+        if (tlRes.ok) {
+          const tlData = await tlRes.json();
+          const hasNoRipple = (tlData.trustLines ?? []).some(
+            (l: { no_ripple?: boolean }) => l.no_ripple === true,
+          );
+          setRipplingStatus(hasNoRipple ? "needs_repair" : "done");
+        } else {
+          setRipplingStatus("done");
+        }
       }
     } catch {
       // ignore — will show the button as idle
@@ -159,17 +169,21 @@ export function IssuerSetup({
                       setRipplingStatus("idle");
                     }
                   }}
-                  disabled={ripplingStatus !== "idle"}
+                  disabled={ripplingStatus === "done" || ripplingStatus === "loading"}
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   {ripplingStatus === "loading"
                     ? "Enabling..."
                     : ripplingStatus === "done"
                       ? "Rippling Enabled"
-                      : "Enable Rippling"}
+                      : ripplingStatus === "needs_repair"
+                        ? "Repair Trust Lines"
+                        : "Enable Rippling"}
                 </button>
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Required for peer-to-peer transfers of issued currencies
+                  {ripplingStatus === "needs_repair"
+                    ? "Some trust lines were created before rippling was enabled and need to be updated"
+                    : "Required for peer-to-peer transfers of issued currencies"}
                 </span>
               </div>
               <BalanceDisplay
