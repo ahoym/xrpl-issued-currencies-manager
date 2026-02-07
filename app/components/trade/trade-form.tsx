@@ -204,7 +204,7 @@ export function TradeForm({
               : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
           }`}
         >
-          Buy
+          Buy {sellingCurrency.currency}
         </button>
         <button
           type="button"
@@ -215,7 +215,7 @@ export function TradeForm({
               : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
           }`}
         >
-          Sell
+          Sell {sellingCurrency.currency}
         </button>
       </div>
 
@@ -227,7 +227,7 @@ export function TradeForm({
         <form onSubmit={handleSubmit} className="mt-3 space-y-3">
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-              Amount ({sellingCurrency.label})
+              Amount ({sellingCurrency.currency})
             </label>
             <input
               type="number"
@@ -242,7 +242,7 @@ export function TradeForm({
 
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-              Price ({buyingCurrency.label} per {sellingCurrency.label})
+              Price ({buyingCurrency.currency} per {sellingCurrency.currency})
             </label>
             <input
               type="number"
@@ -257,12 +257,22 @@ export function TradeForm({
 
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-              Total ({buyingCurrency.label})
+              Total ({buyingCurrency.currency})
             </label>
             <div className="mt-1 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
               {total || "—"}
             </div>
           </div>
+
+          {amount && price && total && (
+            <div className="rounded-md bg-zinc-100 px-3 py-2 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              {tab === "buy" ? (
+                <>Pay <span className="font-semibold">{total} {buyingCurrency.currency}</span> to receive <span className="font-semibold">{amount} {sellingCurrency.currency}</span></>
+              ) : (
+                <>Sell <span className="font-semibold">{amount} {sellingCurrency.currency}</span> to receive <span className="font-semibold">{total} {buyingCurrency.currency}</span></>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">

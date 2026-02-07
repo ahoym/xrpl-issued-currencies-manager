@@ -74,7 +74,10 @@ export function OrderBook({
     });
   bids.sort((a, b) => b.price - a.price);
 
-  const hasOrders = asks.length > 0 || bids.length > 0;
+  const bestAsk = asks.length > 0 ? asks[asks.length - 1].price : null;
+  const bestBid = bids.length > 0 ? bids[0].price : null;
+  const spread = bestAsk !== null && bestBid !== null ? bestAsk - bestBid : null;
+  const mid = bestAsk !== null && bestBid !== null ? (bestAsk + bestBid) / 2 : null;
 
   return (
     <div>
@@ -91,20 +94,23 @@ export function OrderBook({
         </button>
       </div>
 
-      {!hasOrders && !loading ? (
-        <p className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          No orders for this pair
-        </p>
-      ) : (
-        <div className="mt-2">
-          <div className="grid grid-cols-3 border-b border-zinc-200 pb-1 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            <span>Price</span>
-            <span className="text-right">{baseCurrency}</span>
-            <span className="text-right">{quoteCurrency}</span>
-          </div>
+      <div className="mt-2">
+        <div className="grid grid-cols-3 border-b border-zinc-200 pb-1 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          <span>Price</span>
+          <span className="text-right">{baseCurrency}</span>
+          <span className="text-right">{quoteCurrency}</span>
+        </div>
 
-          {/* Asks (sell orders) — click to prefill a buy */}
-          {asks.map((a, i) => {
+        {/* Asks (sell orders) — click to prefill a buy */}
+        <div className="mb-1 mt-1.5 text-[10px] font-medium uppercase tracking-wider text-red-400 dark:text-red-500">
+          Asks
+        </div>
+        {asks.length === 0 ? (
+          <p className="py-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            No asks
+          </p>
+        ) : (
+          asks.map((a, i) => {
             const isOwn = accountAddress !== undefined && a.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
             return (
@@ -130,19 +136,36 @@ export function OrderBook({
                 </span>
               </div>
             );
-          })}
+          })
+        )}
 
-          {/* Spread divider */}
-          {(asks.length > 0 || bids.length > 0) && (
-            <div className="border-y border-dashed border-zinc-300 py-1 text-center text-xs text-zinc-400 dark:border-zinc-600 dark:text-zinc-500">
-              {asks.length > 0 && bids.length > 0
-                ? `Spread: ${(asks[asks.length - 1].price - bids[0].price).toFixed(6)}`
-                : "---"}
-            </div>
+        {/* Spread / Mid divider */}
+        <div className="border-y border-dashed border-zinc-300 py-1.5 text-center text-xs dark:border-zinc-600">
+          {spread !== null && mid !== null ? (
+            <span className="text-zinc-600 dark:text-zinc-300">
+              <span className="font-medium">{mid.toFixed(6)}</span>
+              <span className="mx-1.5 text-zinc-400 dark:text-zinc-500">|</span>
+              <span className="text-zinc-400 dark:text-zinc-500">
+                Spread: {spread.toFixed(6)}
+              </span>
+            </span>
+          ) : (
+            <span className="text-zinc-400 dark:text-zinc-500">
+              {bestAsk !== null ? `Best ask: ${bestAsk.toFixed(6)}` : bestBid !== null ? `Best bid: ${bestBid.toFixed(6)}` : "No orders"}
+            </span>
           )}
+        </div>
 
-          {/* Bids (buy orders) — click to prefill a sell */}
-          {bids.map((b, i) => {
+        {/* Bids (buy orders) — click to prefill a sell */}
+        <div className="mb-1 mt-1.5 text-[10px] font-medium uppercase tracking-wider text-green-500 dark:text-green-500">
+          Bids
+        </div>
+        {bids.length === 0 ? (
+          <p className="py-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            No bids
+          </p>
+        ) : (
+          bids.map((b, i) => {
             const isOwn = accountAddress !== undefined && b.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
             return (
@@ -168,9 +191,9 @@ export function OrderBook({
                 </span>
               </div>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 }

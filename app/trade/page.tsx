@@ -390,7 +390,7 @@ export default function TradePage() {
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="min-w-[180px] flex-1">
           <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Selling
+            Base
           </label>
           <select
             value={sellingValue}
@@ -409,7 +409,7 @@ export default function TradePage() {
         </div>
         <div className="min-w-[180px] flex-1">
           <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Buying
+            Quote
           </label>
           <select
             value={buyingValue}
