@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useAppState } from '@/lib/hooks/use-app-state';
 import { useIssuerCurrencies } from '@/lib/hooks/use-issuer-currencies';
-import { NetworkSelector } from './components/network-selector';
 import { SecurityWarning } from './components/security-warning';
 import { IssuerSetup } from './components/issuer-setup';
 import { RecipientWallets } from './components/recipient-wallets';
@@ -12,7 +11,6 @@ export default function Home() {
   const {
     state,
     hydrated,
-    setNetwork,
     setIssuer,
     addCurrency,
     removeCurrency,
@@ -49,10 +47,7 @@ export default function Home() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">XRPL Issued Currencies Manager</h1>
-        <NetworkSelector network={state.network} onChange={setNetwork} />
-      </div>
+      <h1 className="text-2xl font-bold">XRPL Issued Currencies Manager</h1>
 
       <div className="mt-6 space-y-6">
         <IssuerSetup

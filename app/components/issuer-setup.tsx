@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
 import { BalanceDisplay } from "./balance-display";
 import { CurrencyManager } from "./currency-manager";
@@ -29,6 +29,27 @@ export function IssuerSetup({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSeed, setShowSeed] = useState(false);
+  const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done">("idle");
+
+  const checkRippling = useCallback(async () => {
+    if (!issuer) return;
+    try {
+      const res = await fetch(`/api/accounts/${issuer.address}?network=${network}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const flags: number = data.account_data?.Flags ?? 0;
+      // lsfDefaultRipple = 0x00800000
+      if (flags & 0x00800000) {
+        setRipplingStatus("done");
+      }
+    } catch {
+      // ignore — will show the button as idle
+    }
+  }, [issuer, network]);
+
+  useEffect(() => {
+    checkRippling();
+  }, [checkRippling]);
 
   async function handleGenerate() {
     setLoading(true);
@@ -37,7 +58,7 @@ export function IssuerSetup({
       const res = await fetch("/api/accounts/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ network }),
+        body: JSON.stringify({ network, isIssuer: true }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -114,6 +135,42 @@ export function IssuerSetup({
                     {showSeed ? "Hide" : "Show"}
                   </button>
                 </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={async () => {
+                    setRipplingStatus("loading");
+                    setError(null);
+                    try {
+                      const res = await fetch(`/api/accounts/${issuer.address}/rippling`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ seed: issuer.seed, network }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        setError(data.error ?? "Failed to enable rippling");
+                        setRipplingStatus("idle");
+                        return;
+                      }
+                      setRipplingStatus("done");
+                    } catch {
+                      setError("Network error");
+                      setRipplingStatus("idle");
+                    }
+                  }}
+                  disabled={ripplingStatus !== "idle"}
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                >
+                  {ripplingStatus === "loading"
+                    ? "Enabling..."
+                    : ripplingStatus === "done"
+                      ? "Rippling Enabled"
+                      : "Enable Rippling"}
+                </button>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Required for peer-to-peer transfers of issued currencies
+                </span>
               </div>
               <BalanceDisplay
                 address={issuer.address}

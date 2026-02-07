@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet } from "xrpl";
+import { Wallet, AccountSet, AccountSetAsfFlags } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import type { GenerateAccountResponse, ApiError } from "@/lib/xrpl/types";
@@ -12,6 +12,17 @@ export async function POST(request: NextRequest) {
 
     const wallet = Wallet.generate();
     const { balance } = await client.fundWallet(wallet);
+
+    // Enable DefaultRipple so issued currencies can be transferred
+    // between non-issuer wallets (rippling through the issuer)
+    if (body.isIssuer) {
+      const accountSet: AccountSet = {
+        TransactionType: "AccountSet",
+        Account: wallet.address,
+        SetFlag: AccountSetAsfFlags.asfDefaultRipple,
+      };
+      await client.submitAndWait(accountSet, { wallet });
+    }
 
     const response: GenerateAccountResponse = {
       address: wallet.address,

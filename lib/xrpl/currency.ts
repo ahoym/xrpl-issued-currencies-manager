@@ -1,3 +1,7 @@
+import { xrpToDrops, dropsToXrp } from "xrpl";
+import type { Amount } from "xrpl";
+import type { DexAmount } from "./types";
+
 /**
  * Encode a currency code for XRPL transactions.
  *
@@ -42,4 +46,34 @@ export function decodeXrplCurrency(code: string): string {
   }
 
   return code;
+}
+
+/**
+ * Convert an API DexAmount to the XRPL Amount format.
+ * XRP values are converted to drops (string). Issued currencies use the object form.
+ */
+export function toXrplAmount(amount: DexAmount): Amount {
+  if (amount.currency === "XRP") {
+    return xrpToDrops(amount.value);
+  }
+  return {
+    currency: encodeXrplCurrency(amount.currency),
+    issuer: amount.issuer!,
+    value: amount.value,
+  };
+}
+
+/**
+ * Convert an XRPL Amount to the API DexAmount format.
+ * Drop strings are converted to human-readable XRP. Objects are decoded.
+ */
+export function fromXrplAmount(amount: Amount): DexAmount {
+  if (typeof amount === "string") {
+    return { currency: "XRP", value: String(dropsToXrp(amount)) };
+  }
+  return {
+    currency: decodeXrplCurrency(amount.currency),
+    issuer: amount.issuer,
+    value: amount.value,
+  };
 }

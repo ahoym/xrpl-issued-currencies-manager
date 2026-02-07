@@ -7,12 +7,22 @@ interface NetworkSelectorProps {
   onChange: (network: PersistedState["network"]) => void;
 }
 
+const explorerUrls: Record<PersistedState["network"], string> = {
+  testnet: "https://testnet.xrpl.org",
+  devnet: "https://devnet.xrpl.org",
+};
+
 export function NetworkSelector({ network, onChange }: NetworkSelectorProps) {
   return (
     <div className="flex items-center gap-3">
-      <label htmlFor="network" className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+      <a
+        href={explorerUrls[network]}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+      >
         Network
-      </label>
+      </a>
       <select
         id="network"
         value={network}

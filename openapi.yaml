@@ -255,6 +255,170 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /api/accounts/{address}/offers:
+    get:
+      summary: List an account's open DEX offers
+      operationId: getAccountOffers
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 200
+        - name: marker
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Opaque pagination marker from a previous response
+      responses:
+        "200":
+          description: Account offers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountOffersResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/dex/offers:
+    post:
+      summary: Place a DEX offer (OfferCreate)
+      operationId: createOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOfferRequest"
+      responses:
+        "201":
+          description: Offer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/dex/offers/cancel:
+    post:
+      summary: Cancel a DEX offer (OfferCancel)
+      operationId: cancelOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelOfferRequest"
+      responses:
+        "201":
+          description: Offer cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/dex/orderbook:
+    get:
+      summary: View order book for a currency pair
+      operationId: getOrderBook
+      parameters:
+        - name: base_currency
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Base currency code (e.g., "XRP" or "USD")
+        - name: base_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Base currency issuer (required for non-XRP)
+        - name: quote_currency
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Quote currency code
+        - name: quote_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Quote currency issuer (required for non-XRP)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Number of offers per side
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: Order book
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderBookResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
 components:
   parameters:
     address:
@@ -389,3 +553,129 @@ components:
         network:
           type: string
           enum: [testnet, devnet]
+
+    DexAmount:
+      type: object
+      required: [currency, value]
+      properties:
+        currency:
+          type: string
+          description: Currency code ("XRP" or issued currency code)
+        issuer:
+          type: string
+          description: Issuer address (required for non-XRP)
+        value:
+          type: string
+          description: Amount in human-readable units (not drops for XRP)
+
+    OfferFlag:
+      type: string
+      enum: [passive, immediateOrCancel, fillOrKill, sell]
+
+    CreateOfferRequest:
+      type: object
+      required: [seed, takerGets, takerPays]
+      properties:
+        seed:
+          type: string
+        takerGets:
+          $ref: "#/components/schemas/DexAmount"
+        takerPays:
+          $ref: "#/components/schemas/DexAmount"
+        flags:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfferFlag"
+        expiration:
+          type: integer
+          description: Seconds since Ripple Epoch
+        offerSequence:
+          type: integer
+          description: Sequence of an existing offer to replace
+        network:
+          type: string
+          enum: [testnet, devnet]
+
+    CancelOfferRequest:
+      type: object
+      required: [seed, offerSequence]
+      properties:
+        seed:
+          type: string
+        offerSequence:
+          type: integer
+        network:
+          type: string
+          enum: [testnet, devnet]
+
+    OrderBookOffer:
+      type: object
+      properties:
+        account:
+          type: string
+        taker_gets:
+          $ref: "#/components/schemas/DexAmount"
+        taker_pays:
+          $ref: "#/components/schemas/DexAmount"
+        quality:
+          type: string
+        owner_funds:
+          type: string
+        flags:
+          type: integer
+        sequence:
+          type: integer
+
+    OrderBookResponse:
+      type: object
+      required: [base, quote, buy, sell]
+      properties:
+        base:
+          type: object
+          properties:
+            currency:
+              type: string
+            issuer:
+              type: string
+        quote:
+          type: object
+          properties:
+            currency:
+              type: string
+            issuer:
+              type: string
+        buy:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderBookOffer"
+        sell:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderBookOffer"
+
+    AccountOffersResponse:
+      type: object
+      required: [address, offers]
+      properties:
+        address:
+          type: string
+        offers:
+          type: array
+          items:
+            type: object
+            properties:
+              seq:
+                type: integer
+              flags:
+                type: integer
+              taker_gets:
+                $ref: "#/components/schemas/DexAmount"
+              taker_pays:
+                $ref: "#/components/schemas/DexAmount"
+              quality:
+                type: string
+              expiration:
+                type: integer
+        marker:
+          type: string
+          description: Pagination marker for the next page

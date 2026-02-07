@@ -22,7 +22,7 @@ export interface IssueCurrencyRequest {
 export interface TransferRequest {
   senderSeed: string;
   recipientAddress: string;
-  issuerAddress: string;
+  issuerAddress?: string;
   currencyCode: string;
   amount: string;
   network?: string;
@@ -44,4 +44,28 @@ export interface CurrencyBalance {
 
 export interface ApiError {
   error: string;
+}
+
+export interface DexAmount {
+  currency: string;
+  issuer?: string;
+  value: string;
+}
+
+export type OfferFlag = "passive" | "immediateOrCancel" | "fillOrKill" | "sell";
+
+export interface CreateOfferRequest {
+  seed: string;
+  takerGets: DexAmount;
+  takerPays: DexAmount;
+  flags?: OfferFlag[];
+  expiration?: number;
+  offerSequence?: number;
+  network?: string;
+}
+
+export interface CancelOfferRequest {
+  seed: string;
+  offerSequence: number;
+  network?: string;
 }
