@@ -480,6 +480,7 @@ export default function TradePage() {
                 orderBook={orderBook}
                 loading={loadingOrderBook}
                 baseCurrency={sellingCurrency!.currency}
+                baseIssuer={sellingCurrency!.issuer}
                 quoteCurrency={buyingCurrency!.currency}
                 onRefresh={() => setRefreshKey((k) => k + 1)}
               />

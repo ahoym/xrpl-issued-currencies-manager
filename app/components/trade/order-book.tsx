@@ -18,37 +18,56 @@ interface OrderBookProps {
   orderBook: { buy: OrderBookEntry[]; sell: OrderBookEntry[] } | null;
   loading: boolean;
   baseCurrency: string;
+  baseIssuer?: string;
   quoteCurrency: string;
   onRefresh: () => void;
+}
+
+function matchesCurrency(
+  amt: OrderBookAmount,
+  currency: string,
+  issuer?: string,
+): boolean {
+  if (amt.currency !== currency) return false;
+  if (currency === "XRP") return true;
+  return amt.issuer === issuer;
 }
 
 export function OrderBook({
   orderBook,
   loading,
   baseCurrency,
+  baseIssuer,
   quoteCurrency,
   onRefresh,
 }: OrderBookProps) {
-  // For sell orders (asks): seller offers base, wants quote
-  // Price = taker_pays.value / taker_gets.value (quote per base)
-  const asks = (orderBook?.sell ?? []).map((o) => {
-    const amount = parseFloat(o.taker_gets.value);
-    const total = parseFloat(o.taker_pays.value);
-    const price = amount > 0 ? total / amount : 0;
-    return { price, amount, total, account: o.account };
-  });
-  // Sort asks descending (highest price at top, lowest near spread)
+  // xrpl.js getOrderbook splits by lsfSell flag, not by book side.
+  // Re-categorize by checking which currency is in taker_gets/taker_pays.
+  const allOffers = [
+    ...(orderBook?.buy ?? []),
+    ...(orderBook?.sell ?? []),
+  ];
+
+  // Asks: creator sells base (taker_gets = base)
+  const asks = allOffers
+    .filter((o) => matchesCurrency(o.taker_gets, baseCurrency, baseIssuer))
+    .map((o) => {
+      const amount = parseFloat(o.taker_gets.value);
+      const total = parseFloat(o.taker_pays.value);
+      const price = amount > 0 ? total / amount : 0;
+      return { price, amount, total, account: o.account };
+    });
   asks.sort((a, b) => b.price - a.price);
 
-  // For buy orders (bids): buyer offers quote, wants base
-  // Price = taker_gets.value / taker_pays.value (quote per base)
-  const bids = (orderBook?.buy ?? []).map((o) => {
-    const amount = parseFloat(o.taker_pays.value);
-    const total = parseFloat(o.taker_gets.value);
-    const price = amount > 0 ? total / amount : 0;
-    return { price, amount, total, account: o.account };
-  });
-  // Sort bids descending (highest price at top)
+  // Bids: creator buys base (taker_pays = base, taker_gets = quote)
+  const bids = allOffers
+    .filter((o) => matchesCurrency(o.taker_pays, baseCurrency, baseIssuer))
+    .map((o) => {
+      const amount = parseFloat(o.taker_pays.value);
+      const total = parseFloat(o.taker_gets.value);
+      const price = amount > 0 ? total / amount : 0;
+      return { price, amount, total, account: o.account };
+    });
   bids.sort((a, b) => b.price - a.price);
 
   const hasOrders = asks.length > 0 || bids.length > 0;
