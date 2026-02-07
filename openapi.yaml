@@ -1,0 +1,391 @@
+openapi: "3.0.3"
+info:
+  title: XRPL Issued Currencies Manager API
+  version: "0.1.0"
+  description: API for managing XRPL issued currencies — account generation, trust lines, issuance, and transfers.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+paths:
+  /api/accounts/generate:
+    post:
+      summary: Generate and fund a new XRPL account
+      operationId: generateAccount
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+                  default: testnet
+      responses:
+        "201":
+          description: Account created and funded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateAccountResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/accounts/{address}:
+    get:
+      summary: Get account info from the ledger
+      operationId: getAccountInfo
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: Account info
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Raw account_info result from XRPL
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/accounts/{address}/balances:
+    get:
+      summary: Get XRP and issued currency balances
+      operationId: getBalances
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: Account balances
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalancesResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/accounts/{address}/trustlines:
+    get:
+      summary: Get trust lines for an account
+      operationId: getTrustLines
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: Trust lines
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustLinesResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    post:
+      summary: Create or modify a trust line
+      operationId: setTrustLine
+      parameters:
+        - $ref: "#/components/parameters/address"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrustLineRequest"
+      responses:
+        "201":
+          description: Trust line set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/accounts/{address}/transactions:
+    get:
+      summary: Get transaction history for an account
+      operationId: getTransactions
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Transaction history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionsResponse"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/currencies/issue:
+    post:
+      summary: Issue currency from issuer to recipient
+      operationId: issueCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCurrencyRequest"
+      responses:
+        "201":
+          description: Currency issued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error (e.g., missing trust line)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/transfers:
+    post:
+      summary: Transfer issued currency between accounts
+      operationId: transferCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+      responses:
+        "201":
+          description: Transfer completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+components:
+  parameters:
+    address:
+      name: address
+      in: path
+      required: true
+      schema:
+        type: string
+      description: XRPL account address (e.g., rN7n3...)
+    network:
+      name: network
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [testnet, devnet]
+        default: testnet
+
+  schemas:
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    GenerateAccountResponse:
+      type: object
+      required: [address, seed, publicKey, balance]
+      properties:
+        address:
+          type: string
+        seed:
+          type: string
+        publicKey:
+          type: string
+        balance:
+          type: string
+
+    CurrencyBalance:
+      type: object
+      required: [currency, value]
+      properties:
+        currency:
+          type: string
+        value:
+          type: string
+        issuer:
+          type: string
+
+    BalancesResponse:
+      type: object
+      required: [address, balances]
+      properties:
+        address:
+          type: string
+        balances:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurrencyBalance"
+
+    TrustLinesResponse:
+      type: object
+      required: [address, trustLines]
+      properties:
+        address:
+          type: string
+        trustLines:
+          type: array
+          items:
+            type: object
+            description: Raw trust line object from XRPL
+
+    TransactionsResponse:
+      type: object
+      required: [address, transactions]
+      properties:
+        address:
+          type: string
+        transactions:
+          type: array
+          items:
+            type: object
+            description: Raw transaction object from XRPL
+
+    TrustLineRequest:
+      type: object
+      required: [seed, currency, issuer, limit]
+      properties:
+        seed:
+          type: string
+        currency:
+          type: string
+        issuer:
+          type: string
+        limit:
+          type: string
+        network:
+          type: string
+          enum: [testnet, devnet]
+
+    IssueCurrencyRequest:
+      type: object
+      required: [issuerSeed, recipientAddress, currencyCode, amount]
+      properties:
+        issuerSeed:
+          type: string
+        recipientAddress:
+          type: string
+        currencyCode:
+          type: string
+        amount:
+          type: string
+        network:
+          type: string
+          enum: [testnet, devnet]
+
+    TransferRequest:
+      type: object
+      required: [senderSeed, recipientAddress, issuerAddress, currencyCode, amount]
+      properties:
+        senderSeed:
+          type: string
+        recipientAddress:
+          type: string
+        issuerAddress:
+          type: string
+        currencyCode:
+          type: string
+        amount:
+          type: string
+        network:
+          type: string
+          enum: [testnet, devnet]
