@@ -9,6 +9,7 @@ interface IssuerSetupProps {
   issuer: WalletInfo | null;
   network: PersistedState["network"];
   currencies: string[];
+  onLedgerCurrencies: Set<string>;
   refreshKey: number;
   onGenerate: (wallet: WalletInfo) => void;
   onAddCurrency: (code: string) => void;
@@ -19,6 +20,7 @@ export function IssuerSetup({
   issuer,
   network,
   currencies,
+  onLedgerCurrencies,
   refreshKey,
   onGenerate,
   onAddCurrency,
@@ -120,6 +122,7 @@ export function IssuerSetup({
               />
               <CurrencyManager
                 currencies={currencies}
+                onLedgerCurrencies={onLedgerCurrencies}
                 disabled={false}
                 onAdd={onAddCurrency}
                 onRemove={onRemoveCurrency}

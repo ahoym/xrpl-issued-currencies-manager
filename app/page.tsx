@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppState } from '@/lib/hooks/use-app-state';
+import { useIssuerCurrencies } from '@/lib/hooks/use-issuer-currencies';
 import { NetworkSelector } from './components/network-selector';
 import { SecurityWarning } from './components/security-warning';
 import { IssuerSetup } from './components/issuer-setup';
@@ -23,6 +24,21 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showJson, setShowJson] = useState(false);
 
+  const { onLedgerCurrencies } = useIssuerCurrencies(
+    state.issuer?.address,
+    state.network,
+    refreshKey,
+  );
+
+  // Auto-merge on-ledger currencies into local state
+  useEffect(() => {
+    for (const code of onLedgerCurrencies) {
+      if (!state.currencies.includes(code)) {
+        addCurrency(code);
+      }
+    }
+  }, [onLedgerCurrencies]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!hydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -43,6 +59,7 @@ export default function Home() {
           issuer={state.issuer}
           network={state.network}
           currencies={state.currencies}
+          onLedgerCurrencies={onLedgerCurrencies}
           refreshKey={refreshKey}
           onGenerate={setIssuer}
           onAddCurrency={addCurrency}
@@ -114,7 +131,11 @@ export default function Home() {
           </button>
           <button
             onClick={() => {
-              const blob = new Blob([JSON.stringify(state, null, 2)], {
+              const exportState = {
+                ...state,
+                currencies: state.currencies.filter((c) => onLedgerCurrencies.has(c)),
+              };
+              const blob = new Blob([JSON.stringify(exportState, null, 2)], {
                 type: 'application/json',
               });
               const url = URL.createObjectURL(blob);
@@ -153,7 +174,14 @@ export default function Home() {
         </div>
         {showJson && (
           <pre className="mt-4 max-h-96 overflow-auto rounded-md bg-zinc-50 p-4 font-mono text-xs text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
-            {JSON.stringify(state, null, 2)}
+            {JSON.stringify(
+              {
+                ...state,
+                currencies: state.currencies.filter((c) => onLedgerCurrencies.has(c)),
+              },
+              null,
+              2,
+            )}
           </pre>
         )}
       </div>

@@ -1,31 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface CurrencyManagerProps {
   currencies: string[];
+  onLedgerCurrencies: Set<string>;
   disabled: boolean;
   onAdd: (code: string) => void;
   onRemove: (code: string) => void;
 }
 
-export function CurrencyManager({ currencies, disabled, onAdd, onRemove }: CurrencyManagerProps) {
+export function CurrencyManager({
+  currencies,
+  onLedgerCurrencies,
+  disabled,
+  onAdd,
+  onRemove,
+}: CurrencyManagerProps) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Union of local currencies and on-ledger currencies
+  const allCurrencies = useMemo(() => {
+    const set = new Set(currencies);
+    for (const code of onLedgerCurrencies) set.add(code);
+    return Array.from(set);
+  }, [currencies, onLedgerCurrencies]);
 
   function handleAdd() {
     const code = input.toUpperCase().trim();
     setError(null);
 
     if (code.length < 3 || code.length > 39) {
-      setError("Currency code must be 3–39 uppercase characters (e.g. USD)");
+      setError("Currency code must be 3\u201339 uppercase characters (e.g. USD)");
       return;
     }
     if (!/^[A-Z0-9]+$/.test(code)) {
       setError("Currency code must contain only uppercase letters and digits");
       return;
     }
-    if (currencies.includes(code)) {
+    if (currencies.includes(code) || onLedgerCurrencies.has(code)) {
       setError(`${code} already added`);
       return;
     }
@@ -41,7 +55,9 @@ export function CurrencyManager({ currencies, disabled, onAdd, onRemove }: Curre
     >
       <h2 className="text-lg font-semibold">2. Define Currencies</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        Choose the currency codes your issuer will offer. These are saved locally — nothing is created on the ledger yet.
+        Add currency codes for your issuer.{" "}
+        <span className="text-green-700 dark:text-green-400">Green</span> = on-ledger (has trust lines),{" "}
+        <span className="text-blue-700 dark:text-blue-400">blue</span> = local-only (not yet issued).
         {disabled && " Generate an issuer wallet first."}
       </p>
 
@@ -64,23 +80,47 @@ export function CurrencyManager({ currencies, disabled, onAdd, onRemove }: Curre
       </div>
       {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      {currencies.length > 0 && (
+      {allCurrencies.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {currencies.map((code) => (
-            <span
-              key={code}
-              className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-            >
-              {code}
-              <button
-                onClick={() => onRemove(code)}
-                className="ml-1 text-blue-600 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
-                aria-label={`Remove ${code}`}
+          {allCurrencies.map((code) => {
+            const isOnLedger = onLedgerCurrencies.has(code);
+            return (
+              <span
+                key={code}
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
+                  isOnLedger
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                }`}
               >
-                &times;
-              </button>
-            </span>
-          ))}
+                {isOnLedger && (
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                    />
+                  </svg>
+                )}
+                {code}
+                {!isOnLedger && (
+                  <button
+                    onClick={() => onRemove(code)}
+                    className="ml-1 text-blue-600 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
+                    aria-label={`Remove ${code}`}
+                  >
+                    &times;
+                  </button>
+                )}
+              </span>
+            );
+          })}
         </div>
       )}
     </section>
