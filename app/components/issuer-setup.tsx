@@ -54,61 +54,78 @@ export function IssuerSetup({
     }
   }
 
-  return (
-    <section className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
-      <h2 className="text-lg font-semibold">1. Issuer Wallet</h2>
-      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        Generate a funded wallet that will act as the currency issuer.
-      </p>
+  const [collapsed, setCollapsed] = useState(false);
 
-      {!issuer ? (
-        <div className="mt-4">
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Generating..." : "Generate Issuer Wallet"}
-          </button>
-          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+  return (
+    <section className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        className="flex w-full items-center justify-between p-6 text-left"
+      >
+        <div>
+          <h2 className="text-lg font-semibold">1. Issuer Wallet</h2>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Generate a funded wallet that will act as the currency issuer.
+          </p>
         </div>
-      ) : (
-        <div className="mt-4 space-y-4">
-          <div className="rounded-md bg-zinc-50 p-3 font-mono text-sm dark:bg-zinc-900">
+        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
+          {collapsed ? "▸" : "▾"}
+        </span>
+      </button>
+
+      {!collapsed && (
+        <div className="px-6 pb-6">
+          {!issuer ? (
             <div>
-              <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
-              {issuer.address}
-            </div>
-            <div>
-              <span className="text-zinc-500 dark:text-zinc-400">Public Key: </span>
-              <span className="break-all">{issuer.publicKey}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-500 dark:text-zinc-400">Seed: </span>
-              {showSeed ? (
-                <span className="break-all">{issuer.seed}</span>
-              ) : (
-                <span>••••••••••••</span>
-              )}
               <button
-                onClick={() => setShowSeed(!showSeed)}
-                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                onClick={handleGenerate}
+                disabled={loading}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {showSeed ? "Hide" : "Show"}
+                {loading ? "Generating..." : "Generate Issuer Wallet"}
               </button>
+              {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
             </div>
-          </div>
-          <BalanceDisplay
-            address={issuer.address}
-            network={network}
-            refreshKey={refreshKey}
-          />
-          <CurrencyManager
-            currencies={currencies}
-            disabled={false}
-            onAdd={onAddCurrency}
-            onRemove={onRemoveCurrency}
-          />
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-md bg-zinc-50 p-3 font-mono text-sm dark:bg-zinc-900">
+                <div>
+                  <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
+                  {issuer.address}
+                </div>
+                <div>
+                  <span className="text-zinc-500 dark:text-zinc-400">Public Key: </span>
+                  <span className="break-all">{issuer.publicKey}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-500 dark:text-zinc-400">Seed: </span>
+                  {showSeed ? (
+                    <span className="break-all">{issuer.seed}</span>
+                  ) : (
+                    <span>••••••••••••</span>
+                  )}
+                  <button
+                    onClick={() => setShowSeed(!showSeed)}
+                    className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  >
+                    {showSeed ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+              <BalanceDisplay
+                address={issuer.address}
+                network={network}
+                refreshKey={refreshKey}
+              />
+              <CurrencyManager
+                currencies={currencies}
+                disabled={false}
+                onAdd={onAddCurrency}
+                onRemove={onRemoveCurrency}
+              />
+            </div>
+          )}
         </div>
       )}
     </section>
