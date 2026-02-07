@@ -25,9 +25,11 @@ export function WalletSetupModal({
   onClose,
 }: WalletSetupModalProps) {
   const [selectedCurrency, setSelectedCurrency] = useState("");
+  const [amount, setAmount] = useState("1000");
   const [step, setStep] = useState<SetupStep>("idle");
   const [error, setError] = useState<string | null>(null);
   const [completedCurrency, setCompletedCurrency] = useState("");
+  const [completedAmount, setCompletedAmount] = useState("");
 
   // Derive effective selection: use selectedCurrency if still valid, otherwise first currency
   const effectiveCurrency = currencies.includes(selectedCurrency)
@@ -39,6 +41,12 @@ export function WalletSetupModal({
   async function handleSetup() {
     if (!effectiveCurrency) return;
     setError(null);
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setError("Amount must be a positive number");
+      return;
+    }
 
     // Step 1: Create trust line (skip if already exists on ledger)
     if (!trustLineCurrencies.has(effectiveCurrency)) {
@@ -78,7 +86,7 @@ export function WalletSetupModal({
           issuerSeed: issuer.seed,
           recipientAddress: recipient.address,
           currencyCode: effectiveCurrency,
-          amount: "1000",
+          amount,
           network,
         }),
       });
@@ -95,6 +103,7 @@ export function WalletSetupModal({
     }
 
     setCompletedCurrency(effectiveCurrency);
+    setCompletedAmount(amount);
     onComplete();
     setStep("done");
   }
@@ -104,7 +113,7 @@ export function WalletSetupModal({
   return (
     <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Set Up Currency</h4>
+        <h4 className="text-sm font-semibold">Issue Currency</h4>
         <button
           onClick={onClose}
           disabled={isRunning}
@@ -114,9 +123,13 @@ export function WalletSetupModal({
         </button>
       </div>
 
+      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        This will submit transactions to the XRPL.
+      </p>
+
       {step === "done" ? (
         <p className="mt-2 text-sm text-green-700 dark:text-green-400">
-          Successfully set up {completedCurrency} — 1,000 tokens issued.
+          Successfully issued {Number(completedAmount).toLocaleString()} {completedCurrency} tokens.
         </p>
       ) : (
         <>
@@ -133,6 +146,16 @@ export function WalletSetupModal({
                 </option>
               ))}
             </select>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={isRunning}
+              placeholder="Amount"
+              min="0"
+              step="any"
+              className="w-28 rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+            />
             <button
               onClick={handleSetup}
               disabled={isRunning}
@@ -145,7 +168,7 @@ export function WalletSetupModal({
           {isRunning && (
             <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
               {step === "trustline" && `Creating trust line for ${effectiveCurrency}...`}
-              {step === "issuing" && `Issuing 1,000 ${effectiveCurrency}...`}
+              {step === "issuing" && `Issuing ${Number(amount).toLocaleString()} ${effectiveCurrency}...`}
             </p>
           )}
           {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}

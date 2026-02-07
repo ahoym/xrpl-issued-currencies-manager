@@ -60,10 +60,10 @@ export function RecipientWallets({
         disabled ? "pointer-events-none opacity-50" : ""
       }`}
     >
-      <h2 className="text-lg font-semibold">2. Recipient Wallets</h2>
+      <h2 className="text-lg font-semibold">3. Recipient Wallets</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        Generate recipient wallets and set them up with issued currencies.
-        {disabled && " Generate an issuer wallet and add at least one currency first."}
+        Generate recipient wallets and issue currencies to them on the XRPL.
+        {disabled && " Generate an issuer wallet and define at least one currency first."}
       </p>
 
       <div className="mt-4">

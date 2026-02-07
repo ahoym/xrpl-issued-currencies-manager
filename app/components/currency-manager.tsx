@@ -39,9 +39,9 @@ export function CurrencyManager({ currencies, disabled, onAdd, onRemove }: Curre
         disabled ? "pointer-events-none opacity-50" : ""
       }`}
     >
-      <h2 className="text-lg font-semibold">2. Currency Codes</h2>
+      <h2 className="text-lg font-semibold">2. Define Currencies</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        Define the currency codes your issuer will offer.
+        Choose the currency codes your issuer will offer. These are saved locally — nothing is created on the ledger yet.
         {disabled && " Generate an issuer wallet first."}
       </p>
 

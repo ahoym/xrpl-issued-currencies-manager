@@ -37,10 +37,6 @@ export default function Home() {
         <NetworkSelector network={state.network} onChange={setNetwork} />
       </div>
 
-      <div className="mt-4">
-        <SecurityWarning />
-      </div>
-
       <div className="mt-6 space-y-6">
         <IssuerSetup
           issuer={state.issuer}
@@ -64,7 +60,11 @@ export default function Home() {
         />
       </div>
 
-      <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="mt-8">
+        <SecurityWarning />
+      </div>
+
+      <div className="mt-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <div className="flex gap-3">
           <button
             onClick={() => {
