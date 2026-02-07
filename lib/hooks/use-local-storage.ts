@@ -5,19 +5,31 @@ import { useState, useEffect, useCallback } from "react";
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);
   const [hydrated, setHydrated] = useState(false);
+  const [prevKey, setPrevKey] = useState(key);
 
+  // Synchronously load stored data when key changes (avoids stale-render flicker)
+  if (prevKey !== key) {
+    setPrevKey(key);
+    try {
+      const stored = localStorage.getItem(key);
+      setValue(stored ? JSON.parse(stored) : initialValue);
+    } catch {
+      setValue(initialValue);
+    }
+  }
+
+  // Initial hydration from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(key);
-      if (stored) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Reading from external storage on mount is the intended use of this effect
-        setValue(JSON.parse(stored));
-      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrating from external storage on mount
+      setValue(stored ? JSON.parse(stored) : initialValue);
     } catch {
       // localStorage unavailable or corrupt — keep initial value
     }
     setHydrated(true);
-  }, [key]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on initial mount for hydration
+  }, []);
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {

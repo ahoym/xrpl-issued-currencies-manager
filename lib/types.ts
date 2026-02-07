@@ -10,3 +10,5 @@ export interface PersistedState {
   currencies: string[];
   recipients: WalletInfo[];
 }
+
+export type NetworkData = Omit<PersistedState, "network">;
