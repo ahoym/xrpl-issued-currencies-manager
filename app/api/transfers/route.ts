@@ -3,6 +3,7 @@ import { Wallet, Payment, xrpToDrops } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
+import { getTransactionResult, apiErrorResponse } from "@/lib/api";
 import type { TransferRequest, ApiError } from "@/lib/xrpl/types";
 
 const tecMessages: Record<string, string> = {
@@ -60,12 +61,7 @@ export async function POST(request: NextRequest) {
 
     const result = await client.submitAndWait(payment, { wallet: senderWallet });
 
-    const engineResult = result.result.meta &&
-      typeof result.result.meta === "object" &&
-      "TransactionResult" in result.result.meta
-        ? result.result.meta.TransactionResult
-        : undefined;
-
+    const engineResult = getTransactionResult(result.result.meta);
     if (engineResult && engineResult !== "tesSUCCESS") {
       const friendly = tecMessages[engineResult] ?? "The transaction was rejected by the ledger.";
       return Response.json(
@@ -78,7 +74,6 @@ export async function POST(request: NextRequest) {
       result: result.result,
     }, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to transfer currency";
-    return Response.json({ error: message } satisfies ApiError, { status: 500 });
+    return apiErrorResponse(err, "Failed to transfer currency");
   }
 }

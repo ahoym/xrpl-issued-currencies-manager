@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
-import { useTrustLines } from "@/lib/hooks/use-trust-lines";
+import { useFetchTrustLines } from "@/lib/hooks/use-trust-lines";
+import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
+import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 import { BalanceDisplay } from "./balance-display";
 import { WalletSetupModal } from "./wallet-setup-modal";
 
@@ -25,13 +27,60 @@ export function RecipientCard({
 }: RecipientCardProps) {
   const [showSeed, setShowSeed] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [trustingRlusd, setTrustingRlusd] = useState(false);
+  const [rlusdError, setRlusdError] = useState<string | null>(null);
 
-  const { trustLineCurrencies, refetch } = useTrustLines(
+  const { lines, refetch } = useFetchTrustLines(
     recipient.address,
-    issuer?.address ?? null,
     network,
     refreshKey,
   );
+
+  const trustLineCurrencies = useMemo(() => {
+    if (!issuer) return new Set<string>();
+    return new Set(
+      lines
+        .filter((l) => l.account === issuer.address)
+        .map((l) => decodeCurrency(l.currency)),
+    );
+  }, [lines, issuer]);
+
+  const rlusd = WELL_KNOWN_CURRENCIES.find((c) => c.currency === "RLUSD");
+  const hasRlusdTrust = rlusd
+    ? lines.some(
+        (l) => l.account === rlusd.issuer && decodeCurrency(l.currency) === "RLUSD",
+      )
+    : false;
+
+  async function handleTrustRlusd() {
+    if (!rlusd || trustingRlusd) return;
+    setTrustingRlusd(true);
+    setRlusdError(null);
+    try {
+      const res = await fetch(`/api/accounts/${recipient.address}/trustlines`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seed: recipient.seed,
+          currency: rlusd.currency,
+          issuer: rlusd.issuer,
+          limit: "1000000000",
+          network,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRlusdError(data.error ?? "Failed to create trust line");
+      } else {
+        refetch();
+        onRefresh();
+      }
+    } catch {
+      setRlusdError("Network error");
+    } finally {
+      setTrustingRlusd(false);
+    }
+  }
 
   function handleSetupComplete() {
     refetch();
@@ -79,6 +128,21 @@ export function RecipientCard({
         network={network}
         refreshKey={refreshKey}
       />
+
+      {rlusd && !hasRlusdTrust && (
+        <div className="mt-2">
+          <button
+            onClick={handleTrustRlusd}
+            disabled={trustingRlusd}
+            className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30"
+          >
+            {trustingRlusd ? "Creating trust line..." : `Trust RLUSD (${rlusd.issuer})`}
+          </button>
+          {rlusdError && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{rlusdError}</p>
+          )}
+        </div>
+      )}
 
       {issuer && currencies.length > 0 && (
         <div className="mt-2">

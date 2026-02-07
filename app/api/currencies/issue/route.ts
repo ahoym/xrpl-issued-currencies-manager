@@ -3,6 +3,7 @@ import { Wallet, Payment } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
+import { getTransactionResult, apiErrorResponse } from "@/lib/api";
 import type { IssueCurrencyRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
@@ -54,11 +55,18 @@ export async function POST(request: NextRequest) {
 
     const result = await client.submitAndWait(payment, { wallet: issuerWallet });
 
+    const txResult = getTransactionResult(result.result.meta);
+    if (txResult && txResult !== "tesSUCCESS") {
+      return Response.json(
+        { error: `Transaction failed: ${txResult}`, result: result.result },
+        { status: 422 },
+      );
+    }
+
     return Response.json({
       result: result.result,
     }, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to issue currency";
-    return Response.json({ error: message } satisfies ApiError, { status: 500 });
+    return apiErrorResponse(err, "Failed to issue currency");
   }
 }

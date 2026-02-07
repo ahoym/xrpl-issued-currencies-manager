@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { Wallet, AccountSet, AccountSetAsfFlags } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import type { GenerateAccountResponse, ApiError } from "@/lib/xrpl/types";
+import { getTransactionResult, apiErrorResponse } from "@/lib/api";
+import type { GenerateAccountResponse } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,14 @@ export async function POST(request: NextRequest) {
         Account: wallet.address,
         SetFlag: AccountSetAsfFlags.asfDefaultRipple,
       };
-      await client.submitAndWait(accountSet, { wallet });
+      const setResult = await client.submitAndWait(accountSet, { wallet });
+      const setTxResult = getTransactionResult(setResult.result.meta);
+      if (setTxResult && setTxResult !== "tesSUCCESS") {
+        return Response.json(
+          { error: `Failed to enable DefaultRipple: ${setTxResult}` },
+          { status: 422 },
+        );
+      }
     }
 
     const response: GenerateAccountResponse = {
@@ -33,7 +41,6 @@ export async function POST(request: NextRequest) {
 
     return Response.json(response, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to generate account";
-    return Response.json({ error: message } satisfies ApiError, { status: 500 });
+    return apiErrorResponse(err, "Failed to generate account");
   }
 }

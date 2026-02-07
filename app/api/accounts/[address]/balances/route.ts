@@ -3,7 +3,8 @@ import { dropsToXrp } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
-import type { CurrencyBalance, ApiError } from "@/lib/xrpl/types";
+import { apiErrorResponse } from "@/lib/api";
+import type { CurrencyBalance } from "@/lib/xrpl/types";
 
 export async function GET(
   request: NextRequest,
@@ -45,8 +46,6 @@ export async function GET(
       balances: [xrpBalance, ...issuedBalances],
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to fetch balances";
-    const status = message.includes("actNotFound") ? 404 : 500;
-    return Response.json({ error: message } satisfies ApiError, { status });
+    return apiErrorResponse(err, "Failed to fetch balances", { checkNotFound: true });
   }
 }

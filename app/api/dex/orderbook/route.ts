@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency, fromXrplAmount } from "@/lib/xrpl/currency";
+import { apiErrorResponse } from "@/lib/api";
 import type { ApiError } from "@/lib/xrpl/types";
 
 export async function GET(request: NextRequest) {
@@ -65,7 +66,6 @@ export async function GET(request: NextRequest) {
       sell: normalize(orderbook.sell),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to fetch order book";
-    return Response.json({ error: message } satisfies ApiError, { status: 500 });
+    return apiErrorResponse(err, "Failed to fetch order book");
   }
 }

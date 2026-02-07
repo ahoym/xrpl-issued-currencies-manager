@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Wallet, AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
+import { getTransactionResult, apiErrorResponse } from "@/lib/api";
 import type { ApiError } from "@/lib/xrpl/types";
 
 export async function POST(
@@ -36,7 +37,14 @@ export async function POST(
       SetFlag: AccountSetAsfFlags.asfDefaultRipple,
     };
 
-    await client.submitAndWait(accountSet, { wallet });
+    const setResult = await client.submitAndWait(accountSet, { wallet });
+    const setTxResult = getTransactionResult(setResult.result.meta);
+    if (setTxResult && setTxResult !== "tesSUCCESS") {
+      return Response.json(
+        { error: `Failed to enable DefaultRipple: ${setTxResult}` } satisfies ApiError,
+        { status: 422 },
+      );
+    }
 
     // Clear NoRipple on any existing trust lines so they can also ripple.
     // DefaultRipple only affects newly created trust lines — existing ones
@@ -62,14 +70,20 @@ export async function POST(
         },
         Flags: 0x00040000, // tfClearNoRipple
       };
-      await client.submitAndWait(trustSet, { wallet });
+      const trustResult = await client.submitAndWait(trustSet, { wallet });
+      const trustTxResult = getTransactionResult(trustResult.result.meta);
+      if (trustTxResult && trustTxResult !== "tesSUCCESS") {
+        return Response.json(
+          { error: `Failed to clear NoRipple on trust line ${line.currency}: ${trustTxResult}` } satisfies ApiError,
+          { status: 422 },
+        );
+      }
     }
 
     return Response.json({
       result: { message: "Rippling enabled", trustLinesUpdated: noRippleLines.length },
     }, { status: 200 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to enable rippling";
-    return Response.json({ error: message } satisfies ApiError, { status: 500 });
+    return apiErrorResponse(err, "Failed to enable rippling");
   }
 }

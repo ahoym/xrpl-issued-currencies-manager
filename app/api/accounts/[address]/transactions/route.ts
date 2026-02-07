@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import type { ApiError } from "@/lib/xrpl/types";
+import { apiErrorResponse } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -25,8 +25,6 @@ export async function GET(
       transactions: response.result.transactions,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to fetch transactions";
-    const status = message.includes("actNotFound") ? 404 : 500;
-    return Response.json({ error: message } satisfies ApiError, { status });
+    return apiErrorResponse(err, "Failed to fetch transactions", { checkNotFound: true });
   }
 }
