@@ -12,3 +12,10 @@ export interface PersistedState {
 }
 
 export type NetworkData = Omit<PersistedState, "network">;
+
+export interface TrustLine {
+  account: string;
+  currency: string;
+  balance: string;
+  limit: string;
+}

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { dropsToXrp } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { decodeXrplCurrency } from "@/lib/xrpl/currency";
+import { decodeCurrency } from "@/lib/xrpl/currency";
 import type { CurrencyBalance, ApiError } from "@/lib/xrpl/types";
 
 export async function GET(
@@ -34,7 +34,7 @@ export async function GET(
 
     const issuedBalances: CurrencyBalance[] = accountLines.result.lines.map(
       (line) => ({
-        currency: decodeXrplCurrency(line.currency),
+        currency: decodeCurrency(line.currency),
         value: line.balance,
         issuer: line.account,
       }),

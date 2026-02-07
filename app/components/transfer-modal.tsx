@@ -2,17 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
-
-function decodeCurrencyHex(code: string): string {
-  if (code.length !== 40) return code;
-  const stripped = code.replace(/0+$/, "");
-  if (stripped.length === 0 || stripped.length % 2 !== 0) return code;
-  let decoded = "";
-  for (let i = 0; i < stripped.length; i += 2) {
-    decoded += String.fromCharCode(parseInt(stripped.slice(i, i + 2), 16));
-  }
-  return decoded;
-}
+import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 
 interface BalanceEntry {
   currency: string;
@@ -114,7 +104,7 @@ export function TransferModal({
           (l) => l.account === selectedBalance.issuer &&
             (l.currency === selectedBalance.currency ||
               // handle hex-encoded currency codes
-              decodeCurrencyHex(l.currency) === selectedBalance.currency),
+              decodeCurrency(l.currency) === selectedBalance.currency),
         );
         if (!cancelled) setTrustLineOk(match);
 

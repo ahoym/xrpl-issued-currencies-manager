@@ -22,7 +22,6 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(key);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrating from external storage on mount
       setValue(stored ? JSON.parse(stored) : initialValue);
     } catch {
       // localStorage unavailable or corrupt — keep initial value

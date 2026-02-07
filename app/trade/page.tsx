@@ -8,17 +8,7 @@ import { TradeForm } from "../components/trade/trade-form";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
 import type { WalletInfo, PersistedState } from "@/lib/types";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
-
-function decodeCurrencyHex(code: string): string {
-  if (code.length !== 40) return code;
-  const stripped = code.replace(/0+$/, "");
-  if (stripped.length === 0 || stripped.length % 2 !== 0) return code;
-  let decoded = "";
-  for (let i = 0; i < stripped.length; i += 2) {
-    decoded += String.fromCharCode(parseInt(stripped.slice(i, i + 2), 16));
-  }
-  return decoded;
-}
+import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 
 interface BalanceEntry {
   currency: string;
@@ -66,14 +56,14 @@ function currencyMatches(
   currency: string,
   issuer: string | undefined,
 ): boolean {
-  const amtCurrency = decodeCurrencyHex(amt.currency);
+  const amtCurrency = decodeCurrency(amt.currency);
   if (amtCurrency !== currency && amt.currency !== currency) return false;
   if (currency === "XRP") return true;
   return amt.issuer === issuer;
 }
 
 function formatOfferSide(amt: OrderBookAmount): string {
-  const cur = decodeCurrencyHex(amt.currency);
+  const cur = decodeCurrency(amt.currency);
   return `${parseFloat(amt.value).toFixed(4)} ${cur}`;
 }
 
@@ -171,7 +161,7 @@ export default function TradePage() {
     }
 
     for (const b of balances) {
-      const cur = decodeCurrencyHex(b.currency);
+      const cur = decodeCurrency(b.currency);
       if (cur === "XRP") continue;
       const key = `${cur}|${b.issuer ?? ""}`;
       if (seen.has(key)) continue;
@@ -583,7 +573,7 @@ export default function TradePage() {
             ) : (
               <div className="mt-2 space-y-1">
                 {balances.map((b, i) => {
-                  const cur = decodeCurrencyHex(b.currency);
+                  const cur = decodeCurrency(b.currency);
                   return (
                     <div
                       key={i}
