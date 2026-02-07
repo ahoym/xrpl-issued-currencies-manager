@@ -7,6 +7,7 @@ import { OrderBook } from "../components/trade/order-book";
 import { TradeForm } from "../components/trade/trade-form";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
 import type { WalletInfo, PersistedState } from "@/lib/types";
+import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 
 function decodeCurrencyHex(code: string): string {
   if (code.length !== 40) return code;
@@ -154,6 +155,20 @@ export default function TradePage() {
     const xrpKey = "XRP|";
     opts.push({ currency: "XRP", label: "XRP", value: xrpKey });
     seen.add(xrpKey);
+
+    // Well-known currencies
+    for (const wk of WELL_KNOWN_CURRENCIES) {
+      const key = `${wk.currency}|${wk.issuer}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        opts.push({
+          currency: wk.currency,
+          issuer: wk.issuer,
+          label: `${wk.currency} (${wk.issuer})`,
+          value: key,
+        });
+      }
+    }
 
     for (const b of balances) {
       const cur = decodeCurrencyHex(b.currency);
