@@ -126,15 +126,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       } catch {
         // ignore
       }
-      // Switch to the imported network so useLocalStorage picks up the data
-      setNetworkRaw(importedNetwork);
       try {
         localStorage.setItem(NETWORK_KEY, importedNetwork);
       } catch {
         // ignore
       }
+      if (importedNetwork === network) {
+        // Same network — key won't change so useLocalStorage won't re-read;
+        // update React state directly
+        setNetworkData(data);
+      } else {
+        setNetworkRaw(importedNetwork);
+      }
     },
-    [],
+    [network, setNetworkData],
   );
 
   const clearAll = useCallback(() => {
