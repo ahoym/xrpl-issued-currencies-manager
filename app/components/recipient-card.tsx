@@ -97,7 +97,7 @@ export function RecipientCard({
               onClick={() => setExpanded(true)}
               className="mt-1 text-sm text-green-600 hover:text-green-800 dark:text-green-400"
             >
-              Issue Currency
+              Receive Currency
             </button>
           )}
         </div>

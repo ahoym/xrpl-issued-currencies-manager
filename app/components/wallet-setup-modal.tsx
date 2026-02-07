@@ -113,7 +113,7 @@ export function WalletSetupModal({
   return (
     <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Issue Currency</h4>
+        <h4 className="text-sm font-semibold">Receive Currency</h4>
         <button
           onClick={onClose}
           disabled={isRunning}
@@ -129,7 +129,7 @@ export function WalletSetupModal({
 
       {step === "done" ? (
         <p className="mt-2 text-sm text-green-700 dark:text-green-400">
-          Successfully issued {Number(completedAmount).toLocaleString()} {completedCurrency} tokens.
+          Successfully received {Number(completedAmount).toLocaleString()} {completedCurrency} tokens.
         </p>
       ) : (
         <>
@@ -168,7 +168,7 @@ export function WalletSetupModal({
           {isRunning && (
             <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
               {step === "trustline" && `Creating trust line for ${effectiveCurrency}...`}
-              {step === "issuing" && `Issuing ${Number(amount).toLocaleString()} ${effectiveCurrency}...`}
+              {step === "issuing" && `Receiving ${Number(amount).toLocaleString()} ${effectiveCurrency}...`}
             </p>
           )}
           {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}

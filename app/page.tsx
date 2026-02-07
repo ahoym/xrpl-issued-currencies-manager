@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useAppState } from "@/lib/hooks/use-app-state";
-import { NetworkSelector } from "./components/network-selector";
-import { SecurityWarning } from "./components/security-warning";
-import { IssuerSetup } from "./components/issuer-setup";
-import { RecipientWallets } from "./components/recipient-wallets";
+import { useState } from 'react';
+import { useAppState } from '@/lib/hooks/use-app-state';
+import { NetworkSelector } from './components/network-selector';
+import { SecurityWarning } from './components/security-warning';
+import { IssuerSetup } from './components/issuer-setup';
+import { RecipientWallets } from './components/recipient-wallets';
 
 export default function Home() {
   const {
@@ -16,6 +16,7 @@ export default function Home() {
     addCurrency,
     removeCurrency,
     addRecipient,
+    importState,
     clearAll,
   } = useAppState();
 
@@ -68,9 +69,56 @@ export default function Home() {
         <div className="flex gap-3">
           <button
             onClick={() => {
-              const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.json';
+              input.onchange = () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  try {
+                    const parsed = JSON.parse(reader.result as string);
+                    if (
+                      !parsed ||
+                      typeof parsed.network !== 'string' ||
+                      !Array.isArray(parsed.currencies) ||
+                      !Array.isArray(parsed.recipients) ||
+                      !('issuer' in parsed)
+                    ) {
+                      alert(
+                        'Invalid file: missing required fields (network, issuer, currencies, recipients).',
+                      );
+                      return;
+                    }
+                    if (state.issuer || state.recipients.length > 0) {
+                      if (
+                        !window.confirm(
+                          'This will replace all current data. Continue?',
+                        )
+                      )
+                        return;
+                    }
+                    importState(parsed);
+                  } catch {
+                    alert('Failed to parse JSON file.');
+                  }
+                };
+                reader.readAsText(file);
+              };
+              input.click();
+            }}
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          >
+            Import JSON
+          </button>
+          <button
+            onClick={() => {
+              const blob = new Blob([JSON.stringify(state, null, 2)], {
+                type: 'application/json',
+              });
               const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
+              const a = document.createElement('a');
               a.href = url;
               a.download = `xrpl-wallets-${state.network}-${new Date().toISOString().slice(0, 10)}.json`;
               a.click();
@@ -86,11 +134,15 @@ export default function Home() {
             disabled={!state.issuer && state.recipients.length === 0}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
-            {showJson ? "Hide JSON" : "View JSON"}
+            {showJson ? 'Hide JSON' : 'View JSON'}
           </button>
           <button
             onClick={() => {
-              if (window.confirm("Clear all stored wallets and data? This cannot be undone.")) {
+              if (
+                window.confirm(
+                  'Clear all stored wallets and data? This cannot be undone.',
+                )
+              ) {
                 clearAll();
               }
             }}

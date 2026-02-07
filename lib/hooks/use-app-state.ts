@@ -60,6 +60,13 @@ export function useAppState() {
     [setState],
   );
 
+  const importState = useCallback(
+    (imported: PersistedState) => {
+      setState(imported);
+    },
+    [setState],
+  );
+
   const clearAll = useCallback(() => {
     remove();
   }, [remove]);
@@ -72,6 +79,7 @@ export function useAppState() {
     addCurrency,
     removeCurrency,
     addRecipient,
+    importState,
     clearAll,
   } as const;
 }
