@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { OrderBook } from "../components/trade/order-book";
 import { TradeForm } from "../components/trade/trade-form";
+import type { TradeFormPrefill } from "../components/trade/trade-form";
 import type { WalletInfo, PersistedState } from "@/lib/types";
 
 function decodeCurrencyHex(code: string): string {
@@ -96,6 +97,8 @@ export default function TradePage() {
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [cancellingSeq, setCancellingSeq] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
+  const prefillKeyRef = useRef(0);
 
   // Auto-select first recipient on mount / when recipients change
   useEffect(() => {
@@ -158,13 +161,10 @@ export default function TradePage() {
       const key = `${cur}|${b.issuer ?? ""}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const issuerShort = b.issuer
-        ? `${b.issuer.slice(0, 6)}...`
-        : "";
       opts.push({
         currency: cur,
         issuer: b.issuer,
-        label: `${cur} (${issuerShort})`,
+        label: b.issuer ? `${cur} (${b.issuer})` : cur,
         value: key,
       });
     }
@@ -176,7 +176,7 @@ export default function TradePage() {
       opts.push({
         currency: c.currency,
         issuer: c.issuer,
-        label: `${c.currency} (${c.issuer.slice(0, 6)}...)`,
+        label: `${c.currency} (${c.issuer})`,
         value: key,
       });
     }
@@ -375,7 +375,7 @@ export default function TradePage() {
             }`}
           >
             <p className="font-mono text-xs text-zinc-900 dark:text-zinc-100">
-              {wallet.address.slice(0, 8)}...{wallet.address.slice(-4)}
+              {wallet.address}
             </p>
           </button>
         ))}
@@ -482,7 +482,12 @@ export default function TradePage() {
                 baseCurrency={sellingCurrency!.currency}
                 baseIssuer={sellingCurrency!.issuer}
                 quoteCurrency={buyingCurrency!.currency}
+                accountAddress={focusedWallet?.address}
                 onRefresh={() => setRefreshKey((k) => k + 1)}
+                onSelectOrder={(price, amount, tab) => {
+                  prefillKeyRef.current += 1;
+                  setPrefill({ price, amount, tab, key: prefillKeyRef.current });
+                }}
               />
             ) : (
               <div className="py-8 text-center">
@@ -590,6 +595,7 @@ export default function TradePage() {
                 sellingCurrency={sellingCurrency!}
                 buyingCurrency={buyingCurrency!}
                 network={state.network}
+                prefill={prefill}
                 onSubmitted={() => setRefreshKey((k) => k + 1)}
               />
             ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
 import type { OfferFlag } from "@/lib/xrpl/types";
 
@@ -10,11 +10,19 @@ interface CurrencyOption {
   label: string;
 }
 
+export interface TradeFormPrefill {
+  tab: "buy" | "sell";
+  price: string;
+  amount: string;
+  key: number;
+}
+
 interface TradeFormProps {
   focusedWallet: WalletInfo;
   sellingCurrency: CurrencyOption;
   buyingCurrency: CurrencyOption;
   network: PersistedState["network"];
+  prefill?: TradeFormPrefill;
   onSubmitted: () => void;
 }
 
@@ -41,6 +49,7 @@ export function TradeForm({
   sellingCurrency,
   buyingCurrency,
   network,
+  prefill,
   onSubmitted,
 }: TradeFormProps) {
   const [tab, setTab] = useState<"buy" | "sell">("buy");
@@ -51,6 +60,18 @@ export function TradeForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const lastPrefillKey = useRef(prefill?.key);
+  useEffect(() => {
+    if (prefill && prefill.key !== lastPrefillKey.current) {
+      lastPrefillKey.current = prefill.key;
+      setTab(prefill.tab);
+      setPrice(prefill.price);
+      setAmount(prefill.amount);
+      setError(null);
+      setSuccess(false);
+    }
+  }, [prefill]);
 
   const total =
     amount && price

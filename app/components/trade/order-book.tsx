@@ -20,7 +20,9 @@ interface OrderBookProps {
   baseCurrency: string;
   baseIssuer?: string;
   quoteCurrency: string;
+  accountAddress?: string;
   onRefresh: () => void;
+  onSelectOrder?: (price: string, amount: string, tab: "buy" | "sell") => void;
 }
 
 function matchesCurrency(
@@ -39,7 +41,9 @@ export function OrderBook({
   baseCurrency,
   baseIssuer,
   quoteCurrency,
+  accountAddress,
   onRefresh,
+  onSelectOrder,
 }: OrderBookProps) {
   // xrpl.js getOrderbook splits by lsfSell flag, not by book side.
   // Re-categorize by checking which currency is in taker_gets/taker_pays.
@@ -99,23 +103,34 @@ export function OrderBook({
             <span className="text-right">{quoteCurrency}</span>
           </div>
 
-          {/* Asks (sell orders) */}
-          {asks.map((a, i) => (
-            <div
-              key={`ask-${i}`}
-              className="grid grid-cols-3 py-0.5 text-xs font-mono"
-            >
-              <span className="text-red-600 dark:text-red-400">
-                {a.price.toFixed(6)}
-              </span>
-              <span className="text-right text-zinc-700 dark:text-zinc-300">
-                {a.amount.toFixed(4)}
-              </span>
-              <span className="text-right text-zinc-500 dark:text-zinc-400">
-                {a.total.toFixed(4)}
-              </span>
-            </div>
-          ))}
+          {/* Asks (sell orders) — click to prefill a buy */}
+          {asks.map((a, i) => {
+            const isOwn = accountAddress !== undefined && a.account === accountAddress;
+            const clickable = !isOwn && onSelectOrder;
+            return (
+              <div
+                key={`ask-${i}`}
+                onClick={clickable ? () => onSelectOrder(a.price.toFixed(6), a.amount.toFixed(6), "buy") : undefined}
+                className={`grid grid-cols-3 py-0.5 text-xs font-mono ${
+                  clickable
+                    ? "cursor-pointer rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                    : isOwn
+                      ? "opacity-50"
+                      : ""
+                }`}
+              >
+                <span className="text-red-600 dark:text-red-400">
+                  {a.price.toFixed(6)}
+                </span>
+                <span className="text-right text-zinc-700 dark:text-zinc-300">
+                  {a.amount.toFixed(4)}
+                </span>
+                <span className="text-right text-zinc-500 dark:text-zinc-400">
+                  {a.total.toFixed(4)}
+                </span>
+              </div>
+            );
+          })}
 
           {/* Spread divider */}
           {(asks.length > 0 || bids.length > 0) && (
@@ -126,23 +141,34 @@ export function OrderBook({
             </div>
           )}
 
-          {/* Bids (buy orders) */}
-          {bids.map((b, i) => (
-            <div
-              key={`bid-${i}`}
-              className="grid grid-cols-3 py-0.5 text-xs font-mono"
-            >
-              <span className="text-green-600 dark:text-green-400">
-                {b.price.toFixed(6)}
-              </span>
-              <span className="text-right text-zinc-700 dark:text-zinc-300">
-                {b.amount.toFixed(4)}
-              </span>
-              <span className="text-right text-zinc-500 dark:text-zinc-400">
-                {b.total.toFixed(4)}
-              </span>
-            </div>
-          ))}
+          {/* Bids (buy orders) — click to prefill a sell */}
+          {bids.map((b, i) => {
+            const isOwn = accountAddress !== undefined && b.account === accountAddress;
+            const clickable = !isOwn && onSelectOrder;
+            return (
+              <div
+                key={`bid-${i}`}
+                onClick={clickable ? () => onSelectOrder(b.price.toFixed(6), b.amount.toFixed(6), "sell") : undefined}
+                className={`grid grid-cols-3 py-0.5 text-xs font-mono ${
+                  clickable
+                    ? "cursor-pointer rounded hover:bg-green-50 dark:hover:bg-green-900/20"
+                    : isOwn
+                      ? "opacity-50"
+                      : ""
+                }`}
+              >
+                <span className="text-green-600 dark:text-green-400">
+                  {b.price.toFixed(6)}
+                </span>
+                <span className="text-right text-zinc-700 dark:text-zinc-300">
+                  {b.amount.toFixed(4)}
+                </span>
+                <span className="text-right text-zinc-500 dark:text-zinc-400">
+                  {b.total.toFixed(4)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
