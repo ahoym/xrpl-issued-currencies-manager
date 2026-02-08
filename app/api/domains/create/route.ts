@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, PermissionedDomainSet } from "xrpl";
+import { Wallet, PermissionedDomainSet, isValidClassicAddress } from "xrpl";
 import type { AuthorizeCredential } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
@@ -29,8 +29,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" }, { status: 400 });
+    }
+
+    for (const ac of body.acceptedCredentials) {
+      if (!isValidClassicAddress(ac.issuer)) {
+        return Response.json({ error: `Invalid issuer address: ${ac.issuer}` }, { status: 400 });
+      }
+      if (ac.credentialType.length > 128) {
+        return Response.json({ error: "credentialType must not exceed 128 characters" }, { status: 400 });
+      }
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
 
     const acceptedCredentials: AuthorizeCredential[] = body.acceptedCredentials.map((ac) => ({
       Credential: {

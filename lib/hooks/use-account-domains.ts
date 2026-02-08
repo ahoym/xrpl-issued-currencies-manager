@@ -14,7 +14,8 @@ export function useAccountDomains(
   const { data, loading, refresh } = useApiFetch<DomainInfo>(
     () => {
       if (!address) return null;
-      return `/api/accounts/${address}/domains?network=${network}`;
+      const params = new URLSearchParams({ network });
+      return `/api/accounts/${encodeURIComponent(address)}/domains?${params}`;
     },
     (json) => (json.domains as DomainInfo[]) ?? [],
   );

@@ -1,3 +1,13 @@
+/**
+ * XRPL network configuration.
+ *
+ * TRUST MODEL: These URLs point to Ripple-operated public nodes for testnet
+ * and devnet. The application trusts these endpoints implicitly — all ledger
+ * queries and transaction submissions flow through them. If these URLs were
+ * changed (e.g., via a compromised dependency or malicious PR), an attacker
+ * could intercept transactions and wallet seeds. Review changes to this file
+ * carefully.
+ */
 export const NETWORKS = {
   testnet: {
     name: "Testnet",
@@ -21,6 +31,9 @@ export const EXPLORER_URLS: Record<NetworkId, string> = {
 export const DEFAULT_NETWORK: NetworkId = "testnet";
 
 export function resolveNetwork(network?: string): NetworkId {
+  if (network && !(network in NETWORKS)) {
+    console.warn(`Unknown network "${network}", falling back to ${DEFAULT_NETWORK}`);
+  }
   if (network && network in NETWORKS) {
     return network as NetworkId;
   }

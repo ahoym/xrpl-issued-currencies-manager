@@ -6,14 +6,31 @@ import { Assets } from "@/lib/assets";
 
 export { decodeCurrency };
 
+/** Minimum length for a non-standard currency code (characters). */
+const MIN_CURRENCY_CODE_LENGTH = 1;
+/** Maximum length for a non-standard currency code (characters). */
+const MAX_CURRENCY_CODE_LENGTH = 20;
+
 /**
  * Encode a currency code for XRPL transactions.
  *
  * Standard 3-character ASCII codes (e.g. "USD") are passed through as-is.
- * Non-standard codes (4–39 chars) are converted to a 40-character uppercase
+ * Non-standard codes (4–20 chars) are converted to a 40-character uppercase
  * hex string, right-padded with zeros, as required by the XRPL.
+ *
+ * Throws if the code is empty or longer than 20 characters (the maximum that
+ * fits in a 40-hex-char / 20-byte XRPL currency field).
  */
 export function encodeXrplCurrency(code: string): string {
+  if (
+    code.length < MIN_CURRENCY_CODE_LENGTH ||
+    code.length > MAX_CURRENCY_CODE_LENGTH
+  ) {
+    throw new Error(
+      `Currency code must be between ${MIN_CURRENCY_CODE_LENGTH} and ${MAX_CURRENCY_CODE_LENGTH} characters, got ${code.length}`,
+    );
+  }
+
   if (/^[A-Za-z0-9]{3}$/.test(code)) {
     return code;
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, Payment } from "xrpl";
+import { Wallet, Payment, isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
@@ -13,8 +13,23 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["issuerSeed", "recipientAddress", "currencyCode", "amount"]);
     if (invalid) return invalid;
 
+    let issuerWallet;
+    try {
+      issuerWallet = Wallet.fromSeed(body.issuerSeed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" } satisfies ApiError, { status: 400 });
+    }
+
+    if (!isValidClassicAddress(body.recipientAddress)) {
+      return Response.json({ error: "Invalid recipient address" } satisfies ApiError, { status: 400 });
+    }
+
+    const parsedAmount = Number(body.amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return Response.json({ error: "Amount must be a positive number" } satisfies ApiError, { status: 400 });
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const issuerWallet = Wallet.fromSeed(body.issuerSeed);
 
     // Verify recipient has a trust line to the issuer for this currency
     const accountLines = await client.request({

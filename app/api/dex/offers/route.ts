@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, OfferCreate } from "xrpl";
+import { Wallet, OfferCreate, isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { toXrplAmount } from "@/lib/xrpl/currency";
@@ -43,6 +43,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (body.takerGets.currency !== Assets.XRP && body.takerGets.issuer && !isValidClassicAddress(body.takerGets.issuer)) {
+      return Response.json(
+        { error: "Invalid takerGets.issuer address" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+
+    if (body.takerPays.currency !== Assets.XRP && body.takerPays.issuer && !isValidClassicAddress(body.takerPays.issuer)) {
+      return Response.json(
+        { error: "Invalid takerPays.issuer address" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+
+    const parsedGetsValue = Number(body.takerGets.value);
+    if (!Number.isFinite(parsedGetsValue) || parsedGetsValue <= 0) {
+      return Response.json(
+        { error: "takerGets.value must be a positive number" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+
+    const parsedPaysValue = Number(body.takerPays.value);
+    if (!Number.isFinite(parsedPaysValue) || parsedPaysValue <= 0) {
+      return Response.json(
+        { error: "takerPays.value must be a positive number" } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+
+    if (body.expiration !== undefined) {
+      if (!Number.isInteger(body.expiration) || body.expiration <= 0) {
+        return Response.json(
+          { error: "expiration must be a positive integer" } satisfies ApiError,
+          { status: 400 },
+        );
+      }
+    }
+
+    if (body.offerSequence !== undefined) {
+      if (!Number.isInteger(body.offerSequence) || body.offerSequence < 0) {
+        return Response.json(
+          { error: "offerSequence must be a non-negative integer" } satisfies ApiError,
+          { status: 400 },
+        );
+      }
+    }
+
     if (body.flags) {
       const invalid = body.flags.filter((f) => !VALID_OFFER_FLAGS.includes(f as OfferFlag));
       if (invalid.length > 0) {
@@ -53,8 +101,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" } satisfies ApiError, { status: 400 });
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
 
     const tx: OfferCreate = {
       TransactionType: "OfferCreate",

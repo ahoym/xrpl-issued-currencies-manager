@@ -11,7 +11,8 @@ export function useFetchTrustLines(
   const { data, loading, error, refresh, refetch } = useApiFetch<TrustLine>(
     () => {
       if (!address) return null;
-      return `/api/accounts/${address}/trustlines?network=${network}`;
+      const params = new URLSearchParams({ network });
+      return `/api/accounts/${encodeURIComponent(address)}/trustlines?${params}`;
     },
     (json) => (json.trustLines as TrustLine[]) ?? [],
     refreshKey,

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, TrustSet } from "xrpl";
+import { Wallet, TrustSet, isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
@@ -12,6 +12,11 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
+
+    if (!isValidClassicAddress(address)) {
+      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
+    }
+
     const network = getNetworkParam(request);
     const client = await getClient(resolveNetwork(network));
 
@@ -36,13 +41,24 @@ export async function POST(
 ) {
   try {
     const { address } = await params;
+
+    if (!isValidClassicAddress(address)) {
+      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
+    }
+
     const body: TrustLineRequest = await request.json();
 
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "currency", "issuer", "limit"]);
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
+
+    let wallet: Wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed" }, { status: 400 });
+    }
 
     if (wallet.address !== address) {
       return Response.json(

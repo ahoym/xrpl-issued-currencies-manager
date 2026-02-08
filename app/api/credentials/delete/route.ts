@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, CredentialDelete } from "xrpl";
+import { Wallet, CredentialDelete, isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
@@ -20,8 +20,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" }, { status: 400 });
+    }
+
+    if (body.subject && !isValidClassicAddress(body.subject)) {
+      return Response.json({ error: "Invalid subject address" }, { status: 400 });
+    }
+
+    if (body.issuer && !isValidClassicAddress(body.issuer)) {
+      return Response.json({ error: "Invalid issuer address" }, { status: 400 });
+    }
+
+    if (body.credentialType.length > 128) {
+      return Response.json({ error: "credentialType must not exceed 128 characters" }, { status: 400 });
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
 
     const tx: CredentialDelete = {
       TransactionType: "CredentialDelete",

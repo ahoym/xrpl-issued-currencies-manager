@@ -12,8 +12,18 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "domainID"]);
     if (invalid) return invalid;
 
+    let wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" }, { status: 400 });
+    }
+
+    if (!/^[0-9A-Fa-f]{64}$/.test(body.domainID)) {
+      return Response.json({ error: "domainID must be a 64-character hex string" }, { status: 400 });
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
 
     const tx: PermissionedDomainDelete = {
       TransactionType: "PermissionedDomainDelete",

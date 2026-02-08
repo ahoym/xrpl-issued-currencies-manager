@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCredentialType } from "@/lib/xrpl/credentials";
@@ -12,6 +13,11 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
+
+    if (!isValidClassicAddress(address)) {
+      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
+    }
+
     const sp = request.nextUrl.searchParams;
     const network = getNetworkParam(request);
     const role = sp.get("role") ?? undefined; // "issuer" | "subject" | undefined

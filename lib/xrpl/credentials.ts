@@ -8,7 +8,12 @@ export function encodeCredentialType(type: string): string {
 
 /**
  * Decode a hex-encoded credential type back to a UTF-8 string.
+ * Falls back to the original hex string if decoding fails.
  */
 export function decodeCredentialType(hex: string): string {
-  return Buffer.from(hex, "hex").toString("utf-8");
+  try {
+    return Buffer.from(hex, "hex").toString("utf-8");
+  } catch {
+    return hex;
+  }
 }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Wallet, CredentialCreate } from "xrpl";
+import { Wallet, CredentialCreate, isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
@@ -13,8 +13,26 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "subject", "credentialType"]);
     if (invalid) return invalid;
 
+    let wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" }, { status: 400 });
+    }
+
+    if (!isValidClassicAddress(body.subject)) {
+      return Response.json({ error: "Invalid subject address" }, { status: 400 });
+    }
+
+    if (body.credentialType.length > 128) {
+      return Response.json({ error: "credentialType must not exceed 128 characters" }, { status: 400 });
+    }
+
+    if (body.uri && Buffer.byteLength(body.uri, "utf-8") > 256) {
+      return Response.json({ error: "URI must not exceed 256 bytes" }, { status: 400 });
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
 
     const tx: CredentialCreate = {
       TransactionType: "CredentialCreate",

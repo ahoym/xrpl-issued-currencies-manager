@@ -69,7 +69,9 @@ export function apiErrorResponse(
   fallbackMessage: string,
   { checkNotFound = false } = {},
 ): Response {
-  const message = err instanceof Error ? err.message : fallbackMessage;
+  const message = process.env.NODE_ENV === "production" || !(err instanceof Error)
+    ? fallbackMessage
+    : err.message;
   const status = checkNotFound && message.includes("actNotFound") ? 404 : 500;
   return Response.json({ error: message } satisfies ApiError, { status });
 }

@@ -3,7 +3,7 @@ import { Wallet, OfferCancel } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { CancelOfferRequest } from "@/lib/xrpl/types";
+import type { CancelOfferRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,8 +19,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let wallet;
+    try {
+      wallet = Wallet.fromSeed(body.seed);
+    } catch {
+      return Response.json({ error: "Invalid seed format" } satisfies ApiError, { status: 400 });
+    }
+
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
 
     const tx: OfferCancel = {
       TransactionType: "OfferCancel",

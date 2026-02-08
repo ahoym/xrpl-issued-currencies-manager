@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { DEFAULT_ACCOUNT_OFFERS_LIMIT } from "@/lib/xrpl/constants";
@@ -11,8 +12,13 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
+
+    if (!isValidClassicAddress(address)) {
+      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
+    }
+
     const sp = request.nextUrl.searchParams;
-    const limit = Number(sp.get("limit") ?? String(DEFAULT_ACCOUNT_OFFERS_LIMIT));
+    const limit = Math.min(parseInt(sp.get("limit") ?? String(DEFAULT_ACCOUNT_OFFERS_LIMIT), 10), 400);
     const marker = sp.get("marker") ?? undefined;
 
     const client = await getClient(resolveNetwork(getNetworkParam(request)));

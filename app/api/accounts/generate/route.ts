@@ -39,7 +39,10 @@ export async function POST(request: NextRequest) {
       balance: String(balance),
     };
 
-    return Response.json(response, { status: 201 });
+    return Response.json(response, {
+      status: 201,
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (err) {
     return apiErrorResponse(err, "Failed to generate account");
   }
