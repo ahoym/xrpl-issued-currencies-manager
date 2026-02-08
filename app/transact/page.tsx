@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
@@ -17,6 +17,14 @@ export default function TransactPage() {
   if (!hydrated) {
     return <LoadingScreen />;
   }
+
+  const allWallets = useMemo(() => {
+    const wallets = [...state.recipients];
+    if (state.issuer && !wallets.some((w) => w.address === state.issuer!.address)) {
+      wallets.unshift(state.issuer);
+    }
+    return wallets;
+  }, [state.issuer, state.recipients]);
 
   if (state.recipients.length === 0) {
     return <EmptyWallets title="Transact" maxWidth="max-w-3xl" />;
@@ -58,7 +66,7 @@ export default function TransactPage() {
         <TransferModal
           sender={sendingFrom}
           network={state.network}
-          recipients={state.recipients}
+          recipients={allWallets}
           onComplete={() => {
             setSendingFrom(null);
             setRefreshKey((k) => k + 1);
