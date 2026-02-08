@@ -79,6 +79,10 @@ export async function POST(request: NextRequest) {
       tx.OfferSequence = body.offerSequence;
     }
 
+    if (body.domainID) {
+      tx.DomainID = body.domainID;
+    }
+
     const result = await client.submitAndWait(tx, { wallet });
 
     const txResult = getTransactionResult(result.result.meta);

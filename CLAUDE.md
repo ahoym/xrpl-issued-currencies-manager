@@ -31,11 +31,18 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/accounts/[address]/trustlines` | GET, POST | View/create trust lines |
 | `/api/accounts/[address]/transactions` | GET | Transaction history |
 | `/api/accounts/[address]/offers` | GET | List account's open DEX offers |
+| `/api/accounts/[address]/credentials` | GET | List account's credentials (XLS-70) |
+| `/api/accounts/[address]/domains` | GET | List account's permissioned domains (XLS-80) |
 | `/api/currencies/issue` | POST | Issue currency (Payment from issuer) |
 | `/api/transfers` | POST | Transfer issued currency |
-| `/api/dex/offers` | POST | Place a DEX offer (OfferCreate) |
+| `/api/credentials/create` | POST | Issue a credential (CredentialCreate) |
+| `/api/credentials/accept` | POST | Accept a credential (CredentialAccept) |
+| `/api/credentials/delete` | POST | Delete a credential (CredentialDelete) |
+| `/api/domains/create` | POST | Create/update a permissioned domain (PermissionedDomainSet) |
+| `/api/domains/delete` | POST | Delete a permissioned domain (PermissionedDomainDelete) |
+| `/api/dex/offers` | POST | Place a DEX offer (OfferCreate), optional `domainID` for permissioned DEX |
 | `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) |
-| `/api/dex/orderbook` | GET | View order book for a currency pair |
+| `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param |
 
 ## Conventions
 

@@ -7,6 +7,8 @@ export interface WalletInfo {
 export interface PersistedState {
   network: "testnet" | "devnet";
   issuer: WalletInfo | null;
+  credentialIssuer: WalletInfo | null;
+  domainOwner: WalletInfo | null;
   currencies: string[];
   recipients: WalletInfo[];
 }
@@ -37,5 +39,21 @@ export interface OrderBookEntry {
   taker_gets: OrderBookAmount;
   taker_pays: OrderBookAmount;
   quality: string;
+  sequence: number;
+}
+
+export interface CredentialInfo {
+  issuer: string;
+  subject: string;
+  credentialType: string;
+  accepted: boolean;
+  expiration?: number;
+  uri?: string;
+}
+
+export interface DomainInfo {
+  domainID: string;
+  owner: string;
+  acceptedCredentials: { issuer: string; credentialType: string }[];
   sequence: number;
 }

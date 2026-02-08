@@ -6,6 +6,7 @@ const FLAG_MAP: Record<OfferFlag, number> = {
   immediateOrCancel: OfferCreateFlags.tfImmediateOrCancel,
   fillOrKill: OfferCreateFlags.tfFillOrKill,
   sell: OfferCreateFlags.tfSell,
+  hybrid: OfferCreateFlags.tfHybrid,
 };
 
 export const VALID_OFFER_FLAGS = Object.keys(FLAG_MAP) as OfferFlag[];

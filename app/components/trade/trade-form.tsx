@@ -23,14 +23,16 @@ interface TradeFormProps {
   buyingCurrency: CurrencyOption;
   network: PersistedState["network"];
   prefill?: TradeFormPrefill;
+  domainID?: string;
   onSubmitted: () => void;
 }
 
-const FLAG_OPTIONS: { value: OfferFlag; label: string }[] = [
+const FLAG_OPTIONS: { value: OfferFlag; label: string; domainOnly?: boolean }[] = [
   { value: "passive", label: "Passive" },
   { value: "immediateOrCancel", label: "Immediate or Cancel" },
   { value: "fillOrKill", label: "Fill or Kill" },
   { value: "sell", label: "Sell" },
+  { value: "hybrid", label: "Hybrid", domainOnly: true },
 ];
 
 function buildDexAmount(
@@ -50,6 +52,7 @@ export function TradeForm({
   buyingCurrency,
   network,
   prefill,
+  domainID,
   onSubmitted,
 }: TradeFormProps) {
   const [tab, setTab] = useState<"buy" | "sell">("buy");
@@ -147,6 +150,10 @@ export function TradeForm({
       takerPays,
       network,
     };
+
+    if (domainID) {
+      payload.domainID = domainID;
+    }
 
     if (flags.size > 0) {
       payload.flags = Array.from(flags);
@@ -279,7 +286,7 @@ export function TradeForm({
               Flags
             </label>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-              {FLAG_OPTIONS.map((f) => (
+              {FLAG_OPTIONS.filter((f) => !f.domainOnly || domainID).map((f) => (
                 <label
                   key={f.value}
                   className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400"

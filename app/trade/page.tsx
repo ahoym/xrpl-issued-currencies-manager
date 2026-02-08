@@ -10,7 +10,7 @@ import { MyOpenOrders } from "../components/trade/my-open-orders";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
-import type { WalletInfo, PersistedState, BalanceEntry, OrderBookAmount, OrderBookEntry } from "@/lib/types";
+import type { WalletInfo, PersistedState, BalanceEntry, OrderBookAmount, OrderBookEntry, DomainInfo } from "@/lib/types";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
@@ -57,6 +57,41 @@ export default function TradePage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
   const prefillKeyRef = useRef(0);
+
+  // Domain state
+  const [domainMode, setDomainMode] = useState<"open" | "select" | "custom">("open");
+  const [selectedDomainID, setSelectedDomainID] = useState("");
+  const [customDomainID, setCustomDomainID] = useState("");
+  const [availableDomains, setAvailableDomains] = useState<DomainInfo[]>([]);
+
+  const activeDomainID =
+    domainMode === "select"
+      ? selectedDomainID
+      : domainMode === "custom"
+        ? customDomainID
+        : undefined;
+
+  // Fetch available domains from domain owner
+  useEffect(() => {
+    if (!state.domainOwner) {
+      setAvailableDomains([]);
+      return;
+    }
+    async function fetchDomains() {
+      try {
+        const res = await fetch(
+          `/api/accounts/${state.domainOwner!.address}/domains?network=${state.network}`,
+        );
+        const data = await res.json();
+        if (res.ok) {
+          setAvailableDomains(data.domains ?? []);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchDomains();
+  }, [state.domainOwner, state.network]);
 
   // Auto-select first recipient on mount / when recipients change
   useEffect(() => {
@@ -173,6 +208,7 @@ export default function TradePage() {
       selling: CurrencyOption,
       buying: CurrencyOption,
       network: PersistedState["network"],
+      domain?: string,
     ) => {
       setLoadingOrderBook(true);
       try {
@@ -183,6 +219,7 @@ export default function TradePage() {
         });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
         if (buying.issuer) params.set("quote_issuer", buying.issuer);
+        if (domain) params.set("domain", domain);
 
         const res = await fetch(`/api/dex/orderbook?${params}`);
         const data = await res.json();
@@ -202,9 +239,9 @@ export default function TradePage() {
 
   useEffect(() => {
     if (sellingCurrency && buyingCurrency) {
-      fetchOrderBook(sellingCurrency, buyingCurrency, state.network);
+      fetchOrderBook(sellingCurrency, buyingCurrency, state.network, activeDomainID || undefined);
     }
-  }, [sellingCurrency, buyingCurrency, state.network, refreshKey, fetchOrderBook]);
+  }, [sellingCurrency, buyingCurrency, state.network, refreshKey, fetchOrderBook, activeDomainID]);
 
   // Fetch account offers
   const fetchAccountOffers = useCallback(
@@ -311,6 +348,56 @@ export default function TradePage() {
         onSelect={handleSelectWallet}
       />
 
+      {/* Domain selector */}
+      <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            DEX Mode:
+          </label>
+          <select
+            value={domainMode}
+            onChange={(e) => {
+              setDomainMode(e.target.value as "open" | "select" | "custom");
+              setSelectedDomainID("");
+              setCustomDomainID("");
+            }}
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+          >
+            <option value="open">Open DEX</option>
+            {availableDomains.length > 0 && <option value="select">Permissioned Domain</option>}
+            <option value="custom">Custom Domain ID</option>
+          </select>
+          {domainMode === "select" && (
+            <select
+              value={selectedDomainID}
+              onChange={(e) => setSelectedDomainID(e.target.value)}
+              className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+            >
+              <option value="">Select domain...</option>
+              {availableDomains.map((d) => (
+                <option key={d.domainID} value={d.domainID}>
+                  {d.domainID.slice(0, 16)}... ({d.acceptedCredentials.map((ac) => ac.credentialType).join(", ")})
+                </option>
+              ))}
+            </select>
+          )}
+          {domainMode === "custom" && (
+            <input
+              type="text"
+              value={customDomainID}
+              onChange={(e) => setCustomDomainID(e.target.value)}
+              placeholder="Enter Domain ID (64-char hex)"
+              className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+            />
+          )}
+          {activeDomainID && (
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">
+              Permissioned
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Currency pair selector */}
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="min-w-[180px] flex-1">
@@ -376,6 +463,13 @@ export default function TradePage() {
         <div className="space-y-6 lg:col-span-3">
           {/* Order Book */}
           <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            {activeDomainID && (
+              <div className="mb-2 flex items-center gap-2">
+                <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">
+                  Domain: {activeDomainID.slice(0, 12)}...
+                </span>
+              </div>
+            )}
             {pairSelected ? (
               <OrderBook
                 orderBook={orderBook}
@@ -455,6 +549,7 @@ export default function TradePage() {
                 buyingCurrency={buyingCurrency!}
                 network={state.network}
                 prefill={prefill}
+                domainID={activeDomainID || undefined}
                 onSubmitted={() => setRefreshKey((k) => k + 1)}
               />
             ) : (

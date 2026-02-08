@@ -52,7 +52,7 @@ export interface DexAmount {
   value: string;
 }
 
-export type OfferFlag = "passive" | "immediateOrCancel" | "fillOrKill" | "sell";
+export type OfferFlag = "passive" | "immediateOrCancel" | "fillOrKill" | "sell" | "hybrid";
 
 export interface CreateOfferRequest {
   seed: string;
@@ -61,11 +61,49 @@ export interface CreateOfferRequest {
   flags?: OfferFlag[];
   expiration?: number;
   offerSequence?: number;
+  domainID?: string;
   network?: string;
 }
 
 export interface CancelOfferRequest {
   seed: string;
   offerSequence: number;
+  network?: string;
+}
+
+export interface CreateCredentialRequest {
+  seed: string;
+  subject: string;
+  credentialType: string;
+  expiration?: number;
+  uri?: string;
+  network?: string;
+}
+
+export interface AcceptCredentialRequest {
+  seed: string;
+  issuer: string;
+  credentialType: string;
+  network?: string;
+}
+
+export interface DeleteCredentialRequest {
+  seed: string;
+  subject?: string;
+  issuer?: string;
+  credentialType: string;
+  network?: string;
+}
+
+export interface CreateDomainRequest {
+  seed: string;
+  domainID?: string;
+  acceptedCredentials: { issuer: string; credentialType: string }[];
+  network?: string;
+}
+
+export interface DeleteDomainRequest {
+  seed: string;
+  domainID: string;
   network?: string;
 }

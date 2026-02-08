@@ -16,6 +16,8 @@ SCRIPTS=(
   "test-transfer.sh"
   "test-rippling.sh"
   "test-dex-offers.sh"
+  "test-credentials.sh"
+  "test-domains.sh"
 )
 
 echo "============================================"

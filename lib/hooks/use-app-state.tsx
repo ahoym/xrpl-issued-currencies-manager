@@ -14,6 +14,8 @@ function networkDataKey(network: PersistedState["network"]) {
 
 const DEFAULT_NETWORK_DATA: NetworkData = {
   issuer: null,
+  credentialIssuer: null,
+  domainOwner: null,
   currencies: [],
   recipients: [],
 };
@@ -36,6 +38,8 @@ interface AppStateValue {
   readonly addCurrency: (code: string) => void;
   readonly removeCurrency: (code: string) => void;
   readonly addRecipient: (wallet: WalletInfo) => void;
+  readonly setCredentialIssuer: (wallet: WalletInfo) => void;
+  readonly setDomainOwner: (wallet: WalletInfo) => void;
   readonly importState: (imported: PersistedState) => void;
   readonly clearAll: () => void;
 }
@@ -118,6 +122,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [setNetworkData],
   );
 
+  const setCredentialIssuer = useCallback(
+    (wallet: WalletInfo) => {
+      setNetworkData((prev) => ({ ...prev, credentialIssuer: wallet }));
+    },
+    [setNetworkData],
+  );
+
+  const setDomainOwner = useCallback(
+    (wallet: WalletInfo) => {
+      setNetworkData((prev) => ({ ...prev, domainOwner: wallet }));
+    },
+    [setNetworkData],
+  );
+
   const importState = useCallback(
     (imported: PersistedState) => {
       const { network: importedNetwork, ...data } = imported;
@@ -154,6 +172,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     addCurrency,
     removeCurrency,
     addRecipient,
+    setCredentialIssuer,
+    setDomainOwner,
     importState,
     clearAll,
   };

@@ -1,9 +1,22 @@
 import { NextRequest } from "next/server";
+import type { BookOffersRequest, BookOffer } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency, fromXrplAmount } from "@/lib/xrpl/currency";
 import { apiErrorResponse } from "@/lib/api";
 import type { ApiError } from "@/lib/xrpl/types";
+
+function normalizeOffer(offer: BookOffer) {
+  return {
+    account: offer.Account,
+    taker_gets: fromXrplAmount(offer.TakerGets),
+    taker_pays: fromXrplAmount(offer.TakerPays),
+    quality: offer.quality,
+    owner_funds: offer.owner_funds,
+    flags: offer.Flags,
+    sequence: offer.Sequence,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +27,7 @@ export async function GET(request: NextRequest) {
     const quoteIssuer = sp.get("quote_issuer") ?? undefined;
     const limit = Number(sp.get("limit") ?? "20");
     const network = sp.get("network") ?? undefined;
+    const domain = sp.get("domain") ?? undefined;
 
     if (!baseCurrency || !quoteCurrency) {
       return Response.json(
@@ -46,24 +60,49 @@ export async function GET(request: NextRequest) {
       ? { currency: "XRP" }
       : { currency: encodeXrplCurrency(quoteCurrency), issuer: quoteIssuer! };
 
+    if (domain) {
+      // Permissioned book: use raw book_offers with domain param
+      // (client.getOrderbook sugar doesn't support domain)
+      const askReq: BookOffersRequest = {
+        command: "book_offers",
+        taker_gets: currency1,
+        taker_pays: currency2,
+        limit,
+        domain,
+      };
+      const bidReq: BookOffersRequest = {
+        command: "book_offers",
+        taker_gets: currency2,
+        taker_pays: currency1,
+        limit,
+        domain,
+      };
+
+      const [askRes, bidRes] = await Promise.all([
+        client.request(askReq),
+        client.request(bidReq),
+      ]);
+
+      return Response.json({
+        base: { currency: baseCurrency, issuer: baseIssuer },
+        quote: { currency: quoteCurrency, issuer: quoteIssuer },
+        domain,
+        sell: askRes.result.offers.map(normalizeOffer),
+        buy: bidRes.result.offers.map(normalizeOffer),
+      });
+    }
+
+    // Open DEX: use existing getOrderbook sugar
     const orderbook = await client.getOrderbook(currency1, currency2, { limit });
 
-    const normalize = (offers: typeof orderbook.buy) =>
-      offers.map((offer) => ({
-        account: offer.Account,
-        taker_gets: fromXrplAmount(offer.TakerGets),
-        taker_pays: fromXrplAmount(offer.TakerPays),
-        quality: offer.quality,
-        owner_funds: offer.owner_funds,
-        flags: offer.Flags,
-        sequence: offer.Sequence,
-      }));
+    const normalizeMany = (offers: typeof orderbook.buy) =>
+      offers.map(normalizeOffer);
 
     return Response.json({
       base: { currency: baseCurrency, issuer: baseIssuer },
       quote: { currency: quoteCurrency, issuer: quoteIssuer },
-      buy: normalize(orderbook.buy),
-      sell: normalize(orderbook.sell),
+      buy: normalizeMany(orderbook.buy),
+      sell: normalizeMany(orderbook.sell),
     });
   } catch (err) {
     return apiErrorResponse(err, "Failed to fetch order book");
