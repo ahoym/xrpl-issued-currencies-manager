@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-BASE_URL="${BASE_URL:-http://localhost:3000}"
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
 # NOTE: This test requires devnet — PermissionedDEX amendment is only enabled on devnet
 NETWORK="devnet"
@@ -51,23 +50,27 @@ echo "PASS: All accounts generated"
 # Step 2: Issue credential to trader and accept it
 echo ""
 echo "--- Step 2: Issue and accept credential ---"
-curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/create" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/create" \
   -H "Content-Type: application/json" \
   -d "{
     \"seed\": \"${CRED_ISSUER_SEED}\",
     \"subject\": \"${TRADER_ADDRESS}\",
     \"credentialType\": \"KYC\",
     \"network\": \"${NETWORK}\"
-  }" | tail -1 | grep -q "201" && echo "Credential created" || { echo "FAIL: Credential create"; exit 1; }
+  }")
+parse_response "$RESPONSE"
+assert_status 201 "Credential created"
 
-curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/accept" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/accept" \
   -H "Content-Type: application/json" \
   -d "{
     \"seed\": \"${TRADER_SEED}\",
     \"issuer\": \"${CRED_ISSUER_ADDRESS}\",
     \"credentialType\": \"KYC\",
     \"network\": \"${NETWORK}\"
-  }" | tail -1 | grep -q "201" && echo "Credential accepted" || { echo "FAIL: Credential accept"; exit 1; }
+  }")
+parse_response "$RESPONSE"
+assert_status 201 "Credential accepted"
 
 echo "PASS: Credential issued and accepted"
 
@@ -102,7 +105,7 @@ fi
 # Step 4: Set up trust line and issue tokens
 echo ""
 echo "--- Step 4: Trust line + issue tokens ---"
-curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/accounts/${TRADER_ADDRESS}/trustlines" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/accounts/${TRADER_ADDRESS}/trustlines" \
   -H "Content-Type: application/json" \
   -d "{
     \"seed\": \"${TRADER_SEED}\",
@@ -110,9 +113,11 @@ curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/accounts/${TRADER_ADDRESS}/
     \"issuer\": \"${TOKEN_ISSUER_ADDRESS}\",
     \"limit\": \"1000000\",
     \"network\": \"${NETWORK}\"
-  }" | tail -1 | grep -q "201" && echo "Trust line created" || { echo "FAIL: Trust line"; exit 1; }
+  }")
+parse_response "$RESPONSE"
+assert_status 201 "Trust line created"
 
-curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/currencies/issue" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/currencies/issue" \
   -H "Content-Type: application/json" \
   -d "{
     \"issuerSeed\": \"${TOKEN_ISSUER_SEED}\",
@@ -120,7 +125,9 @@ curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/currencies/issue" \
     \"currencyCode\": \"USD\",
     \"amount\": \"1000\",
     \"network\": \"${NETWORK}\"
-  }" | tail -1 | grep -q "201" && echo "Tokens issued" || { echo "FAIL: Issue tokens"; exit 1; }
+  }")
+parse_response "$RESPONSE"
+assert_status 201 "Tokens issued"
 
 echo "PASS: Trust line + tokens ready"
 

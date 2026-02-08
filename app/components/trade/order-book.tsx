@@ -40,6 +40,7 @@ export function OrderBook({
       const price = amount > 0 ? total / amount : 0;
       return { price, amount, total, account: o.account };
     });
+  // Sort asks highest-first so the best (lowest) ask appears at the bottom, adjacent to the spread
   asks.sort((a, b) => b.price - a.price);
 
   // Bids: creator buys base (taker_pays = base, taker_gets = quote)
@@ -51,6 +52,7 @@ export function OrderBook({
       const price = amount > 0 ? total / amount : 0;
       return { price, amount, total, account: o.account };
     });
+  // Sort bids highest-first so the best (highest) bid appears at the top, adjacent to the spread
   bids.sort((a, b) => b.price - a.price);
 
   const bestAsk = asks.length > 0 ? asks[asks.length - 1].price : null;
@@ -96,6 +98,9 @@ export function OrderBook({
               <div
                 key={`ask-${i}`}
                 onClick={clickable ? () => onSelectOrder(a.price.toFixed(6), a.amount.toFixed(6), "buy") : undefined}
+                role={clickable ? "button" : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onKeyDown={clickable ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") onSelectOrder(a.price.toFixed(6), a.amount.toFixed(6), "buy"); } : undefined}
                 className={`grid grid-cols-3 py-0.5 text-xs font-mono ${
                   clickable
                     ? "cursor-pointer rounded hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -151,6 +156,9 @@ export function OrderBook({
               <div
                 key={`bid-${i}`}
                 onClick={clickable ? () => onSelectOrder(b.price.toFixed(6), b.amount.toFixed(6), "sell") : undefined}
+                role={clickable ? "button" : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onKeyDown={clickable ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") onSelectOrder(b.price.toFixed(6), b.amount.toFixed(6), "sell"); } : undefined}
                 className={`grid grid-cols-3 py-0.5 text-xs font-mono ${
                   clickable
                     ? "cursor-pointer rounded hover:bg-green-50 dark:hover:bg-green-900/20"

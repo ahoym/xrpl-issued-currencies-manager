@@ -3,7 +3,7 @@ import { Wallet, Payment, xrpToDrops } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
-import { getTransactionResult, apiErrorResponse } from "@/lib/api";
+import { validateRequired, getTransactionResult, apiErrorResponse } from "@/lib/api";
 import type { TransferRequest, ApiError } from "@/lib/xrpl/types";
 
 const tecMessages: Record<string, string> = {
@@ -23,14 +23,8 @@ export async function POST(request: NextRequest) {
   try {
     const body: TransferRequest = await request.json();
 
-    if (!body.senderSeed || !body.recipientAddress || !body.currencyCode || !body.amount) {
-      return Response.json(
-        {
-          error: "Missing required fields: senderSeed, recipientAddress, currencyCode, amount",
-        } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["senderSeed", "recipientAddress", "currencyCode", "amount"]);
+    if (invalid) return invalid;
 
     const isXrp = body.currencyCode === "XRP";
 

@@ -36,8 +36,8 @@ export function useApiFetch<T>(
         return;
       }
       setData(extractData(json));
-    } catch {
-      setError("Network error");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
     } finally {
       setLoading(false);
     }

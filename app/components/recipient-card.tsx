@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
 import { useFetchTrustLines } from "@/lib/hooks/use-trust-lines";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
+import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 import { BalanceDisplay } from "./balance-display";
 import { ExplorerLink } from "./explorer-link";
@@ -65,7 +66,7 @@ export function RecipientCard({
           seed: recipient.seed,
           currency: rlusd.currency,
           issuer: rlusd.issuer,
-          limit: "1000000000",
+          limit: DEFAULT_TRUST_LINE_LIMIT,
           network,
         }),
       });

@@ -5,7 +5,8 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
-import { apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, apiErrorResponse } from "@/lib/api";
+import { DEFAULT_ORDERBOOK_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
 
 /** Convert an XRPL Amount to {currency, issuer} for comparison */
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
     const baseIssuer = sp.get("base_issuer") ?? undefined;
     const quoteCurrency = sp.get("quote_currency");
     const quoteIssuer = sp.get("quote_issuer") ?? undefined;
-    const limit = Number(sp.get("limit") ?? "20");
-    const network = sp.get("network") ?? undefined;
+    const limit = Number(sp.get("limit") ?? String(DEFAULT_ORDERBOOK_LIMIT));
+    const network = getNetworkParam(request);
     const domain = sp.get("domain") ?? undefined;
 
     if (!baseCurrency || !quoteCurrency) {
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     const response = await client.request({
       command: "account_tx",
       account: issuerAccount,
-      limit: limit * 5,
+      limit: limit * TRADES_FETCH_MULTIPLIER,
     });
 
     interface Trade {
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
       if (typeof meta === "string") continue;
       if (meta.TransactionResult !== "tesSUCCESS") continue;
 
-      // Domain filtering
+      // Filter by domain: if a domain is specified, only include matching trades; otherwise exclude permissioned-domain trades from the open DEX results
       const txDomainID = (tx as Record<string, unknown>).DomainID as string | undefined;
       if (domain) {
         if (txDomainID !== domain) continue;
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
       let quoteTotal = 0;
 
       for (const acctChanges of changes) {
-        // Skip the issuer's own entries — they see mirror-image trust line changes
+        // Skip issuer's entries — trust line changes are mirror-images that would double-count
         if (acctChanges.account === issuerAccount) continue;
 
         for (const bal of acctChanges.balances) {
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
           if (val <= 0) continue;
 
           if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
-            // For XRP, subtract fee if this is the submitting account
+            // Transaction fee is only paid in XRP by the submitting account — subtract it to get the net traded amount
             if (baseCurrency === "XRP" && acctChanges.account === tx.Account) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
               baseTotal += val - fee;

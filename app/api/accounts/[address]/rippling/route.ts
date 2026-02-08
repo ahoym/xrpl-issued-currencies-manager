@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { Wallet, AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import { TF_CLEAR_NO_RIPPLE } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
 
@@ -14,12 +14,8 @@ export async function POST(
     const { address } = await params;
     const body = await request.json();
 
-    if (!body.seed) {
-      return Response.json(
-        { error: "Missing required field: seed" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed"]);
+    if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
     const wallet = Wallet.fromSeed(body.seed);

@@ -1,20 +1,17 @@
+import { NextRequest } from "next/server";
 import { Wallet, CredentialAccept } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { AcceptCredentialRequest, ApiError } from "@/lib/xrpl/types";
+import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import type { AcceptCredentialRequest } from "@/lib/xrpl/types";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body: AcceptCredentialRequest = await request.json();
 
-    if (!body.seed || !body.issuer || !body.credentialType) {
-      return Response.json(
-        { error: "Missing required fields: seed, issuer, credentialType" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "issuer", "credentialType"]);
+    if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
     const wallet = Wallet.fromSeed(body.seed);

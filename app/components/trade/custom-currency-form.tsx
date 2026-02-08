@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MAX_CURRENCY_CODE_LENGTH } from "@/lib/xrpl/constants";
 
 interface CustomCurrencyFormProps {
   onAdd: (currency: string, issuer: string) => void;
@@ -32,7 +33,7 @@ export function CustomCurrencyForm({ onAdd, onClose }: CustomCurrencyFormProps) 
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           placeholder="USD"
-          maxLength={3}
+          maxLength={MAX_CURRENCY_CODE_LENGTH}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
         />
       </div>

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -9,8 +9,7 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
-    const network = request.nextUrl.searchParams.get("network") ?? undefined;
-    const client = await getClient(resolveNetwork(network));
+    const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({
       command: "account_info",

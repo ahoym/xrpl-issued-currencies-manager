@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-BASE_URL="${BASE_URL:-http://localhost:3000}"
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
 echo "=== End-to-End: Issue Currency ==="
 

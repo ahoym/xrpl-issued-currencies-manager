@@ -29,9 +29,12 @@ export function toXrplAmount(amount: DexAmount): Amount {
   if (amount.currency === "XRP") {
     return xrpToDrops(amount.value);
   }
+  if (!amount.issuer) {
+    throw new Error(`issuer is required for non-XRP currency "${amount.currency}"`);
+  }
   return {
     currency: encodeXrplCurrency(amount.currency),
-    issuer: amount.issuer!,
+    issuer: amount.issuer,
     value: amount.value,
   };
 }

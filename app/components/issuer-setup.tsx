@@ -119,6 +119,7 @@ export function IssuerSetup({
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}
+        aria-expanded={!collapsed}
         className="flex w-full items-center justify-between p-6 text-left"
       >
         <div>

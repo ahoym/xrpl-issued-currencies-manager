@@ -1,20 +1,17 @@
+import { NextRequest } from "next/server";
 import { Wallet, CredentialDelete } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { DeleteCredentialRequest, ApiError } from "@/lib/xrpl/types";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body: DeleteCredentialRequest = await request.json();
 
-    if (!body.seed || !body.credentialType) {
-      return Response.json(
-        { error: "Missing required fields: seed, credentialType" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "credentialType"]);
+    if (invalid) return invalid;
 
     if (!body.subject && !body.issuer) {
       return Response.json(

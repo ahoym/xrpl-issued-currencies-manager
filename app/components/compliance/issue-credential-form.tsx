@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
-import { RIPPLE_EPOCH_OFFSET } from "@/lib/xrpl/constants";
+import { toRippleEpoch } from "@/lib/xrpl/constants";
 import { inputClass, labelClass, primaryButtonClass, errorTextClass, successBannerClass } from "@/lib/ui/styles";
 import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
 
@@ -44,7 +44,7 @@ export function IssueCredentialForm({
     if (expiration) {
       const epochMs = new Date(expiration).getTime();
       if (!isNaN(epochMs)) {
-        payload.expiration = Math.floor(epochMs / 1000) - RIPPLE_EPOCH_OFFSET;
+        payload.expiration = toRippleEpoch(epochMs);
       }
     }
 

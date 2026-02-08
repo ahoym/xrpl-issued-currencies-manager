@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
+import { DEFAULT_ACCOUNT_OFFERS_LIMIT } from "@/lib/xrpl/constants";
 import { fromXrplAmount } from "@/lib/xrpl/currency";
-import { apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -10,11 +11,11 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
-    const network = request.nextUrl.searchParams.get("network") ?? undefined;
-    const limit = Number(request.nextUrl.searchParams.get("limit") ?? "200");
-    const marker = request.nextUrl.searchParams.get("marker") ?? undefined;
+    const sp = request.nextUrl.searchParams;
+    const limit = Number(sp.get("limit") ?? String(DEFAULT_ACCOUNT_OFFERS_LIMIT));
+    const marker = sp.get("marker") ?? undefined;
 
-    const client = await getClient(resolveNetwork(network));
+    const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({
       command: "account_offers",

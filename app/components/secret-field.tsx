@@ -19,7 +19,9 @@ export function SecretField({ label, value }: SecretFieldProps) {
         <span>••••••••••••</span>
       )}
       <button
+        type="button"
         onClick={() => setShow((prev) => !prev)}
+        aria-label={show ? "Hide secret" : "Show secret"}
         className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
       >
         {show ? "Hide" : "Show"}

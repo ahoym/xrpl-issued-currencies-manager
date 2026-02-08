@@ -281,6 +281,7 @@ export function TransferModal({
                 <button
                   type="button"
                   onClick={() => setRecipientMode("known")}
+                  aria-pressed={recipientMode === "known"}
                   className={`rounded-md px-3 py-1 text-xs font-medium ${
                     recipientMode === "known"
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
@@ -292,6 +293,7 @@ export function TransferModal({
                 <button
                   type="button"
                   onClick={() => setRecipientMode("other")}
+                  aria-pressed={recipientMode === "other"}
                   className={`rounded-md px-3 py-1 text-xs font-medium ${
                     recipientMode === "other"
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"

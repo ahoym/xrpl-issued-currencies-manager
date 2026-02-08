@@ -3,7 +3,7 @@ import { dropsToXrp } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
-import { apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 import type { CurrencyBalance } from "@/lib/xrpl/types";
 
 export async function GET(
@@ -12,8 +12,7 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
-    const network = request.nextUrl.searchParams.get("network") ?? undefined;
-    const client = await getClient(resolveNetwork(network));
+    const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const [accountInfo, accountLines] = await Promise.all([
       client.request({

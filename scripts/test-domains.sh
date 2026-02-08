@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-BASE_URL="${BASE_URL:-http://localhost:3000}"
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
 echo "=== End-to-End: Permissioned Domains ==="
 
@@ -56,23 +55,27 @@ fi
 # Step 4: Create credential and accept it (prerequisite for domain)
 echo ""
 echo "--- Step 4: Create and accept credential ---"
-curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/create" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/create" \
   -H "Content-Type: application/json" \
   -d "{
     \"seed\": \"${CRED_ISSUER_SEED}\",
     \"subject\": \"${SUBJECT_ADDRESS}\",
     \"credentialType\": \"KYC\",
     \"network\": \"testnet\"
-  }" | tail -1 | grep -q "201" && echo "Credential created" || { echo "FAIL: Credential create"; exit 1; }
+  }")
+parse_response "$RESPONSE"
+assert_status 201 "Credential created"
 
-curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/accept" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/accept" \
   -H "Content-Type: application/json" \
   -d "{
     \"seed\": \"${SUBJECT_SEED}\",
     \"issuer\": \"${CRED_ISSUER_ADDRESS}\",
     \"credentialType\": \"KYC\",
     \"network\": \"testnet\"
-  }" | tail -1 | grep -q "201" && echo "Credential accepted" || { echo "FAIL: Credential accept"; exit 1; }
+  }")
+parse_response "$RESPONSE"
+assert_status 201 "Credential accepted"
 
 echo "PASS: Credential created and accepted"
 

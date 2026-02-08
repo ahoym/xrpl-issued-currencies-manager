@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
-BASE_URL="${BASE_URL:-http://localhost:3000}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ACCOUNT_FILE="${SCRIPT_DIR}/.test-account.json"
 

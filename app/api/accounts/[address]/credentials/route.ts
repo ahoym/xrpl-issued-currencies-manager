@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCredentialType } from "@/lib/xrpl/credentials";
-import { apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 import { LSF_ACCEPTED } from "@/lib/xrpl/constants";
 import type { CredentialInfo } from "@/lib/types";
 
@@ -13,7 +13,7 @@ export async function GET(
   try {
     const { address } = await params;
     const sp = request.nextUrl.searchParams;
-    const network = sp.get("network") ?? undefined;
+    const network = getNetworkParam(request);
     const role = sp.get("role") ?? undefined; // "issuer" | "subject" | undefined
 
     const client = await getClient(resolveNetwork(network));

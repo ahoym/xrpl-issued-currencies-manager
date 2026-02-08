@@ -36,8 +36,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         const resolved = next instanceof Function ? next(prev) : next;
         try {
           localStorage.setItem(key, JSON.stringify(resolved));
-        } catch {
-          // storage full or unavailable
+        } catch (err) {
+          console.warn("localStorage setItem failed:", err);
         }
         return resolved;
       });
@@ -49,8 +49,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     setValue(initialValue);
     try {
       localStorage.removeItem(key);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn("localStorage removeItem failed:", err);
     }
   }, [key, initialValue]);
 

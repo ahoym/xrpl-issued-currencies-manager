@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { apiErrorResponse } from "@/lib/api";
+import { DEFAULT_TRANSACTION_LIMIT } from "@/lib/xrpl/constants";
+import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -9,10 +10,9 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
-    const searchParams = request.nextUrl.searchParams;
-    const network = searchParams.get("network") ?? undefined;
-    const limit = parseInt(searchParams.get("limit") ?? "20", 10);
-    const client = await getClient(resolveNetwork(network));
+    const sp = request.nextUrl.searchParams;
+    const limit = parseInt(sp.get("limit") ?? String(DEFAULT_TRANSACTION_LIMIT), 10);
+    const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({
       command: "account_tx",

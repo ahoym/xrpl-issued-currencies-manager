@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CredentialInfo, PersistedState } from "@/lib/types";
+import { fromRippleEpoch } from "@/lib/xrpl/constants";
 
 interface IssuedCredentialsTableProps {
   credentials: CredentialInfo[];
@@ -85,7 +86,7 @@ export function IssuedCredentialsTable({
                     </td>
                     <td className="py-1.5">
                       {c.expiration
-                        ? new Date((c.expiration + 946684800) * 1000).toLocaleString()
+                        ? fromRippleEpoch(c.expiration).toLocaleString()
                         : "\u2014"}
                     </td>
                     <td className="py-1.5 text-right">

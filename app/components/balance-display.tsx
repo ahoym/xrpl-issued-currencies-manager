@@ -87,6 +87,9 @@ export function BalanceDisplay({ address, network, refreshKey }: BalanceDisplayP
                 onClick={g.entries.length > 1 ? () => setExpandedCurrency(
                   expandedCurrency === g.currency ? null : g.currency,
                 ) : undefined}
+                role={g.entries.length > 1 ? "button" : undefined}
+                tabIndex={g.entries.length > 1 ? 0 : undefined}
+                onKeyDown={g.entries.length > 1 ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") setExpandedCurrency(expandedCurrency === g.currency ? null : g.currency); } : undefined}
                 className={`inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 ${
                   g.entries.length > 1 ? "cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700" : ""
                 }`}

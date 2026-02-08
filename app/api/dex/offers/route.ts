@@ -4,19 +4,15 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { toXrplAmount } from "@/lib/xrpl/currency";
 import { resolveOfferFlags, VALID_OFFER_FLAGS } from "@/lib/xrpl/offers";
-import { txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { CreateOfferRequest, OfferFlag, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
     const body: CreateOfferRequest = await request.json();
 
-    if (!body.seed || !body.takerGets || !body.takerPays) {
-      return Response.json(
-        { error: "Missing required fields: seed, takerGets, takerPays" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "takerGets", "takerPays"]);
+    if (invalid) return invalid;
 
     if (!body.takerGets.currency || !body.takerGets.value) {
       return Response.json(

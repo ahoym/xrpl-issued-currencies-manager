@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { MIN_CURRENCY_CODE_LENGTH, MAX_CURRENCY_CODE_LENGTH } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/styles";
 
 interface CurrencyManagerProps {
@@ -32,8 +33,8 @@ export function CurrencyManager({
     const code = input.toUpperCase().trim();
     setError(null);
 
-    if (code.length < 3 || code.length > 39) {
-      setError("Currency code must be 3\u201339 uppercase characters (e.g. USD)");
+    if (code.length < MIN_CURRENCY_CODE_LENGTH || code.length > MAX_CURRENCY_CODE_LENGTH) {
+      setError(`Currency code must be ${MIN_CURRENCY_CODE_LENGTH}\u2013${MAX_CURRENCY_CODE_LENGTH} uppercase characters (e.g. USD)`);
       return;
     }
     if (!/^[A-Z0-9]+$/.test(code)) {
@@ -66,10 +67,10 @@ export function CurrencyManager({
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value.toUpperCase().slice(0, 39))}
+          onChange={(e) => setInput(e.target.value.toUpperCase().slice(0, MAX_CURRENCY_CODE_LENGTH))}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="e.g. USD"
-          maxLength={39}
+          maxLength={MAX_CURRENCY_CODE_LENGTH}
           className="w-48 rounded-md border border-zinc-300 px-3 py-1.5 text-sm uppercase dark:border-zinc-700 dark:bg-zinc-900"
         />
         <button

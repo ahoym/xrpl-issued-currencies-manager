@@ -28,6 +28,7 @@ export function NavBar() {
             <Link
               key={link.href}
               href={link.href}
+              aria-current={active ? "page" : undefined}
               className={`text-sm font-medium ${
                 active
                   ? 'text-blue-600 dark:text-blue-400'

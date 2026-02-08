@@ -3,7 +3,7 @@ import { Wallet, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
-import { txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { TrustLineRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { address } = await params;
-    const network = request.nextUrl.searchParams.get("network") ?? undefined;
+    const network = getNetworkParam(request);
     const client = await getClient(resolveNetwork(network));
 
     const response = await client.request({
@@ -38,12 +38,8 @@ export async function POST(
     const { address } = await params;
     const body: TrustLineRequest = await request.json();
 
-    if (!body.seed || !body.currency || !body.issuer || !body.limit) {
-      return Response.json(
-        { error: "Missing required fields: seed, currency, issuer, limit" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "currency", "issuer", "limit"]);
+    if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
     const wallet = Wallet.fromSeed(body.seed);

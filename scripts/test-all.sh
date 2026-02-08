@@ -18,6 +18,7 @@ SCRIPTS=(
   "test-dex-offers.sh"
   "test-credentials.sh"
   "test-domains.sh"
+  "test-permissioned-dex.sh"
 )
 
 echo "============================================"

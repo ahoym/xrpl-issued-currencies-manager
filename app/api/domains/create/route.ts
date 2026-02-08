@@ -1,25 +1,30 @@
+import { NextRequest } from "next/server";
 import { Wallet, PermissionedDomainSet } from "xrpl";
 import type { AuthorizeCredential } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { MIN_DOMAIN_CREDENTIALS, MAX_DOMAIN_CREDENTIALS } from "@/lib/xrpl/constants";
 import type { CreateDomainRequest, ApiError } from "@/lib/xrpl/types";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body: CreateDomainRequest = await request.json();
 
-    if (!body.seed || !body.acceptedCredentials || body.acceptedCredentials.length === 0) {
+    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed"]);
+    if (invalid) return invalid;
+
+    if (!body.acceptedCredentials || body.acceptedCredentials.length < MIN_DOMAIN_CREDENTIALS) {
       return Response.json(
-        { error: "Missing required fields: seed, acceptedCredentials (1-10 entries)" } satisfies ApiError,
+        { error: `acceptedCredentials must have at least ${MIN_DOMAIN_CREDENTIALS} entry` } satisfies ApiError,
         { status: 400 },
       );
     }
 
-    if (body.acceptedCredentials.length > 10) {
+    if (body.acceptedCredentials.length > MAX_DOMAIN_CREDENTIALS) {
       return Response.json(
-        { error: "acceptedCredentials must have at most 10 entries" } satisfies ApiError,
+        { error: `acceptedCredentials must have at most ${MAX_DOMAIN_CREDENTIALS} entries` } satisfies ApiError,
         { status: 400 },
       );
     }

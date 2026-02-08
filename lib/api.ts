@@ -1,5 +1,37 @@
+import type { NextRequest } from "next/server";
 import type { TxResponse } from "xrpl";
 import type { ApiError } from "./xrpl/types";
+
+// ---------------------------------------------------------------------------
+// Request helpers
+// ---------------------------------------------------------------------------
+
+/** Extract the optional `network` query param from a NextRequest. */
+export function getNetworkParam(request: NextRequest): string | undefined {
+  return request.nextUrl.searchParams.get("network") ?? undefined;
+}
+
+/**
+ * Validate that all `fields` are truthy on `data`.
+ * Returns a 400 Response listing missing fields, or null if all present.
+ */
+export function validateRequired(
+  data: Record<string, unknown>,
+  fields: string[],
+): Response | null {
+  const missing = fields.filter((f) => !data[f]);
+  if (missing.length > 0) {
+    return Response.json(
+      { error: `Missing required fields: ${missing.join(", ")}` } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Transaction result helpers
+// ---------------------------------------------------------------------------
 
 /**
  * Extract the TransactionResult string from an XRPL submit response's meta.
