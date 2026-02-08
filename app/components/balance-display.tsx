@@ -98,11 +98,8 @@ export function BalanceDisplay({ address, network, refreshKey }: BalanceDisplayP
                   </span>
                 )}
                 {g.entries.length === 1 && g.entries[0].issuer && (
-                  <span className="group relative ml-1 cursor-default text-zinc-500 dark:text-zinc-400">
-                    ({g.entries[0].issuer.slice(0, 6)}...)
-                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-2 py-1 text-xs text-white group-hover:block dark:bg-zinc-100 dark:text-zinc-900">
-                      {g.entries[0].issuer}
-                    </span>
+                  <span className="ml-1 font-mono text-zinc-500 dark:text-zinc-400">
+                    ({g.entries[0].issuer})
                   </span>
                 )}
               </span>
@@ -115,11 +112,8 @@ export function BalanceDisplay({ address, network, refreshKey }: BalanceDisplayP
                     >
                       {e.value}
                       {e.issuer && (
-                        <span className="group relative ml-1 cursor-default">
-                          {e.issuer.slice(0, 8)}...{e.issuer.slice(-4)}
-                          <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-2 py-1 text-xs text-white group-hover:block dark:bg-zinc-100 dark:text-zinc-900">
-                            {e.issuer}
-                          </span>
+                        <span className="ml-1 font-mono">
+                          {e.issuer}
                         </span>
                       )}
                     </span>
