@@ -26,6 +26,7 @@ export function IssueCredentialForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,16 +79,26 @@ export function IssueCredentialForm({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-        Issue Credential
-      </h3>
-      {success ? (
-        <div className={successBannerClass}>
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        aria-expanded={!collapsed}
+        className="flex w-full items-center justify-between p-4 text-left"
+      >
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          Issue Credential
+        </h3>
+        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
+          {collapsed ? "▸" : "▾"}
+        </span>
+      </button>
+      {!collapsed && (success ? (
+        <div className={`mx-4 mb-4 ${successBannerClass}`}>
           Credential issued!
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="mt-3 space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 px-4 pb-4">
           <div>
             <label className={labelClass}>
               Subject
@@ -158,7 +169,7 @@ export function IssueCredentialForm({
             {submitting ? "Issuing..." : "Issue Credential"}
           </button>
         </form>
-      )}
+      ))}
     </div>
   );
 }
