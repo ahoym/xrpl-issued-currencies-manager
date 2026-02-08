@@ -74,7 +74,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const state: PersistedState = { network, ...networkData };
+  const state: PersistedState = {
+    network,
+    issuer: networkData.issuer ?? null,
+    credentialIssuer: networkData.credentialIssuer ?? null,
+    domainOwner: networkData.domainOwner ?? null,
+    currencies: Array.isArray(networkData.currencies) ? networkData.currencies : [],
+    recipients: Array.isArray(networkData.recipients) ? networkData.recipients : [],
+  };
 
   const setNetwork = useCallback(
     (next: PersistedState["network"]) => {

@@ -81,7 +81,11 @@ export function IssuedCredentialsTable({
                     </td>
                     <td className="py-1.5 font-mono">
                       {c.uri ? (
-                        <a href={c.uri} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{c.uri}</a>
+                        /^https?:\/\//i.test(c.uri) ? (
+                          <a href={c.uri} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{c.uri}</a>
+                        ) : (
+                          <span className="text-zinc-500">{c.uri}</span>
+                        )
                       ) : "\u2014"}
                     </td>
                     <td className="py-1.5">

@@ -49,15 +49,25 @@ export default function Home() {
       reader.onload = () => {
         try {
           const parsed = JSON.parse(reader.result as string);
+
+          const isWallet = (w: unknown): boolean =>
+            !!w && typeof w === 'object' &&
+            typeof (w as Record<string, unknown>).address === 'string' &&
+            typeof (w as Record<string, unknown>).seed === 'string' &&
+            typeof (w as Record<string, unknown>).publicKey === 'string';
+
           if (
             !parsed ||
-            typeof parsed.network !== 'string' ||
+            (parsed.network !== 'testnet' && parsed.network !== 'devnet') ||
             !Array.isArray(parsed.currencies) ||
+            !parsed.currencies.every((c: unknown) => typeof c === 'string') ||
             !Array.isArray(parsed.recipients) ||
-            !('issuer' in parsed)
+            !parsed.recipients.every(isWallet) ||
+            !('issuer' in parsed) ||
+            (parsed.issuer !== null && !isWallet(parsed.issuer))
           ) {
             alert(
-              'Invalid file: missing required fields (network, issuer, currencies, recipients).',
+              'Invalid file: network must be testnet or devnet, and wallet objects must have address, seed, and publicKey string fields.',
             );
             return;
           }

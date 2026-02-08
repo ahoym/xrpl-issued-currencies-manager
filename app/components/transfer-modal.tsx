@@ -42,7 +42,7 @@ export function TransferModal({
     setLoadingBalances(true);
     try {
       const res = await fetch(
-        `/api/accounts/${sender.address}/balances?network=${network}`,
+        `/api/accounts/${encodeURIComponent(sender.address)}/balances?network=${network}`,
       );
       const data = await res.json();
       if (res.ok) {
@@ -89,7 +89,7 @@ export function TransferModal({
     (async () => {
       try {
         const res = await fetch(
-          `/api/accounts/${destinationAddress}/trustlines?network=${network}`,
+          `/api/accounts/${encodeURIComponent(destinationAddress)}/trustlines?network=${network}`,
         );
         if (!res.ok || cancelled) {
           if (!cancelled) setTrustLineOk(null);
@@ -109,7 +109,7 @@ export function TransferModal({
         if (match && selectedBalance.issuer && sender.address !== selectedBalance.issuer) {
           try {
             const issuerRes = await fetch(
-              `/api/accounts/${selectedBalance.issuer}?network=${network}`,
+              `/api/accounts/${encodeURIComponent(selectedBalance.issuer)}?network=${network}`,
             );
             if (issuerRes.ok && !cancelled) {
               const issuerData = await issuerRes.json();
