@@ -24,14 +24,22 @@ export async function GET(
       ledger_index: "validated",
     });
 
-    const offers = response.result.offers?.map((offer) => ({
-      seq: offer.seq,
-      flags: offer.flags,
-      taker_gets: fromXrplAmount(offer.taker_gets),
-      taker_pays: fromXrplAmount(offer.taker_pays),
-      quality: offer.quality,
-      expiration: offer.expiration,
-    })) ?? [];
+    const offers = response.result.offers?.map((offer) => {
+      const mapped: Record<string, unknown> = {
+        seq: offer.seq,
+        flags: offer.flags,
+        taker_gets: fromXrplAmount(offer.taker_gets),
+        taker_pays: fromXrplAmount(offer.taker_pays),
+        quality: offer.quality,
+        expiration: offer.expiration,
+      };
+      // XLS-80: include DomainID if the offer was placed on a permissioned DEX
+      const domainID = (offer as unknown as Record<string, unknown>).DomainID;
+      if (domainID) {
+        mapped.domainID = domainID;
+      }
+      return mapped;
+    }) ?? [];
 
     const result: Record<string, unknown> = { address, offers };
     if (response.result.marker) {

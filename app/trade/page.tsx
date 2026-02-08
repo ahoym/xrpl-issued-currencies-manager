@@ -35,6 +35,7 @@ interface AccountOffer {
   taker_pays: OrderBookAmount;
   quality: string;
   expiration?: number;
+  domainID?: string;
 }
 
 export default function TradePage() {
@@ -254,10 +255,18 @@ export default function TradePage() {
     }
   }, [focusedWallet, state.network, refreshKey, fetchAccountOffers]);
 
-  // Filter offers to the selected pair
+  // Filter offers to the selected pair and domain
   const pairOffers = useMemo(() => {
     if (!sellingCurrency || !buyingCurrency) return [];
     return accountOffers.filter((o) => {
+      // Filter by domain: open DEX shows offers without a domain,
+      // permissioned mode shows only offers matching the active domain
+      if (activeDomainID) {
+        if (o.domainID !== activeDomainID) return false;
+      } else {
+        if (o.domainID) return false;
+      }
+
       const getsMatchesSelling = matchesCurrency(
         o.taker_gets,
         sellingCurrency.currency,
@@ -283,7 +292,7 @@ export default function TradePage() {
         (getsMatchesBuying && paysMatchesSelling)
       );
     });
-  }, [accountOffers, sellingCurrency, buyingCurrency]);
+  }, [accountOffers, sellingCurrency, buyingCurrency, activeDomainID]);
 
   // Cancel an offer
   async function handleCancel(seq: number) {
