@@ -55,6 +55,25 @@ export function OrderBook({
   // Sort bids highest-first so the best (highest) bid appears at the top, adjacent to the spread
   bids.sort((a, b) => b.price - a.price);
 
+  // Cumulative depth: asks accumulate from best ask (bottom) upward,
+  // bids accumulate from best bid (top) downward.
+  const askCumulative: number[] = new Array(asks.length);
+  for (let i = asks.length - 1, cum = 0; i >= 0; i--) {
+    cum += asks[i].amount;
+    askCumulative[i] = cum;
+  }
+  const bidCumulative: number[] = new Array(bids.length);
+  for (let i = 0, cum = 0; i < bids.length; i++) {
+    cum += bids[i].amount;
+    bidCumulative[i] = cum;
+  }
+
+  // Max cumulative across both sides for consistent bar scaling
+  const maxDepth = Math.max(
+    askCumulative[0] ?? 0,
+    bidCumulative[bidCumulative.length - 1] ?? 0,
+  );
+
   const bestAsk = asks.length > 0 ? asks[asks.length - 1].price : null;
   const bestBid = bids.length > 0 ? bids[0].price : null;
   const spread = bestAsk !== null && bestBid !== null ? bestAsk - bestBid : null;
@@ -76,10 +95,11 @@ export function OrderBook({
       </div>
 
       <div className="mt-2">
-        <div className="grid grid-cols-3 border-b border-zinc-200 pb-1 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        <div className="grid grid-cols-4 border-b border-zinc-200 pb-1 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
           <span>Price</span>
           <span className="text-right">{baseCurrency}</span>
           <span className="text-right">{quoteCurrency}</span>
+          <span className="text-right">Depth</span>
         </div>
 
         {/* Asks (sell orders) — click to prefill a buy */}
@@ -94,6 +114,7 @@ export function OrderBook({
           asks.map((a, i) => {
             const isOwn = accountAddress !== undefined && a.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
+            const depthPct = maxDepth > 0 ? (askCumulative[i] / maxDepth) * 100 : 0;
             return (
               <div
                 key={`ask-${i}`}
@@ -101,7 +122,7 @@ export function OrderBook({
                 role={clickable ? "button" : undefined}
                 tabIndex={clickable ? 0 : undefined}
                 onKeyDown={clickable ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") onSelectOrder(a.price.toFixed(6), a.amount.toFixed(6), "buy"); } : undefined}
-                className={`grid grid-cols-3 py-0.5 text-xs font-mono ${
+                className={`relative grid grid-cols-4 py-0.5 text-xs font-mono ${
                   clickable
                     ? "cursor-pointer rounded hover:bg-red-50 dark:hover:bg-red-900/20"
                     : isOwn
@@ -109,14 +130,21 @@ export function OrderBook({
                       : ""
                 }`}
               >
-                <span className="text-red-600 dark:text-red-400">
+                <div
+                  className="pointer-events-none absolute inset-y-0 right-0 bg-red-100 dark:bg-red-900/30"
+                  style={{ width: `${depthPct}%` }}
+                />
+                <span className="relative text-red-600 dark:text-red-400">
                   {a.price.toFixed(6)}
                 </span>
-                <span className="text-right text-zinc-700 dark:text-zinc-300">
+                <span className="relative text-right text-zinc-700 dark:text-zinc-300">
                   {a.amount.toFixed(4)}
                 </span>
-                <span className="text-right text-zinc-500 dark:text-zinc-400">
+                <span className="relative text-right text-zinc-500 dark:text-zinc-400">
                   {a.total.toFixed(4)}
+                </span>
+                <span className="relative text-right text-zinc-500 dark:text-zinc-400">
+                  {askCumulative[i].toFixed(4)}
                 </span>
               </div>
             );
@@ -152,6 +180,7 @@ export function OrderBook({
           bids.map((b, i) => {
             const isOwn = accountAddress !== undefined && b.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
+            const depthPct = maxDepth > 0 ? (bidCumulative[i] / maxDepth) * 100 : 0;
             return (
               <div
                 key={`bid-${i}`}
@@ -159,7 +188,7 @@ export function OrderBook({
                 role={clickable ? "button" : undefined}
                 tabIndex={clickable ? 0 : undefined}
                 onKeyDown={clickable ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") onSelectOrder(b.price.toFixed(6), b.amount.toFixed(6), "sell"); } : undefined}
-                className={`grid grid-cols-3 py-0.5 text-xs font-mono ${
+                className={`relative grid grid-cols-4 py-0.5 text-xs font-mono ${
                   clickable
                     ? "cursor-pointer rounded hover:bg-green-50 dark:hover:bg-green-900/20"
                     : isOwn
@@ -167,14 +196,21 @@ export function OrderBook({
                       : ""
                 }`}
               >
-                <span className="text-green-600 dark:text-green-400">
+                <div
+                  className="pointer-events-none absolute inset-y-0 right-0 bg-green-100 dark:bg-green-900/30"
+                  style={{ width: `${depthPct}%` }}
+                />
+                <span className="relative text-green-600 dark:text-green-400">
                   {b.price.toFixed(6)}
                 </span>
-                <span className="text-right text-zinc-700 dark:text-zinc-300">
+                <span className="relative text-right text-zinc-700 dark:text-zinc-300">
                   {b.amount.toFixed(4)}
                 </span>
-                <span className="text-right text-zinc-500 dark:text-zinc-400">
+                <span className="relative text-right text-zinc-500 dark:text-zinc-400">
                   {b.total.toFixed(4)}
+                </span>
+                <span className="relative text-right text-zinc-500 dark:text-zinc-400">
+                  {bidCumulative[i].toFixed(4)}
                 </span>
               </div>
             );
