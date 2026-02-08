@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { errorTextClass } from "@/lib/ui/styles";
 
 interface CurrencyManagerProps {
   currencies: string[];
@@ -78,7 +79,7 @@ export function CurrencyManager({
           Add
         </button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className={`mt-2 ${errorTextClass}`}>{error}</p>}
 
       {allCurrencies.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">

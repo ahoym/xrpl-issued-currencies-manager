@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { Wallet, AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { getTransactionResult, apiErrorResponse } from "@/lib/api";
+import { txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { TF_CLEAR_NO_RIPPLE } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
 
 export async function POST(
@@ -38,13 +39,8 @@ export async function POST(
     };
 
     const setResult = await client.submitAndWait(accountSet, { wallet });
-    const setTxResult = getTransactionResult(setResult.result.meta);
-    if (setTxResult && setTxResult !== "tesSUCCESS") {
-      return Response.json(
-        { error: `Failed to enable DefaultRipple: ${setTxResult}` } satisfies ApiError,
-        { status: 422 },
-      );
-    }
+    const setFailure = txFailureResponse(setResult);
+    if (setFailure) return setFailure;
 
     // Clear NoRipple on any existing trust lines so they can also ripple.
     // DefaultRipple only affects newly created trust lines — existing ones
@@ -68,16 +64,11 @@ export async function POST(
           issuer: line.account,
           value: line.limit,
         },
-        Flags: 0x00040000, // tfClearNoRipple
+        Flags: TF_CLEAR_NO_RIPPLE,
       };
       const trustResult = await client.submitAndWait(trustSet, { wallet });
-      const trustTxResult = getTransactionResult(trustResult.result.meta);
-      if (trustTxResult && trustTxResult !== "tesSUCCESS") {
-        return Response.json(
-          { error: `Failed to clear NoRipple on trust line ${line.currency}: ${trustTxResult}` } satisfies ApiError,
-          { status: 422 },
-        );
-      }
+      const trustFailure = txFailureResponse(trustResult);
+      if (trustFailure) return trustFailure;
     }
 
     return Response.json({

@@ -1,3 +1,4 @@
+import type { TxResponse } from "xrpl";
 import type { ApiError } from "./xrpl/types";
 
 /**
@@ -10,6 +11,21 @@ export function getTransactionResult(meta: unknown): string | undefined {
     return typeof value === "string" ? value : undefined;
   }
   return undefined;
+}
+
+/**
+ * Return a 422 error Response if the transaction failed, or null on success.
+ * Replaces the common 5-line result-check pattern in API routes.
+ */
+export function txFailureResponse(result: TxResponse): Response | null {
+  const txResult = getTransactionResult(result.result.meta);
+  if (txResult && txResult !== "tesSUCCESS") {
+    return Response.json(
+      { error: `Transaction failed: ${txResult}`, result: result.result },
+      { status: 422 },
+    );
+  }
+  return null;
 }
 
 /**

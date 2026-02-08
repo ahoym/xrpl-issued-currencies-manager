@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
+import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
+import { errorTextClass } from "@/lib/ui/styles";
 import { BalanceDisplay } from "./balance-display";
 import { CurrencyManager } from "./currency-manager";
 import { SecretField } from "./secret-field";
@@ -38,8 +40,7 @@ export function IssuerSetup({
       if (!res.ok) return;
       const data = await res.json();
       const flags: number = data.account_data?.Flags ?? 0;
-      // lsfDefaultRipple = 0x00800000
-      if (flags & 0x00800000) {
+      if (flags & LSF_DEFAULT_RIPPLE) {
         // DefaultRipple is set, but check if existing trust lines still have NoRipple
         const tlRes = await fetch(`/api/accounts/${issuer.address}/trustlines?network=${network}`);
         if (tlRes.ok) {
@@ -141,7 +142,7 @@ export function IssuerSetup({
               >
                 {loading ? "Generating..." : "Generate Issuer Wallet"}
               </button>
-              {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+              {error && <p className={`mt-2 ${errorTextClass}`}>{error}</p>}
             </div>
           ) : (
             <div className="space-y-4">

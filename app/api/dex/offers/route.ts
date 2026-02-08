@@ -4,7 +4,7 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { toXrplAmount } from "@/lib/xrpl/currency";
 import { resolveOfferFlags, VALID_OFFER_FLAGS } from "@/lib/xrpl/offers";
-import { getTransactionResult, apiErrorResponse } from "@/lib/api";
+import { txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { CreateOfferRequest, OfferFlag, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
@@ -85,13 +85,8 @@ export async function POST(request: NextRequest) {
 
     const result = await client.submitAndWait(tx, { wallet });
 
-    const txResult = getTransactionResult(result.result.meta);
-    if (txResult && txResult !== "tesSUCCESS") {
-      return Response.json(
-        { error: `Transaction failed: ${txResult}`, result: result.result },
-        { status: 422 },
-      );
-    }
+    const failure = txFailureResponse(result);
+    if (failure) return failure;
 
     return Response.json({ result: result.result }, { status: 201 });
   } catch (err) {

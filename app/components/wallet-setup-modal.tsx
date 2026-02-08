@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
+import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
+import { errorTextClass } from "@/lib/ui/styles";
 
 interface WalletSetupModalProps {
   recipient: WalletInfo;
@@ -59,7 +61,7 @@ export function WalletSetupModal({
             seed: recipient.seed,
             currency: effectiveCurrency,
             issuer: issuer.address,
-            limit: "1000000",
+            limit: DEFAULT_TRUST_LINE_LIMIT,
             network,
           }),
         });
@@ -171,7 +173,7 @@ export function WalletSetupModal({
               {step === "issuing" && `Receiving ${Number(amount).toLocaleString()} ${effectiveCurrency}...`}
             </p>
           )}
-          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className={`mt-2 ${errorTextClass}`}>{error}</p>}
         </>
       )}
     </div>

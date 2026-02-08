@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
+import { RIPPLE_EPOCH_OFFSET } from "@/lib/xrpl/constants";
+import { inputClass, labelClass, primaryButtonClass, errorTextClass, successBannerClass } from "@/lib/ui/styles";
+import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
 
 interface IssueCredentialFormProps {
   credentialIssuer: WalletInfo;
@@ -41,7 +44,7 @@ export function IssueCredentialForm({
     if (expiration) {
       const epochMs = new Date(expiration).getTime();
       if (!isNaN(epochMs)) {
-        payload.expiration = Math.floor(epochMs / 1000) - 946684800;
+        payload.expiration = Math.floor(epochMs / 1000) - RIPPLE_EPOCH_OFFSET;
       }
     }
 
@@ -65,7 +68,7 @@ export function IssueCredentialForm({
         setExpiration("");
         setUri("");
         onIssued();
-        setTimeout(() => setSuccess(false), 2000);
+        setTimeout(() => setSuccess(false), SUCCESS_MESSAGE_DURATION_MS);
       }
     } catch {
       setError("Network error");
@@ -80,19 +83,19 @@ export function IssueCredentialForm({
         Issue Credential
       </h3>
       {success ? (
-        <div className="mt-3 rounded-md bg-green-50 p-3 text-center text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+        <div className={successBannerClass}>
           Credential issued!
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Subject
             </label>
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             >
               <option value="">Select recipient...</option>
               {recipients.map((r) => (
@@ -106,11 +109,11 @@ export function IssueCredentialForm({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Or enter address manually"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Credential Type
             </label>
             <input
@@ -118,22 +121,22 @@ export function IssueCredentialForm({
               value={credType}
               onChange={(e) => setCredType(e.target.value)}
               placeholder="e.g. KYC"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Expiration (optional)
             </label>
             <input
               type="datetime-local"
               value={expiration}
               onChange={(e) => setExpiration(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               URI (optional)
             </label>
             <input
@@ -141,16 +144,16 @@ export function IssueCredentialForm({
               value={uri}
               onChange={(e) => setUri(e.target.value)}
               placeholder="https://..."
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className={errorTextClass}>{error}</p>
           )}
           <button
             type="submit"
             disabled={submitting || !subject || !credType}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className={primaryButtonClass}
           >
             {submitting ? "Issuing..." : "Issue Credential"}
           </button>

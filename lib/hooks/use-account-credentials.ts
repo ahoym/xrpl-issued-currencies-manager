@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useApiFetch } from "./use-api-fetch";
 import type { CredentialInfo, PersistedState } from "../types";
 
 interface UseAccountCredentialsResult {
@@ -12,38 +12,15 @@ export function useAccountCredentials(
   network: PersistedState["network"],
   role?: "issuer" | "subject",
 ): UseAccountCredentialsResult {
-  const [credentials, setCredentials] = useState<CredentialInfo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const fetchCredentials = useCallback(async () => {
-    if (!address) {
-      setCredentials([]);
-      return;
-    }
-    setLoading(true);
-    try {
+  const { data, loading, refresh } = useApiFetch<CredentialInfo>(
+    () => {
+      if (!address) return null;
       const params = new URLSearchParams({ network });
       if (role) params.set("role", role);
-      const res = await fetch(`/api/accounts/${address}/credentials?${params}`);
-      const data = await res.json();
-      if (res.ok) {
-        setCredentials(data.credentials ?? []);
-      }
-    } catch {
-      // ignore — avoid breaking UI refresh loops
-    } finally {
-      setLoading(false);
-    }
-  }, [address, network, role]);
+      return `/api/accounts/${address}/credentials?${params}`;
+    },
+    (json) => (json.credentials as CredentialInfo[]) ?? [],
+  );
 
-  useEffect(() => {
-    fetchCredentials();
-  }, [fetchCredentials, refreshKey]);
-
-  const refresh = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-  }, []);
-
-  return { credentials, loading, refresh };
+  return { credentials: data, loading, refresh };
 }

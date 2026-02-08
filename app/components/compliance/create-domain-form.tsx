@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import type { WalletInfo, DomainInfo, PersistedState } from "@/lib/types";
+import { labelClass, primaryButtonClass, errorTextClass, successBannerClass } from "@/lib/ui/styles";
+import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
 
 export interface EditingDomain {
   domainID: string;
@@ -97,7 +99,7 @@ export function CreateDomainForm({
         resetForm();
         onSaved();
         if (editingDomain && onCancelEdit) onCancelEdit();
-        setTimeout(() => setSuccess(false), 2000);
+        setTimeout(() => setSuccess(false), SUCCESS_MESSAGE_DURATION_MS);
       }
     } catch {
       setError("Network error");
@@ -134,13 +136,13 @@ export function CreateDomainForm({
         </p>
       )}
       {success ? (
-        <div className="mt-3 rounded-md bg-green-50 p-3 text-center text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+        <div className={successBannerClass}>
           {successLabel}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Accepted Credentials
             </label>
             {credentials.map((dc, i) => (
@@ -194,12 +196,12 @@ export function CreateDomainForm({
             )}
           </div>
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className={errorTextClass}>{error}</p>
           )}
           <button
             type="submit"
             disabled={submitting || credentials.every((dc) => !dc.issuer || !dc.credentialType)}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className={primaryButtonClass}
           >
             {submitting ? submittingLabel : submitLabel}
           </button>

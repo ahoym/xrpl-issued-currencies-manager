@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import type { WalletInfo, PersistedState, BalanceEntry } from "@/lib/types";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
+import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
+import { errorTextClass } from "@/lib/ui/styles";
+import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
 
 interface TransferModalProps {
   sender: WalletInfo;
@@ -111,8 +114,7 @@ export function TransferModal({
             if (issuerRes.ok && !cancelled) {
               const issuerData = await issuerRes.json();
               const flags: number = issuerData.account_data?.Flags ?? 0;
-              // lsfDefaultRipple = 0x00800000
-              if (!cancelled) setRipplingOk((flags & 0x00800000) !== 0);
+              if (!cancelled) setRipplingOk((flags & LSF_DEFAULT_RIPPLE) !== 0);
             }
           } catch {
             // non-fatal — leave as null
@@ -182,7 +184,7 @@ export function TransferModal({
         setSuccess(true);
         setTimeout(() => {
           onComplete();
-        }, 1500);
+        }, SUCCESS_MESSAGE_DURATION_MS);
       }
     } catch {
       setError("Network error");
@@ -347,7 +349,7 @@ export function TransferModal({
             )}
 
             {error && (
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className={errorTextClass}>{error}</p>
             )}
 
             <button

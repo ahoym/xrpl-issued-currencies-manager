@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
 import type { OfferFlag } from "@/lib/xrpl/types";
+import { RIPPLE_EPOCH_OFFSET } from "@/lib/xrpl/constants";
+import { inputClass, labelClass, errorTextClass } from "@/lib/ui/styles";
+import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
 
 interface CurrencyOption {
   currency: string;
@@ -162,8 +165,7 @@ export function TradeForm({
     if (expiration) {
       const epochMs = new Date(expiration).getTime();
       if (!isNaN(epochMs)) {
-        // Convert to XRPL Ripple Epoch (seconds since Jan 1, 2000)
-        payload.expiration = Math.floor(epochMs / 1000) - 946684800;
+        payload.expiration = Math.floor(epochMs / 1000) - RIPPLE_EPOCH_OFFSET;
       }
     }
 
@@ -185,7 +187,7 @@ export function TradeForm({
         setTimeout(() => {
           setSuccess(false);
           onSubmitted();
-        }, 1500);
+        }, SUCCESS_MESSAGE_DURATION_MS);
       }
     } catch {
       setError("Network error");
@@ -233,7 +235,7 @@ export function TradeForm({
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Amount ({sellingCurrency.currency})
             </label>
             <input
@@ -243,12 +245,12 @@ export function TradeForm({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Price ({buyingCurrency.currency} per {sellingCurrency.currency})
             </label>
             <input
@@ -258,12 +260,12 @@ export function TradeForm({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="0.00"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Total ({buyingCurrency.currency})
             </label>
             <div className="mt-1 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
@@ -282,7 +284,7 @@ export function TradeForm({
           )}
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Flags
             </label>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
@@ -304,19 +306,19 @@ export function TradeForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            <label className={labelClass}>
               Expiration (optional)
             </label>
             <input
               type="datetime-local"
               value={expiration}
               onChange={(e) => setExpiration(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className={inputClass}
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className={errorTextClass}>{error}</p>
           )}
 
           <button
