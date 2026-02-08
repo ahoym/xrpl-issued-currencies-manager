@@ -27,11 +27,11 @@ export default function TransactPage() {
   }, [state.issuer, state.recipients]);
 
   if (state.recipients.length === 0) {
-    return <EmptyWallets title="Transact" maxWidth="max-w-3xl" />;
+    return <EmptyWallets title="Transact" maxWidth="max-w-4xl" />;
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-bold">Transact</h1>
 
       <div className="mt-6 space-y-4">
