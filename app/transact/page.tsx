@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { LoadingScreen } from "../components/loading-screen";
+import { EmptyWallets } from "../components/empty-wallets";
 import { BalanceDisplay } from "../components/balance-display";
 import { TransferModal } from "../components/transfer-modal";
 import type { WalletInfo } from "@/lib/types";
@@ -13,28 +14,11 @@ export default function TransactPage() {
   const [sendingFrom, setSendingFrom] = useState<WalletInfo | null>(null);
 
   if (!hydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-zinc-500">Loading...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (state.recipients.length === 0) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-bold">Transact</h1>
-        <div className="mt-8 rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            No recipient wallets found. Set up wallets on the{" "}
-            <Link href="/" className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-              Setup page
-            </Link>{" "}
-            first.
-          </p>
-        </div>
-      </div>
-    );
+    return <EmptyWallets title="Transact" maxWidth="max-w-3xl" />;
   }
 
   return (

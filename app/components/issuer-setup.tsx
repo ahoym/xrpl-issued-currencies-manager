@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
 import { BalanceDisplay } from "./balance-display";
 import { CurrencyManager } from "./currency-manager";
+import { SecretField } from "./secret-field";
 
 interface IssuerSetupProps {
   issuer: WalletInfo | null;
@@ -28,7 +29,6 @@ export function IssuerSetup({
 }: IssuerSetupProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSeed, setShowSeed] = useState(false);
   const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done" | "needs_repair">("idle");
 
   const checkRippling = useCallback(async () => {
@@ -87,6 +87,29 @@ export function IssuerSetup({
     }
   }
 
+  async function handleEnableRippling() {
+    if (!issuer) return;
+    setRipplingStatus("loading");
+    setError(null);
+    try {
+      const res = await fetch(`/api/accounts/${issuer.address}/rippling`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed: issuer.seed, network }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Failed to enable rippling");
+        setRipplingStatus("idle");
+        return;
+      }
+      setRipplingStatus("done");
+    } catch {
+      setError("Network error");
+      setRipplingStatus("idle");
+    }
+  }
+
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -131,44 +154,11 @@ export function IssuerSetup({
                   <span className="text-zinc-500 dark:text-zinc-400">Public Key: </span>
                   <span className="break-all">{issuer.publicKey}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-zinc-500 dark:text-zinc-400">Seed: </span>
-                  {showSeed ? (
-                    <span className="break-all">{issuer.seed}</span>
-                  ) : (
-                    <span>••••••••••••</span>
-                  )}
-                  <button
-                    onClick={() => setShowSeed(!showSeed)}
-                    className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
-                  >
-                    {showSeed ? "Hide" : "Show"}
-                  </button>
-                </div>
+                <SecretField label="Seed" value={issuer.seed} />
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={async () => {
-                    setRipplingStatus("loading");
-                    setError(null);
-                    try {
-                      const res = await fetch(`/api/accounts/${issuer.address}/rippling`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ seed: issuer.seed, network }),
-                      });
-                      const data = await res.json();
-                      if (!res.ok) {
-                        setError(data.error ?? "Failed to enable rippling");
-                        setRipplingStatus("idle");
-                        return;
-                      }
-                      setRipplingStatus("done");
-                    } catch {
-                      setError("Network error");
-                      setRipplingStatus("idle");
-                    }
-                  }}
+                  onClick={handleEnableRippling}
                   disabled={ripplingStatus === "done" || ripplingStatus === "loading"}
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >

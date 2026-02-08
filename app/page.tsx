@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAppState } from '@/lib/hooks/use-app-state';
 import { useIssuerCurrencies } from '@/lib/hooks/use-issuer-currencies';
+import { LoadingScreen } from './components/loading-screen';
 import { SecurityWarning } from './components/security-warning';
 import { IssuerSetup } from './components/issuer-setup';
 import { RecipientWallets } from './components/recipient-wallets';
@@ -37,12 +38,65 @@ export default function Home() {
     }
   }, [onLedgerCurrencies]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  function handleImport() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result as string);
+          if (
+            !parsed ||
+            typeof parsed.network !== 'string' ||
+            !Array.isArray(parsed.currencies) ||
+            !Array.isArray(parsed.recipients) ||
+            !('issuer' in parsed)
+          ) {
+            alert(
+              'Invalid file: missing required fields (network, issuer, currencies, recipients).',
+            );
+            return;
+          }
+          if (state.issuer || state.recipients.length > 0) {
+            if (
+              !window.confirm(
+                'This will replace all current data. Continue?',
+              )
+            )
+              return;
+          }
+          importState(parsed);
+        } catch {
+          alert('Failed to parse JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  function handleExport() {
+    const exportState = {
+      ...state,
+      currencies: state.currencies.filter((c) => onLedgerCurrencies.has(c)),
+    };
+    const blob = new Blob([JSON.stringify(exportState, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `xrpl-wallets-${state.network}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!hydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-zinc-500">Loading...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -80,66 +134,13 @@ export default function Home() {
       <div className="mt-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <div className="flex gap-3">
           <button
-            onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = '.json';
-              input.onchange = () => {
-                const file = input.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                  try {
-                    const parsed = JSON.parse(reader.result as string);
-                    if (
-                      !parsed ||
-                      typeof parsed.network !== 'string' ||
-                      !Array.isArray(parsed.currencies) ||
-                      !Array.isArray(parsed.recipients) ||
-                      !('issuer' in parsed)
-                    ) {
-                      alert(
-                        'Invalid file: missing required fields (network, issuer, currencies, recipients).',
-                      );
-                      return;
-                    }
-                    if (state.issuer || state.recipients.length > 0) {
-                      if (
-                        !window.confirm(
-                          'This will replace all current data. Continue?',
-                        )
-                      )
-                        return;
-                    }
-                    importState(parsed);
-                  } catch {
-                    alert('Failed to parse JSON file.');
-                  }
-                };
-                reader.readAsText(file);
-              };
-              input.click();
-            }}
+            onClick={handleImport}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
             Import JSON
           </button>
           <button
-            onClick={() => {
-              const exportState = {
-                ...state,
-                currencies: state.currencies.filter((c) => onLedgerCurrencies.has(c)),
-              };
-              const blob = new Blob([JSON.stringify(exportState, null, 2)], {
-                type: 'application/json',
-              });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `xrpl-wallets-${state.network}-${new Date().toISOString().slice(0, 10)}.json`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
+            onClick={handleExport}
             disabled={!state.issuer && state.recipients.length === 0}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >

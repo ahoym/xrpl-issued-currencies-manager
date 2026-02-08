@@ -19,3 +19,23 @@ export interface TrustLine {
   balance: string;
   limit: string;
 }
+
+export interface BalanceEntry {
+  currency: string;
+  value: string;
+  issuer?: string;
+}
+
+export interface OrderBookAmount {
+  currency: string;
+  value: string;
+  issuer?: string;
+}
+
+export interface OrderBookEntry {
+  account: string;
+  taker_gets: OrderBookAmount;
+  taker_pays: OrderBookAmount;
+  quality: string;
+  sequence: number;
+}

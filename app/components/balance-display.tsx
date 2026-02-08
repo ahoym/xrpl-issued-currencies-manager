@@ -1,18 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import type { PersistedState } from "@/lib/types";
+import type { PersistedState, BalanceEntry } from "@/lib/types";
 
 interface BalanceDisplayProps {
   address: string;
   network: PersistedState["network"];
   refreshKey?: number;
-}
-
-interface BalanceEntry {
-  currency: string;
-  value: string;
-  issuer?: string;
 }
 
 interface GroupedBalance {

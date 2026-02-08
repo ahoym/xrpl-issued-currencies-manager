@@ -1,14 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { WalletInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo, PersistedState, BalanceEntry } from "@/lib/types";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
-
-interface BalanceEntry {
-  currency: string;
-  value: string;
-  issuer?: string;
-}
 
 interface TransferModalProps {
   sender: WalletInfo;

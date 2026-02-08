@@ -6,6 +6,7 @@ import { useFetchTrustLines } from "@/lib/hooks/use-trust-lines";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 import { BalanceDisplay } from "./balance-display";
+import { SecretField } from "./secret-field";
 import { WalletSetupModal } from "./wallet-setup-modal";
 
 interface RecipientCardProps {
@@ -25,7 +26,6 @@ export function RecipientCard({
   refreshKey,
   onRefresh,
 }: RecipientCardProps) {
-  const [showSeed, setShowSeed] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [trustingRlusd, setTrustingRlusd] = useState(false);
   const [rlusdError, setRlusdError] = useState<string | null>(null);
@@ -94,20 +94,7 @@ export function RecipientCard({
           <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
           {recipient.address}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-500 dark:text-zinc-400">Seed: </span>
-          {showSeed ? (
-            <span className="break-all">{recipient.seed}</span>
-          ) : (
-            <span>••••••••••••</span>
-          )}
-          <button
-            onClick={() => setShowSeed((prev) => !prev)}
-            className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
-          >
-            {showSeed ? "Hide" : "Show"}
-          </button>
-        </div>
+        <SecretField label="Seed" value={recipient.seed} />
       </div>
 
       {trustLineCurrencies.size > 0 && (

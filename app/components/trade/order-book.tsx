@@ -1,18 +1,7 @@
 "use client";
 
-interface OrderBookAmount {
-  currency: string;
-  value: string;
-  issuer?: string;
-}
-
-interface OrderBookEntry {
-  account: string;
-  taker_gets: OrderBookAmount;
-  taker_pays: OrderBookAmount;
-  quality: string;
-  sequence: number;
-}
+import type { OrderBookEntry } from "@/lib/types";
+import { matchesCurrency } from "@/lib/xrpl/match-currency";
 
 interface OrderBookProps {
   orderBook: { buy: OrderBookEntry[]; sell: OrderBookEntry[] } | null;
@@ -23,16 +12,6 @@ interface OrderBookProps {
   accountAddress?: string;
   onRefresh: () => void;
   onSelectOrder?: (price: string, amount: string, tab: "buy" | "sell") => void;
-}
-
-function matchesCurrency(
-  amt: OrderBookAmount,
-  currency: string,
-  issuer?: string,
-): boolean {
-  if (amt.currency !== currency) return false;
-  if (currency === "XRP") return true;
-  return amt.issuer === issuer;
 }
 
 export function OrderBook({
