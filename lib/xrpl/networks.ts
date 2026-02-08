@@ -13,6 +13,11 @@ export const NETWORKS = {
 
 export type NetworkId = keyof typeof NETWORKS;
 
+export const EXPLORER_URLS: Record<NetworkId, string> = {
+  testnet: "https://testnet.xrpl.org",
+  devnet: "https://devnet.xrpl.org",
+};
+
 export const DEFAULT_NETWORK: NetworkId = "testnet";
 
 export function resolveNetwork(network?: string): NetworkId {

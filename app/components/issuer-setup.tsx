@@ -6,6 +6,7 @@ import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/styles";
 import { BalanceDisplay } from "./balance-display";
 import { CurrencyManager } from "./currency-manager";
+import { ExplorerLink } from "./explorer-link";
 import { SecretField } from "./secret-field";
 
 interface IssuerSetupProps {
@@ -149,7 +150,7 @@ export function IssuerSetup({
               <div className="rounded-md bg-zinc-50 p-3 font-mono text-sm dark:bg-zinc-900">
                 <div>
                   <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
-                  {issuer.address}
+                  <ExplorerLink address={issuer.address} />
                 </div>
                 <div>
                   <span className="text-zinc-500 dark:text-zinc-400">Public Key: </span>

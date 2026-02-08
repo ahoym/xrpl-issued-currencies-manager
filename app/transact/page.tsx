@@ -7,6 +7,7 @@ import { EmptyWallets } from "../components/empty-wallets";
 import { BalanceDisplay } from "../components/balance-display";
 import { TransferModal } from "../components/transfer-modal";
 import type { WalletInfo } from "@/lib/types";
+import { ExplorerLink } from "../components/explorer-link";
 
 export default function TransactPage() {
   const { state, hydrated } = useAppState();
@@ -33,8 +34,8 @@ export default function TransactPage() {
           >
             <div className="flex items-start justify-between">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-sm text-zinc-900 dark:text-zinc-100">
-                  {wallet.address}
+                <p className="truncate font-mono text-sm">
+                  <ExplorerLink address={wallet.address} />
                 </p>
                 <BalanceDisplay
                   address={wallet.address}

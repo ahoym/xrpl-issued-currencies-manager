@@ -1,22 +1,18 @@
 "use client";
 
 import type { PersistedState } from "@/lib/types";
+import { EXPLORER_URLS } from "@/lib/xrpl/networks";
 
 interface NetworkSelectorProps {
   network: PersistedState["network"];
   onChange: (network: PersistedState["network"]) => void;
 }
 
-const explorerUrls: Record<PersistedState["network"], string> = {
-  testnet: "https://testnet.xrpl.org",
-  devnet: "https://devnet.xrpl.org",
-};
-
 export function NetworkSelector({ network, onChange }: NetworkSelectorProps) {
   return (
     <div className="flex items-center gap-3">
       <a
-        href={explorerUrls[network]}
+        href={EXPLORER_URLS[network]}
         target="_blank"
         rel="noopener noreferrer"
         className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"

@@ -1,6 +1,7 @@
 "use client";
 
 import type { WalletInfo } from "@/lib/types";
+import { ExplorerLink } from "./explorer-link";
 
 interface WalletSetupCardProps {
   title: string;
@@ -23,7 +24,7 @@ export function WalletSetupCard({
       {wallet ? (
         <div className="mt-2 rounded-md bg-zinc-50 p-2 font-mono text-xs dark:bg-zinc-900">
           <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
-          <span className="break-all">{wallet.address}</span>
+          <ExplorerLink address={wallet.address} />
         </div>
       ) : (
         <button

@@ -6,6 +6,7 @@ import { useFetchTrustLines } from "@/lib/hooks/use-trust-lines";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 import { BalanceDisplay } from "./balance-display";
+import { ExplorerLink } from "./explorer-link";
 import { SecretField } from "./secret-field";
 import { WalletSetupModal } from "./wallet-setup-modal";
 
@@ -92,7 +93,7 @@ export function RecipientCard({
       <div className="font-mono text-sm">
         <div>
           <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
-          {recipient.address}
+          <ExplorerLink address={recipient.address} />
         </div>
         <SecretField label="Seed" value={recipient.seed} />
       </div>
