@@ -1,0 +1,34 @@
+{
+  "network": "testnet",
+  "issuer": {
+    "address": "rQKwdFYVseN2kmCniuvSHxresyc2GCiPJw",
+    "seed": "sEd7MH8ea6JZGH1YsmQqb1FTFuHaiwX",
+    "publicKey": "EDA51C0BF5BE8315F7BE906E06CDB4994DA35AE84ADAF02DF46FEF004E143EC29F"
+  },
+  "credentialIssuer": {
+    "address": "rfVv72NsV4xSP2WRYJSe5Ub5YgpK46W7UL",
+    "seed": "sEdVwWoS3B3p5kK3k2yUd5Wr34Mg5Sr",
+    "publicKey": "ED151311B1C8167AA6E7707126E831D236C538ED955F63F6EADFF2B120605985A9"
+  },
+  "domainOwner": {
+    "address": "rQJkffyoLBFTBF4pHZhMGSQdN8gxQrnh2Z",
+    "seed": "sEdSgYGEdPVAsjd1AnVj6UsX5xMLWc2",
+    "publicKey": "ED5EA0EA9A0172E3730A6C15B4B656EC86D2D6D4694079AA02F15DA65F385AEC9E"
+  },
+  "currencies": [
+    "XCAD",
+    "XTHB"
+  ],
+  "recipients": [
+    {
+      "address": "rwZZv2GG7x8CEFR2etV4ZaB6fMPQ3fEoAy",
+      "seed": "sEdTmeD6gshdciHYZ7B2ZALthwAPT4G",
+      "publicKey": "EDDC2814441EEA5D29C15E99B90308F9321D6B8651D9A699B92724D773EEAB3B30"
+    },
+    {
+      "address": "r3SWHG7pGKGmSJLfUaKaAMSc7rF4Db6JtH",
+      "seed": "sEd7rDbGtTb3Wdj7Gu5GXW59729Wqrj",
+      "publicKey": "ED06EE4C3F1AE3309691533F3D175BEC4BD7B443A9EFD9B1AED43C9C7017F1FB15"
+    }
+  ]
+}
