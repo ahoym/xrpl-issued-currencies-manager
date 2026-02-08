@@ -32,21 +32,6 @@ lib/
 - **The orchestrator provides context** (wallet addresses, network, callbacks for cross-component refresh).
 - **Refresh coordination**: Pass `refreshKey` numbers or `onChanged` callbacks down to trigger sibling refreshes when one component modifies shared data.
 
-### Example: Compliance Page
-
-Before refactoring: 750-line monolith with inline forms, tables, fetch logic, and submission handlers.
-
-After refactoring:
-- `compliance/page.tsx` (131 lines) — orchestrates wallet setup, credentials section, domains section
-- `compliance/issue-credential-form.tsx` — form with own submit state
-- `compliance/issued-credentials-table.tsx` — table with inline delete
-- `compliance/recipient-credentials.tsx` — manages own credential fetch per recipient
-- `compliance/create-domain-form.tsx` — form with dynamic credential list
-- `compliance/domains-list.tsx` — domain display with inline delete
-- `lib/hooks/use-account-credentials.ts` — shared fetch hook
-- `lib/hooks/use-account-domains.ts` — shared fetch hook
-- `lib/hooks/use-wallet-generation.ts` — shared action hook
-
 ### When NOT to Extract
 
 - Don't extract a hook for a one-off action unique to a single component

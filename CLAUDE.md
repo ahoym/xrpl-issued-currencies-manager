@@ -53,28 +53,6 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `test-rippling.sh` | Tests DefaultRipple flag behavior and verifies peer-to-peer transfers work after enabling rippling |
 | `test-permissioned-dex.sh` | Tests full permissioned DEX flow (credential, domain, domain-scoped offers) — requires devnet |
 
-## Conventions
-
-### API Route Pattern
-
-Every route handler follows this structure:
-
-1. Parse request params/body
-2. Call `getClient(resolveNetwork(network))` to get a connected XRPL client (reuses singleton)
-3. Perform XRPL operation(s) inside `try/catch`
-4. Return `Response.json(...)` with appropriate status codes (201 for creates, 200 for reads)
-5. On error, return `{ error: message }` with status 400 (validation) or 500 (server)
-
-### Test Script Pattern
-
-Each test script in `scripts/`:
-- Uses `curl -s -w "\n%{http_code}"` to capture both body and status code
-- Parses with `jq`
-- Prints clear PASS/FAIL output
-- Exits non-zero on failure
-- Accepts `BASE_URL` env var
-- Scripts that need prior state read from `scripts/.test-account.json`
-
 ## Gotchas
 
 - **`xrpl.dropsToXrp()` returns `number`**, not `string` — always wrap with `String()` when assigning to string-typed fields
