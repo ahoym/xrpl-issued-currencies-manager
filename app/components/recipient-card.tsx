@@ -92,11 +92,13 @@ export function RecipientCard({
 
   return (
     <div className="rounded-md border border-zinc-200 dark:border-zinc-700">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setCollapsed((v) => !v)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setCollapsed((v) => !v); } }}
         aria-expanded={!collapsed}
-        className="flex w-full items-center justify-between p-4 text-left font-mono text-sm"
+        className="flex w-full cursor-pointer items-center justify-between p-4 text-left font-mono text-sm"
       >
         <div>
           <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
@@ -105,7 +107,7 @@ export function RecipientCard({
         <span className="ml-4 text-zinc-400 dark:text-zinc-500">
           {collapsed ? "▸" : "▾"}
         </span>
-      </button>
+      </div>
 
       {!collapsed && (
         <div className="px-4 pb-4">
