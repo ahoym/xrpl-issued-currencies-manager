@@ -45,7 +45,7 @@ export default function TradePage() {
   const { state, hydrated } = useAppState();
 
   const [focusedWallet, setFocusedWallet] = useState<WalletInfo | null>(null);
-  const [sellingValue, setSellingValue] = useState(`${Assets.RLUSD}|${WELL_KNOWN_CURRENCIES.RLUSD}`);
+  const [sellingValue, setSellingValue] = useState(`${Assets.RLUSD}|${WELL_KNOWN_CURRENCIES[state.network]?.RLUSD ?? ""}`);
   const [buyingValue, setBuyingValue] = useState(`${Assets.XRP}|`);
   const [customCurrencies, setCustomCurrencies] = useState<
     { currency: string; issuer: string }[]
@@ -137,7 +137,7 @@ export default function TradePage() {
     seen.add(xrpKey);
 
     // Well-known currencies
-    for (const [currency, issuer] of Object.entries(WELL_KNOWN_CURRENCIES)) {
+    for (const [currency, issuer] of Object.entries(WELL_KNOWN_CURRENCIES[state.network] ?? {})) {
       const key = `${currency}|${issuer}`;
       if (!seen.has(key)) {
         seen.add(key);

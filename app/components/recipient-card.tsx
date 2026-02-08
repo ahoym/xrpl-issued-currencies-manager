@@ -49,7 +49,7 @@ export function RecipientCard({
     );
   }, [lines, issuer]);
 
-  const rlusdIssuer = WELL_KNOWN_CURRENCIES.RLUSD;
+  const rlusdIssuer = WELL_KNOWN_CURRENCIES[network]?.RLUSD;
   const hasRlusdTrust = rlusdIssuer
     ? lines.some(
         (l) => l.account === rlusdIssuer && decodeCurrency(l.currency) === Assets.RLUSD,
