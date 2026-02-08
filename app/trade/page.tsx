@@ -14,8 +14,7 @@ import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
 import type { WalletInfo, PersistedState, BalanceEntry, OrderBookAmount, OrderBookEntry } from "@/lib/types";
-import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
-import { Assets } from "@/lib/assets";
+import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
 

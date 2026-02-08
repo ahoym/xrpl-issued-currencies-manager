@@ -17,3 +17,6 @@ export const errorTextClass =
 /** Green success banner (mt-3 variant). */
 export const successBannerClass =
   "mt-3 rounded-md bg-green-50 p-3 text-center text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400";
+
+/** Duration (ms) to show success messages before auto-clearing. */
+export const SUCCESS_MESSAGE_DURATION_MS = 2000;

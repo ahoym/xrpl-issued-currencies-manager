@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
-import { inputClass, labelClass, errorTextClass } from "@/lib/ui/styles";
-import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
+import { inputClass, labelClass, errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 import { Assets } from "@/lib/assets";
 
 interface CurrencyOption {

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { WalletInfo, DomainInfo, PersistedState } from "@/lib/types";
-import { labelClass, primaryButtonClass, errorTextClass, successBannerClass } from "@/lib/ui/styles";
-import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
+import { labelClass, primaryButtonClass, errorTextClass, successBannerClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 
 export interface EditingDomain {
   domainID: string;

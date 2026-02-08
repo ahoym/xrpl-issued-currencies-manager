@@ -3,8 +3,7 @@
 import { useState } from "react";
 import type { WalletInfo, PersistedState } from "@/lib/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
-import { inputClass, labelClass, primaryButtonClass, errorTextClass, successBannerClass } from "@/lib/ui/styles";
-import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
+import { inputClass, labelClass, primaryButtonClass, errorTextClass, successBannerClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 
 interface IssueCredentialFormProps {
   credentialIssuer: WalletInfo;

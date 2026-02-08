@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
-import { errorTextClass } from "@/lib/ui/styles";
+import { errorTextClass } from "@/lib/ui/ui";
 
 interface WalletSetupModalProps {
   recipient: WalletInfo;

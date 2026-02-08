@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
 import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
-import { errorTextClass } from "@/lib/ui/styles";
+import { errorTextClass } from "@/lib/ui/ui";
 import { BalanceDisplay } from "./balance-display";
 import { CurrencyManager } from "./currency-manager";
 import { ExplorerLink } from "./explorer-link";

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MIN_CURRENCY_CODE_LENGTH, MAX_CURRENCY_CODE_LENGTH } from "@/lib/xrpl/constants";
-import { errorTextClass } from "@/lib/ui/styles";
+import { errorTextClass } from "@/lib/ui/ui";
 
 interface CurrencyManagerProps {
   currencies: string[];

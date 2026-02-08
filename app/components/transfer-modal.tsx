@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { WalletInfo, PersistedState, BalanceEntry } from "@/lib/types";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
-import { errorTextClass } from "@/lib/ui/styles";
-import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
+import { errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 import { Assets } from "@/lib/assets";
 
 interface TransferModalProps {
