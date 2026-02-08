@@ -30,12 +30,13 @@ interface TradeFormProps {
   onSubmitted: () => void;
 }
 
-const FLAG_OPTIONS: { value: OfferFlag; label: string; domainOnly?: boolean }[] = [
+type ExecutionType = "" | "passive" | "immediateOrCancel" | "fillOrKill";
+
+const EXECUTION_OPTIONS: { value: ExecutionType; label: string }[] = [
+  { value: "", label: "Default (Limit)" },
   { value: "passive", label: "Passive" },
   { value: "immediateOrCancel", label: "Immediate or Cancel" },
   { value: "fillOrKill", label: "Fill or Kill" },
-  { value: "sell", label: "Sell" },
-  { value: "hybrid", label: "Hybrid", domainOnly: true },
 ];
 
 function buildDexAmount(
@@ -61,7 +62,9 @@ export function TradeForm({
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("");
-  const [flags, setFlags] = useState<Set<OfferFlag>>(new Set());
+  const [executionType, setExecutionType] = useState<ExecutionType>("");
+  const [sellMode, setSellMode] = useState(false);
+  const [hybrid, setHybrid] = useState(false);
   const [expiration, setExpiration] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,16 +96,12 @@ export function TradeForm({
     !isNaN(parseFloat(price)) &&
     parseFloat(price) > 0;
 
-  function toggleFlag(flag: OfferFlag) {
-    setFlags((prev) => {
-      const next = new Set(prev);
-      if (next.has(flag)) {
-        next.delete(flag);
-      } else {
-        next.add(flag);
-      }
-      return next;
-    });
+  function buildFlags(): OfferFlag[] {
+    const flags: OfferFlag[] = [];
+    if (executionType) flags.push(executionType);
+    if (sellMode) flags.push("sell");
+    if (hybrid) flags.push("hybrid");
+    return flags;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -158,8 +157,9 @@ export function TradeForm({
       payload.domainID = domainID;
     }
 
-    if (flags.size > 0) {
-      payload.flags = Array.from(flags);
+    const flags = buildFlags();
+    if (flags.length > 0) {
+      payload.flags = flags;
     }
 
     if (expiration) {
@@ -182,7 +182,9 @@ export function TradeForm({
         setSuccess(true);
         setAmount("");
         setPrice("");
-        setFlags(new Set());
+        setExecutionType("");
+        setSellMode(false);
+        setHybrid(false);
         setExpiration("");
         setTimeout(() => {
           setSuccess(false);
@@ -285,24 +287,40 @@ export function TradeForm({
 
           <div>
             <label className={labelClass}>
-              Flags
+              Execution Type
             </label>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-              {FLAG_OPTIONS.filter((f) => !f.domainOnly || domainID).map((f) => (
-                <label
-                  key={f.value}
-                  className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400"
-                >
-                  <input
-                    type="checkbox"
-                    checked={flags.has(f.value)}
-                    onChange={() => toggleFlag(f.value)}
-                    className="rounded border-zinc-300 dark:border-zinc-600"
-                  />
-                  {f.label}
-                </label>
+            <select
+              value={executionType}
+              onChange={(e) => setExecutionType(e.target.value as ExecutionType)}
+              className={inputClass}
+            >
+              {EXECUTION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-            </div>
+            </select>
+          </div>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+              <input
+                type="checkbox"
+                checked={sellMode}
+                onChange={(e) => setSellMode(e.target.checked)}
+                className="rounded border-zinc-300 dark:border-zinc-600"
+              />
+              Sell Mode
+            </label>
+            {domainID && (
+              <label className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                <input
+                  type="checkbox"
+                  checked={hybrid}
+                  onChange={(e) => setHybrid(e.target.checked)}
+                  className="rounded border-zinc-300 dark:border-zinc-600"
+                />
+                Hybrid
+              </label>
+            )}
           </div>
 
           <div>
