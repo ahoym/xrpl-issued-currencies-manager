@@ -3,21 +3,10 @@ import { getBalanceChanges } from "xrpl";
 import type { TransactionMetadata, Amount } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { encodeXrplCurrency, decodeCurrency, fromXrplAmount } from "@/lib/xrpl/currency";
+import { decodeCurrency } from "@/lib/xrpl/currency";
+import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { apiErrorResponse } from "@/lib/api";
 import type { ApiError } from "@/lib/xrpl/types";
-
-/** Check if a balance change matches a given currency + optional issuer */
-function matchesBalance(
-  bal: { currency: string; issuer?: string; value: string },
-  currency: string,
-  issuer: string | undefined,
-): boolean {
-  const decoded = decodeCurrency(bal.currency);
-  if (decoded !== currency && bal.currency !== currency) return false;
-  if (currency === "XRP") return true;
-  return bal.issuer === issuer;
-}
 
 /** Convert an XRPL Amount to {currency, issuer} for comparison */
 function amountCurrency(amt: Amount): { currency: string; issuer?: string } {
@@ -116,7 +105,7 @@ export async function GET(request: NextRequest) {
           const val = parseFloat(bal.value);
           if (val <= 0) continue;
 
-          if (matchesBalance(bal, baseCurrency, baseIssuer)) {
+          if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
             // For XRP, subtract fee if this is the submitting account
             if (baseCurrency === "XRP" && acctChanges.account === tx.Account) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
@@ -124,7 +113,7 @@ export async function GET(request: NextRequest) {
             } else {
               baseTotal += val;
             }
-          } else if (matchesBalance(bal, quoteCurrency, quoteIssuer)) {
+          } else if (matchesCurrency(bal, quoteCurrency, quoteIssuer)) {
             if (quoteCurrency === "XRP" && acctChanges.account === tx.Account) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
               quoteTotal += val - fee;
