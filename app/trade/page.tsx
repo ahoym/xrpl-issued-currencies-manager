@@ -8,6 +8,8 @@ import { TradeForm } from "../components/trade/trade-form";
 import { WalletSelector } from "../components/trade/wallet-selector";
 import { CustomCurrencyForm } from "../components/trade/custom-currency-form";
 import { MyOpenOrders } from "../components/trade/my-open-orders";
+import { RecentTrades } from "../components/trade/recent-trades";
+import type { RecentTrade } from "../components/trade/recent-trades";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
@@ -55,6 +57,8 @@ export default function TradePage() {
   const [loadingOrderBook, setLoadingOrderBook] = useState(false);
   const [accountOffers, setAccountOffers] = useState<AccountOffer[]>([]);
   const [loadingOffers, setLoadingOffers] = useState(false);
+  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
+  const [loadingTrades, setLoadingTrades] = useState(false);
   const [cancellingSeq, setCancellingSeq] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
@@ -255,6 +259,47 @@ export default function TradePage() {
     }
   }, [focusedWallet, state.network, refreshKey, fetchAccountOffers]);
 
+  // Fetch recent trades for the pair
+  const fetchRecentTrades = useCallback(
+    async (
+      selling: CurrencyOption,
+      buying: CurrencyOption,
+      network: PersistedState["network"],
+      domain?: string,
+    ) => {
+      setLoadingTrades(true);
+      try {
+        const params = new URLSearchParams({
+          base_currency: selling.currency,
+          quote_currency: buying.currency,
+          network,
+        });
+        if (selling.issuer) params.set("base_issuer", selling.issuer);
+        if (buying.issuer) params.set("quote_issuer", buying.issuer);
+        if (domain) params.set("domain", domain);
+
+        const res = await fetch(`/api/dex/trades?${params}`);
+        const data = await res.json();
+        if (res.ok) {
+          setRecentTrades(data.trades ?? []);
+        } else {
+          setRecentTrades([]);
+        }
+      } catch {
+        setRecentTrades([]);
+      } finally {
+        setLoadingTrades(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (sellingCurrency && buyingCurrency) {
+      fetchRecentTrades(sellingCurrency, buyingCurrency, state.network, activeDomainID || undefined);
+    }
+  }, [sellingCurrency, buyingCurrency, state.network, refreshKey, fetchRecentTrades, activeDomainID]);
+
   // Filter offers to the selected pair and domain
   const pairOffers = useMemo(() => {
     if (!sellingCurrency || !buyingCurrency) return [];
@@ -448,9 +493,20 @@ export default function TradePage() {
         />
       )}
 
-      {/* Main two-column layout */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-5">
-        {/* Left column: Order Book + My Open Orders */}
+      {/* Main three-column layout */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-7">
+        {/* Left column: Recent Trades */}
+        <div className="space-y-6 lg:col-span-2">
+          <RecentTrades
+            trades={recentTrades}
+            loading={loadingTrades}
+            pairSelected={pairSelected}
+            baseCurrency={sellingCurrency?.currency}
+            quoteCurrency={buyingCurrency?.currency}
+          />
+        </div>
+
+        {/* Middle column: Order Book + My Open Orders */}
         <div className="space-y-6 lg:col-span-3">
           {/* Order Book */}
           <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
