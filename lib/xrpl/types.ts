@@ -1,9 +1,3 @@
-export interface AccountCredentials {
-  address: string;
-  seed: string;
-  publicKey: string;
-}
-
 export interface GenerateAccountResponse {
   address: string;
   seed: string;
