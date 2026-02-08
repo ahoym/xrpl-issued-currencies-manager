@@ -4,6 +4,19 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:3000}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Output JSON shape (consumed by make-market.sh):
+# {
+#   "network": "testnet" | "devnet",
+#   "issuer":            { "address": "r...", "seed": "s...", "publicKey": "..." },
+#   "credentialIssuer":  { "address": "r...", "seed": "s...", "publicKey": "..." },
+#   "domainOwner":       { "address": "r...", "seed": "s...", "publicKey": "..." },
+#   "currencies": ["XCAD", "XTHB"],
+#   "recipients": [
+#     { "address": "r...", "seed": "s...", "publicKey": "..." },
+#     { "address": "r...", "seed": "s...", "publicKey": "..." }
+#   ]
+# }
+
 # Allow NETWORK env var to skip the prompt
 if [ -n "${NETWORK:-}" ]; then
   echo "Using network from env: ${NETWORK}"

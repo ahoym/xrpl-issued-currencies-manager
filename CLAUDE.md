@@ -44,6 +44,15 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) | `test-dex-offers.sh` |
 | `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param | `test-dex-offers.sh` |
 
+### Frontend Pages
+
+| Route | File | Purpose |
+|---|---|---|
+| `/` | `app/page.tsx` | Dashboard — manage issuer wallets, currencies, recipients |
+| `/transact` | `app/transact/page.tsx` | Transfer issued currencies between wallets |
+| `/trade` | `app/trade/page.tsx` | DEX trading (orders, orderbook, trades) |
+| `/compliance` | `app/compliance/page.tsx` | Manage XLS-70 credentials and XLS-80 domains |
+
 ### Utility & Cross-Cutting Scripts
 
 | Script | Purpose |
@@ -60,3 +69,4 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 - **pnpm lockfile warning** about workspace root is cosmetic — parent directory has a `package-lock.json`; safe to ignore
 - **XRPL client singleton** — don't disconnect after each request; the module-level client in `lib/xrpl/client.ts` persists across requests for reuse
 - **Trust line prerequisite** — before issuing currency, the recipient must have a trust line to the issuer for that currency (validated server-side in `/api/currencies/issue`)
+- **Devnet-only amendments** — some XRPL amendments (e.g., PermissionedDEX) are only enabled on devnet. `test-permissioned-dex.sh` hard-codes devnet for this reason
