@@ -16,6 +16,123 @@ Domains don't do anything by themselves — they're building blocks for features
 
 ---
 
+## Conceptual Model
+
+### Three Independent Roles
+
+The permissioned domain system involves three roles that are **completely independent** of each other. They can be the same account, overlap, or be entirely separate:
+
+```
+┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐
+│  Currency Issuer     │   │  Credential Issuer   │   │  Domain Owner        │
+│  (rTokenBank)        │   │  (rComplianceCorp)   │   │  (rExchange)         │
+│                      │   │                      │   │                      │
+│  Issues tokens       │   │  Attests identity    │   │  Creates trading     │
+│  (e.g., USD, EUR)    │   │  (e.g., KYC, AML)   │   │  environments        │
+│                      │   │                      │   │                      │
+│  Uses: Payment       │   │  Uses:               │   │  Uses:               │
+│  (issuer → recipient)│   │  CredentialCreate    │   │  PermissionedDomain  │
+│                      │   │  CredentialDelete    │   │  Set / Delete        │
+└─────────────────────┘   └─────────────────────┘   └─────────────────────┘
+         │                          │                          │
+         │                          │                          │
+    No relationship            Referenced by              References
+    to domains or              domain's Accepted          credential issuer
+    credentials                Credentials array          + type pairs
+```
+
+Key insight: **"Issuer" is overloaded**. In `AcceptedCredentials[].Issuer` on a domain, "Issuer" means the *credential issuer*, NOT the currency issuer.
+
+### What Each Layer Controls
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│                    WHAT gets traded?                           │
+│                                                               │
+│   Controlled by: Currency Issuers + Trust Lines               │
+│   Any token from any issuer can appear in any order book.     │
+│   Permissioned domains have NO say in this.                   │
+├───────────────────────────────────────────────────────────────┤
+│                    WHO can trade?                              │
+│                                                               │
+│   Controlled by: Permissioned Domains + Credentials           │
+│   Only accounts holding a valid credential accepted by        │
+│   the domain can place offers in that domain's order book.    │
+│   The domain has NO say in what currencies are traded.        │
+├───────────────────────────────────────────────────────────────┤
+│                    WHERE does matching happen?                 │
+│                                                               │
+│   Controlled by: DomainID on OfferCreate                      │
+│   Each domain has its own isolated order book.                │
+│   No DomainID = open DEX. With DomainID = domain book.       │
+│   Domain books and open book are strictly separated.          │
+└───────────────────────────────────────────────────────────────┘
+```
+
+### End-to-End Flow
+
+```
+  rComplianceCorp                rAlice                    rExchange
+  (Credential Issuer)           (Trader)                  (Domain Owner)
+        │                          │                          │
+        │  1. CredentialCreate     │                          │
+        │  {Subject: rAlice,       │                          │
+        │   CredentialType: "KYC"} │                          │
+        │─────────────────────────>│                          │
+        │                          │                          │
+        │                          │  2. CredentialAccept     │
+        │                          │  {Issuer: rComplianceCorp│
+        │                          │   CredentialType: "KYC"} │
+        │                          │─────────(self)           │
+        │                          │                          │
+        │                          │     3. PermissionedDomainSet
+        │                          │     {AcceptedCredentials: │
+        │                          │      [{Issuer: rComplianceCorp,
+        │                          │        CredentialType: "KYC"}]}
+        │                          │                          │──(self)
+        │                          │                          │
+        │                          │                   Returns DomainID:
+        │                          │                   "ABC123..."
+        │                          │                          │
+        │                          │  4. OfferCreate          │
+        │                          │  {TakerGets: 100 USD,    │
+        │                          │   TakerPays: 50 XRP,     │
+        │                          │   DomainID: "ABC123..."} │
+        │                          │─────────(to ledger)      │
+        │                          │                          │
+        │                     Ledger checks:                  │
+        │                     - Does domain "ABC123" exist? ✓  │
+        │                     - Does rAlice hold a credential  │
+        │                       matching AcceptedCredentials? ✓│
+        │                     - Place offer in domain book ✓   │
+        │                          │                          │
+        │  rBob (also KYC'd)       │                          │
+        │  places matching offer   │                          │
+        │  in same domain ──────> MATCH ✓ (same domain)       │
+        │                          │                          │
+        │  rCharlie (no credential)│                          │
+        │  tries OfferCreate with  │                          │
+        │  DomainID: "ABC123" ──> REJECTED ✗ (not a member)  │
+```
+
+### No Asset-Level Restrictions
+
+Permissioned domains control **participants**, not **assets**. There is no on-chain mechanism to restrict which currencies can be traded within a domain. Any credentialed member can place offers for any currency pair.
+
+The design assumption is that vetting participants (via credentials) is sufficient compliance. Enforcement against illicit assets is **reactive**, not preventive:
+
+- **Credential issuer** can delete a credential → member's offers become invalid (lazy cleanup)
+- **Domain owner** can update `AcceptedCredentials` to change who qualifies
+- **Credentials can expire** → forces periodic re-verification
+
+```
+  Asset restriction?     ──── NOT enforced by domains
+  Participant restriction? ── ENFORCED by credentials + domains
+  Order book isolation?  ──── ENFORCED by DomainID on offers
+```
+
+---
+
 ## Credentials (XLS-70)
 
 Credentials are the identity primitive that Permissioned Domains rely on. They are on-chain attestations (e.g., KYC verification) stored as ledger objects.
@@ -87,8 +204,8 @@ A credential is **valid** only when `lsfAccepted` is true AND it hasn't expired.
 ### AcceptedCredentials Array
 
 Each entry contains:
-- `Issuer` (AccountID) — who issued the credential
-- `CredentialType` (Blob, hex) — max 64 bytes
+- `Issuer` (AccountID) — the **credential issuer** (NOT the currency issuer — "Issuer" is overloaded)
+- `CredentialType` (Blob, hex) — max 64 bytes; the type label from `CredentialCreate`
 
 The array is sorted by `Issuer` for efficient lookup. **OR logic**: an account needs only **one** matching credential to be a domain member (AND is not supported).
 
@@ -194,18 +311,44 @@ When present:
 
 ## Relevance to This Project
 
-Our app currently supports open DEX trading via `OfferCreate`. Potential permissioned-domain integration points:
+Our app currently supports open DEX trading via `OfferCreate`. The existing currency issuer wallet is completely independent of the permissioned domain system — currency issuance and trust lines don't change.
+
+### Role Mapping for Our App
+
+The simplest approach is to have the existing **issuer wallet** serve as both the credential issuer and the domain owner. This collapses three roles into one for ease of use, but the API routes themselves don't enforce this coupling.
+
+```
+Our "issuer" wallet  ──→  Currency Issuer    (already does this)
+                     ──→  Credential Issuer  (new: issues KYC-like credentials)
+                     ──→  Domain Owner       (new: creates permissioned domains)
+
+Our "recipient" wallets ──→  Credential Subjects  (accept credentials)
+                        ──→  Domain Members        (automatic if credentialed)
+                        ──→  Traders               (place offers in domain books)
+```
+
+### Integration Points
 
 1. **Credential management** — UI for creating, accepting, and viewing credentials (`CredentialCreate`, `CredentialAccept`).
-2. **Domain creation** — Let issuers create permissioned domains with accepted credentials (`PermissionedDomainSet`).
-3. **Permissioned trading** — When XLS-81 activates, add `DomainID` field to `OfferCreate` to place offers in domain-specific order books.
+2. **Domain creation** — Let the issuer create permissioned domains referencing credential types (`PermissionedDomainSet`).
+3. **Permissioned trading** — Add `DomainID` field to `OfferCreate` to place offers in domain-specific order books.
 4. **Domain-filtered order book** — Pass `domain` parameter to `book_offers` to show permissioned order book depth.
 5. **Credential-gated access** — Check if a user holds required credentials before showing permissioned trading UI.
 
 ### Implementation Priority
 
 - XLS-80 (Permissioned Domains) + XLS-70 (Credentials) are **live on mainnet** — can implement credential and domain management now.
-- XLS-81 (Permissioned DEX) is **proposed but not yet activated** — plan for it but don't implement until the amendment is enabled.
+- XLS-81 (Permissioned DEX) is **proposed but not yet activated** — however, xrpl.js v4.5.0 already supports `DomainID` on `OfferCreate` and `domain` on `BookOffersRequest`, so we can build the full stack and test when the amendment activates on testnet/devnet.
+
+### xrpl.js v4.5.0 Support
+
+All transaction types are fully typed in the installed xrpl package:
+- `CredentialCreate`, `CredentialAccept`, `CredentialDelete`
+- `PermissionedDomainSet`, `PermissionedDomainDelete`
+- `OfferCreate.DomainID` (optional field)
+- `OfferCreateFlags.tfHybrid` (offer in both domain + open book)
+- `BookOffersRequest.domain` (optional filter)
+- `AuthorizeCredential` type for `AcceptedCredentials`
 
 ---
 
