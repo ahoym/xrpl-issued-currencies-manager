@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { PersistedState, WalletInfo } from "@/lib/types";
+import { useWalletGeneration } from "@/lib/hooks/use-wallet-generation";
 import { RecipientCard } from "./recipient-card";
 
 interface RecipientWalletsProps {
@@ -25,34 +25,7 @@ export function RecipientWallets({
   onGenerate,
   onRefresh,
 }: RecipientWalletsProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleGenerate() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/accounts/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ network }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to generate wallet");
-        return;
-      }
-      onGenerate({
-        address: data.address,
-        seed: data.seed,
-        publicKey: data.publicKey,
-      });
-    } catch {
-      setError("Network error");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { loading, error, generate } = useWalletGeneration();
 
   return (
     <section
@@ -68,7 +41,7 @@ export function RecipientWallets({
 
       <div className="mt-4">
         <button
-          onClick={handleGenerate}
+          onClick={() => generate(network, onGenerate)}
           disabled={loading}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >

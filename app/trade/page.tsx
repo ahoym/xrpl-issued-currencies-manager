@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { useAccountDomains } from "@/lib/hooks/use-account-domains";
 import { OrderBook } from "../components/trade/order-book";
 import { TradeForm } from "../components/trade/trade-form";
 import { WalletSelector } from "../components/trade/wallet-selector";
@@ -10,7 +11,7 @@ import { MyOpenOrders } from "../components/trade/my-open-orders";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
-import type { WalletInfo, PersistedState, BalanceEntry, OrderBookAmount, OrderBookEntry, DomainInfo } from "@/lib/types";
+import type { WalletInfo, PersistedState, BalanceEntry, OrderBookAmount, OrderBookEntry } from "@/lib/types";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
@@ -62,7 +63,10 @@ export default function TradePage() {
   const [domainMode, setDomainMode] = useState<"open" | "select" | "custom">("open");
   const [selectedDomainID, setSelectedDomainID] = useState("");
   const [customDomainID, setCustomDomainID] = useState("");
-  const [availableDomains, setAvailableDomains] = useState<DomainInfo[]>([]);
+  const { domains: availableDomains } = useAccountDomains(
+    state.domainOwner?.address,
+    state.network,
+  );
 
   const activeDomainID =
     domainMode === "select"
@@ -70,28 +74,6 @@ export default function TradePage() {
       : domainMode === "custom"
         ? customDomainID
         : undefined;
-
-  // Fetch available domains from domain owner
-  useEffect(() => {
-    if (!state.domainOwner) {
-      setAvailableDomains([]);
-      return;
-    }
-    async function fetchDomains() {
-      try {
-        const res = await fetch(
-          `/api/accounts/${state.domainOwner!.address}/domains?network=${state.network}`,
-        );
-        const data = await res.json();
-        if (res.ok) {
-          setAvailableDomains(data.domains ?? []);
-        }
-      } catch {
-        // ignore
-      }
-    }
-    fetchDomains();
-  }, [state.domainOwner, state.network]);
 
   // Auto-select first recipient on mount / when recipients change
   useEffect(() => {
