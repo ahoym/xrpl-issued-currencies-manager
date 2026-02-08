@@ -5,20 +5,32 @@ BASE_URL="${BASE_URL:-http://localhost:3000}"
 NETWORK="${NETWORK:-testnet}"
 PERMISSIONED="${PERMISSIONED:-false}"
 
-# --- Require state file as argument ---
-if [ $# -lt 1 ] || [ ! -f "$1" ]; then
-  echo "Usage: $0 <state-file.json>"
-  echo ""
-  echo "  state-file.json  Output from setup-full-state.sh"
-  echo ""
-  echo "Environment variables:"
-  echo "  BASE_URL      API base URL       (default: http://localhost:3000)"
-  echo "  NETWORK       XRPL network       (default: testnet)"
-  echo "  PERMISSIONED  Also place permissioned offers (default: false)"
-  exit 1
-fi
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+EXAMPLES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/examples"
 
-STATE_FILE="$1"
+# --- Resolve state file: explicit arg > latest in examples/ ---
+if [ $# -ge 1 ]; then
+  STATE_FILE="$1"
+  if [ ! -f "$STATE_FILE" ]; then
+    echo "Error: file not found: $STATE_FILE"
+    exit 1
+  fi
+else
+  # Auto-detect latest setup-state file in examples/
+  STATE_FILE=$(ls -t "$EXAMPLES_DIR"/setup-state-*.json 2>/dev/null | head -1) || true
+  if [ -z "$STATE_FILE" ]; then
+    echo "No state file found in examples/. Run setup-full-state.sh first, or pass a path:"
+    echo ""
+    echo "  $0 [state-file.json]"
+    echo ""
+    echo "Environment variables:"
+    echo "  BASE_URL      API base URL       (default: http://localhost:3000)"
+    echo "  NETWORK       XRPL network       (default: testnet)"
+    echo "  PERMISSIONED  Also place permissioned offers (default: false)"
+    exit 1
+  fi
+  echo "Auto-detected state file: ${STATE_FILE}"
+fi
 
 echo "=== Market Making: Ladder Orders ==="
 echo "State:       ${STATE_FILE}"

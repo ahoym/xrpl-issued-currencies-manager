@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated state files (contain wallet seeds)
+examples/setup-state-*.json

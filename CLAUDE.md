@@ -57,8 +57,8 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 
 | Script | Purpose |
 |---|---|
-| `setup-full-state.sh` | Bootstraps a full demo environment (wallets, trust lines, currencies, credentials, domain) and saves state to JSON |
-| `make-market.sh` | Places 3-level bid/ask ladders across 6 currency pairs on the DEX using state from `setup-full-state.sh` |
+| `setup-full-state.sh` | Bootstraps a full demo environment (wallets, trust lines, currencies, credentials, domain) and saves state to `examples/` |
+| `make-market.sh` | Places 3-level bid/ask ladders across 6 currency pairs on the DEX; auto-reads latest state from `examples/` |
 | `test-rippling.sh` | Tests DefaultRipple flag behavior and verifies peer-to-peer transfers work after enabling rippling |
 | `test-permissioned-dex.sh` | Tests full permissioned DEX flow (credential, domain, domain-scoped offers) — requires devnet |
 

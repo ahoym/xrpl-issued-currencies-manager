@@ -3,6 +3,8 @@ set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:3000}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+EXAMPLES_DIR="${REPO_ROOT}/examples"
 
 # Output JSON shape (consumed by make-market.sh):
 # {
@@ -32,7 +34,8 @@ else
   esac
 fi
 
-OUTPUT_FILE="${SCRIPT_DIR}/setup-state-${NETWORK}-$(date +%Y-%m-%d).json"
+mkdir -p "$EXAMPLES_DIR"
+OUTPUT_FILE="${EXAMPLES_DIR}/setup-state-${NETWORK}-$(date +%Y-%m-%d).json"
 
 RLUSD_ISSUER="rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV"
 
