@@ -23,26 +23,35 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 
 ### API Routes
 
-| Route | Methods | Purpose |
-|---|---|---|
-| `/api/accounts/generate` | POST | Generate & fund wallet via faucet |
-| `/api/accounts/[address]` | GET | Account info from ledger |
-| `/api/accounts/[address]/balances` | GET | XRP + issued currency balances |
-| `/api/accounts/[address]/trustlines` | GET, POST | View/create trust lines |
-| `/api/accounts/[address]/transactions` | GET | Transaction history |
-| `/api/accounts/[address]/offers` | GET | List account's open DEX offers |
-| `/api/accounts/[address]/credentials` | GET | List account's credentials (XLS-70) |
-| `/api/accounts/[address]/domains` | GET | List account's permissioned domains (XLS-80) |
-| `/api/currencies/issue` | POST | Issue currency (Payment from issuer) |
-| `/api/transfers` | POST | Transfer issued currency |
-| `/api/credentials/create` | POST | Issue a credential (CredentialCreate) |
-| `/api/credentials/accept` | POST | Accept a credential (CredentialAccept) |
-| `/api/credentials/delete` | POST | Delete a credential (CredentialDelete) |
-| `/api/domains/create` | POST | Create/update a permissioned domain (PermissionedDomainSet) |
-| `/api/domains/delete` | POST | Delete a permissioned domain (PermissionedDomainDelete) |
-| `/api/dex/offers` | POST | Place a DEX offer (OfferCreate), optional `domainID` for permissioned DEX |
-| `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) |
-| `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param |
+| Route | Methods | Purpose | Test Script |
+|---|---|---|---|
+| `/api/accounts/generate` | POST | Generate & fund wallet via faucet | `test-generate-account.sh` |
+| `/api/accounts/[address]` | GET | Account info from ledger | `test-account-info.sh` |
+| `/api/accounts/[address]/balances` | GET | XRP + issued currency balances | `test-balances.sh` |
+| `/api/accounts/[address]/trustlines` | GET, POST | View/create trust lines | `test-trustlines.sh` |
+| `/api/accounts/[address]/transactions` | GET | Transaction history | `test-transactions.sh` |
+| `/api/accounts/[address]/offers` | GET | List account's open DEX offers | `test-dex-offers.sh` |
+| `/api/accounts/[address]/credentials` | GET | List account's credentials (XLS-70) | `test-credentials.sh` |
+| `/api/accounts/[address]/domains` | GET | List account's permissioned domains (XLS-80) | `test-domains.sh` |
+| `/api/currencies/issue` | POST | Issue currency (Payment from issuer) | `test-issue-currency.sh` |
+| `/api/transfers` | POST | Transfer issued currency | `test-transfer.sh` |
+| `/api/credentials/create` | POST | Issue a credential (CredentialCreate) | `test-credentials.sh` |
+| `/api/credentials/accept` | POST | Accept a credential (CredentialAccept) | `test-credentials.sh` |
+| `/api/credentials/delete` | POST | Delete a credential (CredentialDelete) | `test-credentials.sh` |
+| `/api/domains/create` | POST | Create/update a permissioned domain (PermissionedDomainSet) | `test-domains.sh` |
+| `/api/domains/delete` | POST | Delete a permissioned domain (PermissionedDomainDelete) | `test-domains.sh` |
+| `/api/dex/offers` | POST | Place a DEX offer (OfferCreate), optional `domainID` for permissioned DEX | `test-dex-offers.sh`, `test-permissioned-dex.sh` |
+| `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) | `test-dex-offers.sh` |
+| `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param | `test-dex-offers.sh` |
+
+### Utility & Cross-Cutting Scripts
+
+| Script | Purpose |
+|---|---|
+| `setup-full-state.sh` | Bootstraps a full demo environment (wallets, trust lines, currencies, credentials, domain) and saves state to JSON |
+| `make-market.sh` | Places 3-level bid/ask ladders across 6 currency pairs on the DEX using state from `setup-full-state.sh` |
+| `test-rippling.sh` | Tests DefaultRipple flag behavior and verifies peer-to-peer transfers work after enabling rippling |
+| `test-permissioned-dex.sh` | Tests full permissioned DEX flow (credential, domain, domain-scoped offers) — requires devnet |
 
 ## Conventions
 
