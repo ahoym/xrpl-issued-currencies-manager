@@ -9,6 +9,7 @@ interface DomainsListProps {
   domainOwner: WalletInfo;
   network: PersistedState["network"];
   onDeleted: () => void;
+  onEdit: (domain: DomainInfo) => void;
 }
 
 export function DomainsList({
@@ -17,6 +18,7 @@ export function DomainsList({
   domainOwner,
   network,
   onDeleted,
+  onEdit,
 }: DomainsListProps) {
   const [deletingID, setDeletingID] = useState<string | null>(null);
 
@@ -56,21 +58,44 @@ export function DomainsList({
             >
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
-                  {d.domainID.slice(0, 16)}...
+                  {d.domainID}
                 </span>
-                <button
-                  onClick={() => handleDelete(d.domainID)}
-                  disabled={deletingID === d.domainID}
-                  className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
-                >
-                  {deletingID === d.domainID ? "Deleting..." : "Delete"}
-                </button>
+                <span className="flex gap-2">
+                  <button
+                    onClick={() => onEdit(d)}
+                    className="text-xs text-blue-500 hover:text-blue-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(d.domainID)}
+                    disabled={deletingID === d.domainID}
+                    className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                  >
+                    {deletingID === d.domainID ? "Deleting..." : "Delete"}
+                  </button>
+                </span>
               </div>
-              <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Accepted:{" "}
-                {d.acceptedCredentials
-                  .map((ac) => `${ac.credentialType} (${ac.issuer.slice(0, 8)}...)`)
-                  .join(", ")}
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Owner: <span className="font-mono text-zinc-700 dark:text-zinc-300">{d.owner}</span>
+              </p>
+              <div className="mt-2 overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-200 dark:border-zinc-700">
+                      <th className="py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">Credential Type</th>
+                      <th className="py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">Issuer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.acceptedCredentials.map((ac) => (
+                      <tr key={`${ac.issuer}:${ac.credentialType}`} className="border-b border-zinc-100 dark:border-zinc-800">
+                        <td className="py-1">{ac.credentialType}</td>
+                        <td className="py-1 font-mono">{ac.issuer}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ))}

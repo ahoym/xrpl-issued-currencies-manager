@@ -1,49 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import type { WalletInfo, CredentialInfo, PersistedState } from "@/lib/types";
 
 interface RecipientCredentialsProps {
   recipients: WalletInfo[];
+  issuedCredentials: CredentialInfo[];
   network: PersistedState["network"];
-  refreshKey: number;
+  onChanged: () => void;
 }
 
 export function RecipientCredentials({
   recipients,
+  issuedCredentials,
   network,
-  refreshKey,
+  onChanged,
 }: RecipientCredentialsProps) {
-  const [credentialsByAddress, setCredentialsByAddress] = useState<
-    Record<string, CredentialInfo[]>
-  >({});
   const [acceptingKey, setAcceptingKey] = useState<string | null>(null);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
-  const fetchAll = useCallback(async () => {
-    if (recipients.length === 0) return;
+  const credentialsByAddress = useMemo(() => {
     const result: Record<string, CredentialInfo[]> = {};
-    await Promise.all(
-      recipients.map(async (r) => {
-        try {
-          const res = await fetch(
-            `/api/accounts/${r.address}/credentials?network=${network}&role=subject`,
-          );
-          const data = await res.json();
-          if (res.ok) {
-            result[r.address] = data.credentials ?? [];
-          }
-        } catch {
-          // ignore
-        }
-      }),
-    );
-    setCredentialsByAddress(result);
-  }, [recipients, network]);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll, refreshKey]);
+    for (const r of recipients) {
+      result[r.address] = [];
+    }
+    for (const c of issuedCredentials) {
+      if (result[c.subject]) {
+        result[c.subject].push(c);
+      }
+    }
+    return result;
+  }, [recipients, issuedCredentials]);
 
   async function handleAccept(recipientSeed: string, issuer: string, credentialType: string) {
     const key = `${issuer}:${credentialType}`;
@@ -54,7 +41,7 @@ export function RecipientCredentials({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ seed: recipientSeed, issuer, credentialType, network }),
       });
-      if (res.ok) fetchAll();
+      if (res.ok) onChanged();
     } catch {
       // ignore
     } finally {
@@ -71,7 +58,7 @@ export function RecipientCredentials({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ seed: senderSeed, issuer, credentialType, network }),
       });
-      if (res.ok) fetchAll();
+      if (res.ok) onChanged();
     } catch {
       // ignore
     } finally {
@@ -86,12 +73,15 @@ export function RecipientCredentials({
       <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
         Recipient Credentials
       </h3>
+      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        Credentials issued to your recipient wallets. Accept or delete from here.
+      </p>
       {recipients.map((r) => {
         const creds = credentialsByAddress[r.address] ?? [];
         return (
           <div key={r.address} className="mt-3">
             <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
-              {r.address.slice(0, 16)}...
+              {r.address}
             </p>
             {creds.length === 0 ? (
               <p className="mt-1 text-xs text-zinc-400">No credentials</p>
@@ -107,7 +97,7 @@ export function RecipientCredentials({
                       <span>
                         <span className="font-medium">{c.credentialType}</span>
                         {" from "}
-                        <span className="font-mono">{c.issuer.slice(0, 12)}...</span>
+                        <span className="font-mono">{c.issuer}</span>
                         {" \u2014 "}
                         <span className={c.accepted ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}>
                           {c.accepted ? "Accepted" : "Pending"}

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAppState } from "@/lib/hooks/use-app-state";
-import { NetworkSelector } from "./network-selector";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAppState } from '@/lib/hooks/use-app-state';
+import { NetworkSelector } from './network-selector';
 
 const links = [
-  { href: "/", label: "Setup" },
-  { href: "/transact", label: "Transact" },
-  { href: "/trade", label: "Trade" },
-  { href: "/compliance", label: "Compliance" },
+  { href: '/', label: 'Setup' },
+  { href: '/compliance', label: 'Compliance' },
+  { href: '/transact', label: 'Transact' },
+  { href: '/trade', label: 'Trade' },
 ];
 
 export function NavBar() {
@@ -30,8 +30,8 @@ export function NavBar() {
               href={link.href}
               className={`text-sm font-medium ${
                 active
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
               }`}
             >
               {link.label}

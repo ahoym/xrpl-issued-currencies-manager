@@ -1,20 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { WalletInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo, DomainInfo, PersistedState } from "@/lib/types";
+
+export interface EditingDomain {
+  domainID: string;
+  acceptedCredentials: DomainInfo["acceptedCredentials"];
+}
 
 interface CreateDomainFormProps {
   domainOwner: WalletInfo;
   defaultCredentialIssuer?: string;
   network: PersistedState["network"];
-  onCreated: () => void;
+  editingDomain?: EditingDomain | null;
+  onSaved: () => void;
+  onCancelEdit?: () => void;
 }
 
 export function CreateDomainForm({
   domainOwner,
   defaultCredentialIssuer,
   network,
-  onCreated,
+  editingDomain,
+  onSaved,
+  onCancelEdit,
 }: CreateDomainFormProps) {
   const [credentials, setCredentials] = useState<
     { issuer: string; credentialType: string }[]
@@ -23,9 +32,23 @@ export function CreateDomainForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Update default issuer when it becomes available
+  // Pre-fill when editing a domain
   useEffect(() => {
-    if (defaultCredentialIssuer) {
+    if (editingDomain) {
+      setCredentials(
+        editingDomain.acceptedCredentials.map((ac) => ({
+          issuer: ac.issuer,
+          credentialType: ac.credentialType,
+        })),
+      );
+      setError(null);
+      setSuccess(false);
+    }
+  }, [editingDomain]);
+
+  // Update default issuer when it becomes available (only for new domains)
+  useEffect(() => {
+    if (defaultCredentialIssuer && !editingDomain) {
       setCredentials((prev) =>
         prev.map((dc) => ({
           ...dc,
@@ -33,7 +56,13 @@ export function CreateDomainForm({
         })),
       );
     }
-  }, [defaultCredentialIssuer]);
+  }, [defaultCredentialIssuer, editingDomain]);
+
+  function resetForm() {
+    setCredentials([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);
+    setError(null);
+    setSuccess(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,23 +73,30 @@ export function CreateDomainForm({
     setError(null);
     setSuccess(false);
 
+    const payload: Record<string, unknown> = {
+      seed: domainOwner.seed,
+      acceptedCredentials: valid,
+      network,
+    };
+
+    if (editingDomain) {
+      payload.domainID = editingDomain.domainID;
+    }
+
     try {
       const res = await fetch("/api/domains/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seed: domainOwner.seed,
-          acceptedCredentials: valid,
-          network,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Failed to create domain");
+        setError(data.error ?? "Failed to save domain");
       } else {
         setSuccess(true);
-        setCredentials([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);
-        onCreated();
+        resetForm();
+        onSaved();
+        if (editingDomain && onCancelEdit) onCancelEdit();
         setTimeout(() => setSuccess(false), 2000);
       }
     } catch {
@@ -70,14 +106,36 @@ export function CreateDomainForm({
     }
   }
 
+  const isEditing = !!editingDomain;
+  const title = isEditing ? "Edit Domain" : "Create Domain";
+  const submitLabel = isEditing ? "Update Domain" : "Create Domain";
+  const submittingLabel = isEditing ? "Updating..." : "Creating...";
+  const successLabel = isEditing ? "Domain updated!" : "Domain created!";
+
   return (
     <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-        Create Domain
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          {title}
+        </h3>
+        {isEditing && onCancelEdit && (
+          <button
+            type="button"
+            onClick={() => { resetForm(); onCancelEdit(); }}
+            className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+      {isEditing && (
+        <p className="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+          {editingDomain.domainID}
+        </p>
+      )}
       {success ? (
         <div className="mt-3 rounded-md bg-green-50 p-3 text-center text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-          Domain created!
+          {successLabel}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3">
@@ -143,7 +201,7 @@ export function CreateDomainForm({
             disabled={submitting || credentials.every((dc) => !dc.issuer || !dc.credentialType)}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {submitting ? "Creating..." : "Create Domain"}
+            {submitting ? submittingLabel : submitLabel}
           </button>
         </form>
       )}

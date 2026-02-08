@@ -61,6 +61,7 @@ export function IssuedCredentialsTable({
                 <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Subject</th>
                 <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Type</th>
                 <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Accepted</th>
+                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">URI</th>
                 <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Expiration</th>
                 <th className="py-1.5 text-right font-medium text-zinc-600 dark:text-zinc-400"></th>
               </tr>
@@ -70,12 +71,17 @@ export function IssuedCredentialsTable({
                 const key = `${c.subject}:${c.credentialType}`;
                 return (
                   <tr key={key} className="border-b border-zinc-100 dark:border-zinc-800">
-                    <td className="py-1.5 font-mono">{c.subject.slice(0, 12)}...</td>
+                    <td className="py-1.5 font-mono">{c.subject}</td>
                     <td className="py-1.5">{c.credentialType}</td>
                     <td className="py-1.5">
                       <span className={c.accepted ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}>
                         {c.accepted ? "Yes" : "Pending"}
                       </span>
+                    </td>
+                    <td className="py-1.5 font-mono">
+                      {c.uri ? (
+                        <a href={c.uri} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{c.uri}</a>
+                      ) : "\u2014"}
                     </td>
                     <td className="py-1.5">
                       {c.expiration
