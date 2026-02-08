@@ -2,6 +2,8 @@
 
 A Next.js app for managing issued currencies, credentials, permissioned domains, and DEX offers on the XRP Ledger. No database — all state comes from the ledger. Wallet secrets stay client-side and are only sent to API routes when signing is needed.
 
+**Live app**: [xrpl-issued-currencies-manager.vercel.app](https://xrpl-issued-currencies-manager.vercel.app)
+
 **Stack**: Next.js 16, React 19, TypeScript, Tailwind v4, xrpl.js v4.5.0
 
 ## Getting Started
