@@ -2,8 +2,23 @@
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:3000}"
-NETWORK="testnet"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Allow NETWORK env var to skip the prompt
+if [ -n "${NETWORK:-}" ]; then
+  echo "Using network from env: ${NETWORK}"
+else
+  echo "Which network?"
+  echo "  1) testnet"
+  echo "  2) devnet"
+  read -rp "Select [1]: " choice
+  case "${choice:-1}" in
+    1) NETWORK="testnet" ;;
+    2) NETWORK="devnet" ;;
+    *) echo "Invalid choice"; exit 1 ;;
+  esac
+fi
+
 OUTPUT_FILE="${SCRIPT_DIR}/setup-state-${NETWORK}-$(date +%Y-%m-%d).json"
 
 RLUSD_ISSUER="rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV"
@@ -215,13 +230,14 @@ echo ""
 # --- Step 7: Save state JSON ---
 echo "--- Step 7: Save state ---"
 STATE=$(jq -n \
+  --arg network "$NETWORK" \
   --argjson issuer "$ISSUER_JSON" \
   --argjson credentialIssuer "$CRED_ISSUER_JSON" \
   --argjson domainOwner "$DOMAIN_OWNER_JSON" \
   --argjson r1 "$RECIPIENT1_JSON" \
   --argjson r2 "$RECIPIENT2_JSON" \
   '{
-    network: "testnet",
+    network: $network,
     issuer: $issuer,
     credentialIssuer: $credentialIssuer,
     domainOwner: $domainOwner,
