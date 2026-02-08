@@ -5,6 +5,7 @@ import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
 import { validateRequired, getTransactionResult, apiErrorResponse } from "@/lib/api";
 import type { TransferRequest, ApiError } from "@/lib/xrpl/types";
+import { Assets } from "@/lib/assets";
 
 const tecMessages: Record<string, string> = {
   tecPATH_DRY: "No payment path found. The recipient may not have a trust line for this currency, or the issuer may not have rippling enabled (required for peer-to-peer transfers).",
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["senderSeed", "recipientAddress", "currencyCode", "amount"]);
     if (invalid) return invalid;
 
-    const isXrp = body.currencyCode === "XRP";
+    const isXrp = body.currencyCode === Assets.XRP;
 
     if (!isXrp && !body.issuerAddress) {
       return Response.json(

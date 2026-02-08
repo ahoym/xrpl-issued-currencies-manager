@@ -6,6 +6,7 @@ import { encodeXrplCurrency, fromXrplAmount } from "@/lib/xrpl/currency";
 import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 import { DEFAULT_ORDERBOOK_LIMIT } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
+import { Assets } from "@/lib/assets";
 
 function normalizeOffer(offer: BookOffer) {
   return {
@@ -37,14 +38,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (baseCurrency !== "XRP" && !baseIssuer) {
+    if (baseCurrency !== Assets.XRP && !baseIssuer) {
       return Response.json(
         { error: "base_issuer is required for non-XRP base currency" } satisfies ApiError,
         { status: 400 },
       );
     }
 
-    if (quoteCurrency !== "XRP" && !quoteIssuer) {
+    if (quoteCurrency !== Assets.XRP && !quoteIssuer) {
       return Response.json(
         { error: "quote_issuer is required for non-XRP quote currency" } satisfies ApiError,
         { status: 400 },
@@ -53,12 +54,12 @@ export async function GET(request: NextRequest) {
 
     const client = await getClient(resolveNetwork(network));
 
-    const currency1 = baseCurrency === "XRP"
-      ? { currency: "XRP" }
+    const currency1 = baseCurrency === Assets.XRP
+      ? { currency: Assets.XRP }
       : { currency: encodeXrplCurrency(baseCurrency), issuer: baseIssuer! };
 
-    const currency2 = quoteCurrency === "XRP"
-      ? { currency: "XRP" }
+    const currency2 = quoteCurrency === Assets.XRP
+      ? { currency: Assets.XRP }
       : { currency: encodeXrplCurrency(quoteCurrency), issuer: quoteIssuer! };
 
     // Permissioned DEX: use raw book_offers because client.getOrderbook doesn't support the domain parameter

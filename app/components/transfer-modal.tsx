@@ -6,6 +6,7 @@ import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/styles";
 import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
+import { Assets } from "@/lib/assets";
 
 interface TransferModalProps {
   sender: WalletInfo;
@@ -75,7 +76,7 @@ export function TransferModal({
 
   // Check if the recipient has a trust line and the issuer has rippling enabled
   useEffect(() => {
-    if (!selectedBalance || selectedBalance.currency === "XRP" || !destinationAddress) {
+    if (!selectedBalance || selectedBalance.currency === Assets.XRP || !destinationAddress) {
       setTrustLineOk(null);
       setRipplingOk(null);
       return;
@@ -131,7 +132,7 @@ export function TransferModal({
   }, [selectedBalance, destinationAddress, network, sender.address]);
 
   const currencyLabel = (b: BalanceEntry) => {
-    if (b.currency === "XRP") return `XRP (${b.value})`;
+    if (b.currency === Assets.XRP) return `${Assets.XRP} (${b.value})`;
     const issuerLabel = b.issuer ? ` — ${b.issuer}` : "";
     return `${b.currency} (${b.value}${issuerLabel})`;
   };
@@ -143,7 +144,7 @@ export function TransferModal({
     selectedBalance !== null &&
     parseFloat(amount) <= parseFloat(selectedBalance.value);
 
-  const isIssuedCurrency = selectedBalance !== null && selectedBalance.currency !== "XRP";
+  const isIssuedCurrency = selectedBalance !== null && selectedBalance.currency !== Assets.XRP;
   const trustLineBlocked = isIssuedCurrency && trustLineOk === false;
   const ripplingBlocked = isIssuedCurrency && trustLineOk === true && ripplingOk === false;
 
@@ -157,7 +158,7 @@ export function TransferModal({
     setSubmitting(true);
     setError(null);
 
-    const isXrp = selectedBalance.currency === "XRP";
+    const isXrp = selectedBalance.currency === Assets.XRP;
 
     const payload: Record<string, string> = {
       senderSeed: sender.seed,

@@ -8,10 +8,11 @@ import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 import { DEFAULT_ORDERBOOK_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
+import { Assets } from "@/lib/assets";
 
 /** Convert an XRPL Amount to {currency, issuer} for comparison */
 function amountCurrency(amt: Amount): { currency: string; issuer?: string } {
-  if (typeof amt === "string") return { currency: "XRP" };
+  if (typeof amt === "string") return { currency: Assets.XRP };
   return { currency: decodeCurrency(amt.currency), issuer: amt.issuer };
 }
 
@@ -33,14 +34,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (baseCurrency !== "XRP" && !baseIssuer) {
+    if (baseCurrency !== Assets.XRP && !baseIssuer) {
       return Response.json(
         { error: "base_issuer is required for non-XRP base currency" } satisfies ApiError,
         { status: 400 },
       );
     }
 
-    if (quoteCurrency !== "XRP" && !quoteIssuer) {
+    if (quoteCurrency !== Assets.XRP && !quoteIssuer) {
       return Response.json(
         { error: "quote_issuer is required for non-XRP quote currency" } satisfies ApiError,
         { status: 400 },
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Determine the issuer account to query — since all issued currency movements
     // touch the issuer's RippleState entries, querying the issuer's account_tx
     // captures ALL trades for that currency regardless of who submitted them.
-    const issuerAccount = baseCurrency !== "XRP" ? baseIssuer! : quoteIssuer!;
+    const issuerAccount = baseCurrency !== Assets.XRP ? baseIssuer! : quoteIssuer!;
 
     const client = await getClient(resolveNetwork(network));
 
@@ -108,14 +109,14 @@ export async function GET(request: NextRequest) {
 
           if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
             // Transaction fee is only paid in XRP by the submitting account — subtract it to get the net traded amount
-            if (baseCurrency === "XRP" && acctChanges.account === tx.Account) {
+            if (baseCurrency === Assets.XRP && acctChanges.account === tx.Account) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
               baseTotal += val - fee;
             } else {
               baseTotal += val;
             }
           } else if (matchesCurrency(bal, quoteCurrency, quoteIssuer)) {
-            if (quoteCurrency === "XRP" && acctChanges.account === tx.Account) {
+            if (quoteCurrency === Assets.XRP && acctChanges.account === tx.Account) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
               quoteTotal += val - fee;
             } else {
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
       const takerPays = amountCurrency(tx.TakerPays as Amount);
       const isBuy =
         takerPays.currency === baseCurrency &&
-        (baseCurrency === "XRP" || takerPays.issuer === baseIssuer);
+        (baseCurrency === Assets.XRP || takerPays.issuer === baseIssuer);
 
       // Extract time and hash from entry fields
       const entryAny = entry as unknown as Record<string, unknown>;

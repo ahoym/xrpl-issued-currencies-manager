@@ -6,6 +6,7 @@ import { toXrplAmount } from "@/lib/xrpl/currency";
 import { resolveOfferFlags, VALID_OFFER_FLAGS } from "@/lib/xrpl/offers";
 import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { CreateOfferRequest, OfferFlag, ApiError } from "@/lib/xrpl/types";
+import { Assets } from "@/lib/assets";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,14 +29,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (body.takerGets.currency !== "XRP" && !body.takerGets.issuer) {
+    if (body.takerGets.currency !== Assets.XRP && !body.takerGets.issuer) {
       return Response.json(
         { error: "takerGets.issuer is required for non-XRP currencies" } satisfies ApiError,
         { status: 400 },
       );
     }
 
-    if (body.takerPays.currency !== "XRP" && !body.takerPays.issuer) {
+    if (body.takerPays.currency !== Assets.XRP && !body.takerPays.issuer) {
       return Response.json(
         { error: "takerPays.issuer is required for non-XRP currencies" } satisfies ApiError,
         { status: 400 },

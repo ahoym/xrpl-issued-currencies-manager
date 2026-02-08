@@ -6,6 +6,7 @@ import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import { inputClass, labelClass, errorTextClass } from "@/lib/ui/styles";
 import { SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/constants";
+import { Assets } from "@/lib/assets";
 
 interface CurrencyOption {
   currency: string;
@@ -44,8 +45,8 @@ function buildDexAmount(
   issuer: string | undefined,
   value: string,
 ) {
-  if (currency === "XRP") {
-    return { currency: "XRP", value };
+  if (currency === Assets.XRP) {
+    return { currency: Assets.XRP, value };
   }
   return { currency, issuer, value };
 }

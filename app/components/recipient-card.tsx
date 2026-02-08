@@ -6,6 +6,7 @@ import { useFetchTrustLines } from "@/lib/hooks/use-trust-lines";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
+import { Assets } from "@/lib/assets";
 import { BalanceDisplay } from "./balance-display";
 import { ExplorerLink } from "./explorer-link";
 import { SecretField } from "./secret-field";
@@ -48,15 +49,15 @@ export function RecipientCard({
     );
   }, [lines, issuer]);
 
-  const rlusd = WELL_KNOWN_CURRENCIES.find((c) => c.currency === "RLUSD");
-  const hasRlusdTrust = rlusd
+  const rlusdIssuer = WELL_KNOWN_CURRENCIES.RLUSD;
+  const hasRlusdTrust = rlusdIssuer
     ? lines.some(
-        (l) => l.account === rlusd.issuer && decodeCurrency(l.currency) === "RLUSD",
+        (l) => l.account === rlusdIssuer && decodeCurrency(l.currency) === Assets.RLUSD,
       )
     : false;
 
   async function handleTrustRlusd() {
-    if (!rlusd || trustingRlusd) return;
+    if (!rlusdIssuer || trustingRlusd) return;
     setTrustingRlusd(true);
     setRlusdError(null);
     try {
@@ -65,8 +66,8 @@ export function RecipientCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           seed: recipient.seed,
-          currency: rlusd.currency,
-          issuer: rlusd.issuer,
+          currency: Assets.RLUSD,
+          issuer: rlusdIssuer,
           limit: DEFAULT_TRUST_LINE_LIMIT,
           network,
         }),
@@ -132,14 +133,14 @@ export function RecipientCard({
             refreshKey={refreshKey}
           />
 
-          {rlusd && !hasRlusdTrust && (
+          {rlusdIssuer && !hasRlusdTrust && (
             <div className="mt-2">
               <button
                 onClick={handleTrustRlusd}
                 disabled={trustingRlusd}
                 className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30"
               >
-                {trustingRlusd ? "Creating trust line..." : `Trust RLUSD (${rlusd.issuer})`}
+                {trustingRlusd ? "Creating trust line..." : `Trust ${Assets.RLUSD} (${rlusdIssuer})`}
               </button>
               {rlusdError && (
                 <p className="mt-1 text-xs text-red-600 dark:text-red-400">{rlusdError}</p>

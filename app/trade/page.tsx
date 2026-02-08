@@ -15,6 +15,7 @@ import { EmptyWallets } from "../components/empty-wallets";
 import type { TradeFormPrefill } from "../components/trade/trade-form";
 import type { WalletInfo, PersistedState, BalanceEntry, OrderBookAmount, OrderBookEntry } from "@/lib/types";
 import { WELL_KNOWN_CURRENCIES } from "@/lib/well-known-currencies";
+import { Assets } from "@/lib/assets";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
 
@@ -44,8 +45,8 @@ export default function TradePage() {
   const { state, hydrated } = useAppState();
 
   const [focusedWallet, setFocusedWallet] = useState<WalletInfo | null>(null);
-  const [sellingValue, setSellingValue] = useState("");
-  const [buyingValue, setBuyingValue] = useState("");
+  const [sellingValue, setSellingValue] = useState(`${Assets.RLUSD}|${WELL_KNOWN_CURRENCIES.RLUSD}`);
+  const [buyingValue, setBuyingValue] = useState(`${Assets.XRP}|`);
   const [customCurrencies, setCustomCurrencies] = useState<
     { currency: string; issuer: string }[]
   >([]);
@@ -131,19 +132,19 @@ export default function TradePage() {
     const seen = new Set<string>();
 
     // Always include XRP
-    const xrpKey = "XRP|";
-    opts.push({ currency: "XRP", label: "XRP", value: xrpKey });
+    const xrpKey = `${Assets.XRP}|`;
+    opts.push({ currency: Assets.XRP, label: Assets.XRP, value: xrpKey });
     seen.add(xrpKey);
 
     // Well-known currencies
-    for (const wk of WELL_KNOWN_CURRENCIES) {
-      const key = `${wk.currency}|${wk.issuer}`;
+    for (const [currency, issuer] of Object.entries(WELL_KNOWN_CURRENCIES)) {
+      const key = `${currency}|${issuer}`;
       if (!seen.has(key)) {
         seen.add(key);
         opts.push({
-          currency: wk.currency,
-          issuer: wk.issuer,
-          label: `${wk.currency} (${wk.issuer})`,
+          currency,
+          issuer,
+          label: `${currency} (${issuer})`,
           value: key,
         });
       }
@@ -151,7 +152,7 @@ export default function TradePage() {
 
     for (const b of balances) {
       const cur = decodeCurrency(b.currency);
-      if (cur === "XRP") continue;
+      if (cur === Assets.XRP) continue;
       const key = `${cur}|${b.issuer ?? ""}`;
       if (seen.has(key)) continue;
       seen.add(key);

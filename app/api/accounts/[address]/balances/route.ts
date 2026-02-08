@@ -5,6 +5,7 @@ import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
 import { getNetworkParam, apiErrorResponse } from "@/lib/api";
 import type { CurrencyBalance } from "@/lib/xrpl/types";
+import { Assets } from "@/lib/assets";
 
 export async function GET(
   request: NextRequest,
@@ -28,7 +29,7 @@ export async function GET(
     ]);
 
     const xrpBalance: CurrencyBalance = {
-      currency: "XRP",
+      currency: Assets.XRP,
       value: String(dropsToXrp(accountInfo.result.account_data.Balance)),
     };
 

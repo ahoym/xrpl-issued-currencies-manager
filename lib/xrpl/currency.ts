@@ -2,6 +2,7 @@ import { xrpToDrops, dropsToXrp } from "xrpl";
 import type { Amount } from "xrpl";
 import type { DexAmount } from "./types";
 import { decodeCurrency } from "./decode-currency-client";
+import { Assets } from "@/lib/assets";
 
 export { decodeCurrency };
 
@@ -26,7 +27,7 @@ export function encodeXrplCurrency(code: string): string {
  * XRP values are converted to drops (string). Issued currencies use the object form.
  */
 export function toXrplAmount(amount: DexAmount): Amount {
-  if (amount.currency === "XRP") {
+  if (amount.currency === Assets.XRP) {
     return xrpToDrops(amount.value);
   }
   if (!amount.issuer) {
@@ -45,7 +46,7 @@ export function toXrplAmount(amount: DexAmount): Amount {
  */
 export function fromXrplAmount(amount: Amount): DexAmount {
   if (typeof amount === "string") {
-    return { currency: "XRP", value: String(dropsToXrp(amount)) };
+    return { currency: Assets.XRP, value: String(dropsToXrp(amount)) };
   }
   return {
     currency: decodeCurrency(amount.currency),
