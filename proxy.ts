@@ -45,10 +45,10 @@ function getClientIp(req: NextRequest): string {
 }
 
 // ---------------------------------------------------------------------------
-// Middleware
+// Proxy (rate limiting for API routes)
 // ---------------------------------------------------------------------------
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method;
 
@@ -75,7 +75,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// Only run middleware on API routes.
+// Only run proxy on API routes.
 export const config = {
   matcher: "/api/:path*",
 };
