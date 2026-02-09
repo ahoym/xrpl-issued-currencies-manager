@@ -132,3 +132,46 @@ git push origin branch-name
 ```
 
 This works because git worktrees share the same object database — `git push origin <branch>` from the main repo pushes commits made in any worktree.
+
+## Lesson: Lifecycle Scripts Need Read and Delete Subcommands
+
+### The Problem
+
+A lifecycle script with only `write` and `commit` subcommands is insufficient. When an agent needs to **update** an existing file (append new sections), it must first read the current content. And when mistakes happen (accidental probe files, test writes), the agent needs to delete them before committing.
+
+Without `read`:
+- The agent tried `bash -c 'cat ../worktree/file'` — denied (no `Bash(bash:*)` permission)
+- Tried creating a `_probe` file to test if paths worked — created junk
+- Eventually used `git show branch:path` as a workaround — fragile and non-obvious
+
+Without `delete`:
+- The agent couldn't remove the `_probe`, `dev/null`, and `cleanup.sh` files it created
+- Tried writing a cleanup shell script into the worktree and executing it — denied
+- Tried `bash scripts/../../../worktree/run-cleanup.sh` path traversal — denied
+- Gave up and pushed with junk files included (37 tool calls, 215s wasted)
+
+### The Fix
+
+Add `read` and `delete` subcommands to the lifecycle script:
+
+```bash
+read)
+    # read <worktree-path> <relative-file-path>
+    WORKTREE="${1:?Missing worktree path}"
+    FILE_PATH="${2:?Missing file path}"
+    cat "$WORKTREE/$FILE_PATH"
+    ;;
+
+delete)
+    # delete <worktree-path> <file>...
+    WORKTREE="${1:?Missing worktree path}"
+    shift
+    for FILE_PATH in "$@"; do
+      git -C "$WORKTREE" rm -f "$FILE_PATH"
+    done
+    ;;
+```
+
+### Design Principle
+
+Every filesystem operation the agent might need (create, read, update, delete) must have a corresponding subcommand. If the script can write files, it will eventually need to read and delete them too. CRUD is the minimum viable set.
