@@ -7,6 +7,7 @@ import { LoadingScreen } from './components/loading-screen';
 import { SecurityWarning } from './components/security-warning';
 import { IssuerSetup } from './components/issuer-setup';
 import { RecipientWallets } from './components/recipient-wallets';
+import demoState from '@/examples/setup-state-testnet-2026-02-08.json';
 
 export default function Home() {
   const {
@@ -89,6 +90,13 @@ export default function Home() {
     input.click();
   }
 
+  function handleLoadDemo() {
+    if (state.issuer || state.recipients.length > 0) {
+      if (!window.confirm('This will replace all current data. Continue?')) return;
+    }
+    importState(demoState as Parameters<typeof importState>[0]);
+  }
+
   function handleExport() {
     const exportState = {
       ...state,
@@ -141,6 +149,12 @@ export default function Home() {
 
       <div className="mt-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <div className="flex gap-3">
+          <button
+            onClick={handleLoadDemo}
+            className="rounded-md border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-950"
+          >
+            Load Demo
+          </button>
           <button
             onClick={handleImport}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
