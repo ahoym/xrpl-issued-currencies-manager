@@ -3,40 +3,48 @@ import type { Amount } from "xrpl";
 import type { DexAmount } from "./types";
 import { decodeCurrency } from "./decode-currency-client";
 import { Assets } from "@/lib/assets";
+import {
+  MIN_CURRENCY_CODE_LENGTH,
+  MAX_CURRENCY_CODE_LENGTH,
+  HEX_CURRENCY_CODE_LENGTH,
+} from "./constants";
 
 export { decodeCurrency };
-
-/** Minimum length for a non-standard currency code (characters). */
-const MIN_CURRENCY_CODE_LENGTH = 1;
-/** Maximum length for a non-standard currency code (characters). */
-const MAX_CURRENCY_CODE_LENGTH = 20;
 
 /**
  * Encode a currency code for XRPL transactions.
  *
- * Standard 3-character ASCII codes (e.g. "USD") are passed through as-is.
- * Non-standard codes (4–20 chars) are converted to a 40-character uppercase
- * hex string, right-padded with zeros, as required by the XRPL.
- *
- * Throws if the code is empty or longer than 20 characters (the maximum that
- * fits in a 40-hex-char / 20-byte XRPL currency field).
+ * - 3-char alphanumeric → pass through (standard code)
+ * - Exactly 40 hex chars → pass through (already encoded)
+ * - 4–20 chars → hex-encode + right-pad to 40 hex chars
+ * - < 3 or 21–39 or > 40 → reject (can't fit in 20-byte field)
  */
 export function encodeXrplCurrency(code: string): string {
-  if (
-    code.length < MIN_CURRENCY_CODE_LENGTH ||
-    code.length > MAX_CURRENCY_CODE_LENGTH
-  ) {
+  if (code.length < MIN_CURRENCY_CODE_LENGTH) {
     throw new Error(
-      `Currency code must be between ${MIN_CURRENCY_CODE_LENGTH} and ${MAX_CURRENCY_CODE_LENGTH} characters, got ${code.length}`,
+      `Currency code must be at least ${MIN_CURRENCY_CODE_LENGTH} characters, got ${code.length}`,
     );
   }
 
+  // Standard 3-character ASCII code
   if (/^[A-Za-z0-9]{3}$/.test(code)) {
     return code;
   }
 
-  const hex = Buffer.from(code, "ascii").toString("hex").toUpperCase();
-  return hex.padEnd(40, "0");
+  // Already hex-encoded (40 hex chars = 20 bytes)
+  if (code.length === HEX_CURRENCY_CODE_LENGTH && /^[0-9A-Fa-f]+$/.test(code)) {
+    return code.toUpperCase();
+  }
+
+  // Non-standard ASCII codes that fit in 20 bytes (4–20 chars)
+  if (code.length > MIN_CURRENCY_CODE_LENGTH && code.length <= MAX_CURRENCY_CODE_LENGTH / 2) {
+    const hex = Buffer.from(code, "ascii").toString("hex").toUpperCase();
+    return hex.padEnd(HEX_CURRENCY_CODE_LENGTH, "0");
+  }
+
+  throw new Error(
+    `Currency code must be 3 chars (standard), 4–20 chars (non-standard), or 40 hex chars (pre-encoded), got ${code.length} characters`,
+  );
 }
 
 /**

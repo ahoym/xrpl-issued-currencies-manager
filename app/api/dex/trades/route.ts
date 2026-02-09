@@ -6,7 +6,7 @@ import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { getNetworkParam, apiErrorResponse } from "@/lib/api";
-import { DEFAULT_ORDERBOOK_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
+import { DEFAULT_ORDERBOOK_LIMIT, MAX_API_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
 import { Assets } from "@/lib/assets";
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const quoteCurrency = sp.get("quote_currency");
     const quoteIssuer = sp.get("quote_issuer") ?? undefined;
     const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit, 400);
+    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit, MAX_API_LIMIT);
     const network = getNetworkParam(request);
     const domain = sp.get("domain") ?? undefined;
 

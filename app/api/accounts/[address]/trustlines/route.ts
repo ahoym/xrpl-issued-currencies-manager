@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { Wallet, TrustSet, isValidClassicAddress } from "xrpl";
+import { TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
-import { getNetworkParam, validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, validateRequired, walletFromSeed, validateAddress, validateSeedMatchesAddress, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { TrustLineRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function GET(
@@ -13,9 +13,8 @@ export async function GET(
   try {
     const { address } = await params;
 
-    if (!isValidClassicAddress(address)) {
-      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
-    }
+    const badAddress = validateAddress(address, "XRPL address");
+    if (badAddress) return badAddress;
 
     const network = getNetworkParam(request);
     const client = await getClient(resolveNetwork(network));
@@ -42,9 +41,8 @@ export async function POST(
   try {
     const { address } = await params;
 
-    if (!isValidClassicAddress(address)) {
-      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
-    }
+    const badAddress = validateAddress(address, "XRPL address");
+    if (badAddress) return badAddress;
 
     const body: TrustLineRequest = await request.json();
 
@@ -53,19 +51,12 @@ export async function POST(
 
     const client = await getClient(resolveNetwork(body.network));
 
-    let wallet: Wallet;
-    try {
-      wallet = Wallet.fromSeed(body.seed);
-    } catch {
-      return Response.json({ error: "Invalid seed" }, { status: 400 });
-    }
+    const seedResult = walletFromSeed(body.seed);
+    if ("error" in seedResult) return seedResult.error;
+    const wallet = seedResult.wallet;
 
-    if (wallet.address !== address) {
-      return Response.json(
-        { error: "Seed does not match the account address in the URL" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const mismatch = validateSeedMatchesAddress(wallet, address);
+    if (mismatch) return mismatch;
 
     const trustSet: TrustSet = {
       TransactionType: "TrustSet",

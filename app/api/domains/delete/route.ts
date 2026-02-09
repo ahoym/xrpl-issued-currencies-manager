@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { Wallet, PermissionedDomainDelete } from "xrpl";
+import { PermissionedDomainDelete } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { DeleteDomainRequest } from "@/lib/xrpl/types";
+import { validateRequired, walletFromSeed, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import type { DeleteDomainRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,15 +12,12 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "domainID"]);
     if (invalid) return invalid;
 
-    let wallet;
-    try {
-      wallet = Wallet.fromSeed(body.seed);
-    } catch {
-      return Response.json({ error: "Invalid seed format" }, { status: 400 });
-    }
+    const result = walletFromSeed(body.seed);
+    if ("error" in result) return result.error;
+    const { wallet } = result;
 
     if (!/^[0-9A-Fa-f]{64}$/.test(body.domainID)) {
-      return Response.json({ error: "domainID must be a 64-character hex string" }, { status: 400 });
+      return Response.json({ error: "domainID must be a 64-character hex string" } satisfies ApiError, { status: 400 });
     }
 
     const client = await getClient(resolveNetwork(body.network));
@@ -31,12 +28,12 @@ export async function POST(request: NextRequest) {
       DomainID: body.domainID,
     };
 
-    const result = await client.submitAndWait(tx, { wallet });
+    const submitted = await client.submitAndWait(tx, { wallet });
 
-    const failure = txFailureResponse(result);
+    const failure = txFailureResponse(submitted);
     if (failure) return failure;
 
-    return Response.json({ result: result.result }, { status: 201 });
+    return Response.json({ result: submitted.result }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err, "Failed to delete domain");
   }

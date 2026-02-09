@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { dropsToXrp, isValidClassicAddress } from "xrpl";
+import { dropsToXrp } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
-import { getNetworkParam, apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, validateAddress, apiErrorResponse } from "@/lib/api";
 import type { CurrencyBalance } from "@/lib/xrpl/types";
 import { Assets } from "@/lib/assets";
 
@@ -14,9 +14,8 @@ export async function GET(
   try {
     const { address } = await params;
 
-    if (!isValidClassicAddress(address)) {
-      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
-    }
+    const badAddress = validateAddress(address, "XRPL address");
+    if (badAddress) return badAddress;
 
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 

@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
-import { isValidClassicAddress } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { DEFAULT_TRANSACTION_LIMIT } from "@/lib/xrpl/constants";
-import { getNetworkParam, apiErrorResponse } from "@/lib/api";
+import { DEFAULT_TRANSACTION_LIMIT, MAX_API_LIMIT } from "@/lib/xrpl/constants";
+import { getNetworkParam, validateAddress, apiErrorResponse } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -12,12 +11,11 @@ export async function GET(
   try {
     const { address } = await params;
 
-    if (!isValidClassicAddress(address)) {
-      return Response.json({ error: "Invalid XRPL address" }, { status: 400 });
-    }
+    const badAddress = validateAddress(address, "XRPL address");
+    if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const limit = Math.min(parseInt(sp.get("limit") ?? String(DEFAULT_TRANSACTION_LIMIT), 10), 400);
+    const limit = Math.min(parseInt(sp.get("limit") ?? String(DEFAULT_TRANSACTION_LIMIT), 10), MAX_API_LIMIT);
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({

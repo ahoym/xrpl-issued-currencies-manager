@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { Wallet, AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
+import { AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, walletFromSeed, validateSeedMatchesAddress, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import { TF_CLEAR_NO_RIPPLE } from "@/lib/xrpl/constants";
 import type { ApiError } from "@/lib/xrpl/types";
 
@@ -18,14 +18,12 @@ export async function POST(
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
-    const wallet = Wallet.fromSeed(body.seed);
+    const seedResult = walletFromSeed(body.seed);
+    if ("error" in seedResult) return seedResult.error;
+    const wallet = seedResult.wallet;
 
-    if (wallet.address !== address) {
-      return Response.json(
-        { error: "Seed does not match the account address in the URL" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const mismatch = validateSeedMatchesAddress(wallet, address);
+    if (mismatch) return mismatch;
 
     // Enable DefaultRipple on the account
     const accountSet: AccountSet = {

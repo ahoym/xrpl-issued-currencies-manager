@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { Wallet, CredentialCreate, isValidClassicAddress } from "xrpl";
+import { CredentialCreate } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { CreateCredentialRequest } from "@/lib/xrpl/types";
+import { validateRequired, walletFromSeed, validateAddress, validateCredentialType, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import type { CreateCredentialRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,23 +13,18 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "subject", "credentialType"]);
     if (invalid) return invalid;
 
-    let wallet;
-    try {
-      wallet = Wallet.fromSeed(body.seed);
-    } catch {
-      return Response.json({ error: "Invalid seed format" }, { status: 400 });
-    }
+    const result = walletFromSeed(body.seed);
+    if ("error" in result) return result.error;
+    const { wallet } = result;
 
-    if (!isValidClassicAddress(body.subject)) {
-      return Response.json({ error: "Invalid subject address" }, { status: 400 });
-    }
+    const badSubject = validateAddress(body.subject, "subject address");
+    if (badSubject) return badSubject;
 
-    if (body.credentialType.length > 128) {
-      return Response.json({ error: "credentialType must not exceed 128 characters" }, { status: 400 });
-    }
+    const badType = validateCredentialType(body.credentialType);
+    if (badType) return badType;
 
     if (body.uri && Buffer.byteLength(body.uri, "utf-8") > 256) {
-      return Response.json({ error: "URI must not exceed 256 bytes" }, { status: 400 });
+      return Response.json({ error: "URI must not exceed 256 bytes" } satisfies ApiError, { status: 400 });
     }
 
     const client = await getClient(resolveNetwork(body.network));
@@ -49,12 +44,12 @@ export async function POST(request: NextRequest) {
       tx.URI = Buffer.from(body.uri, "utf-8").toString("hex").toUpperCase();
     }
 
-    const result = await client.submitAndWait(tx, { wallet });
+    const submitted = await client.submitAndWait(tx, { wallet });
 
-    const failure = txFailureResponse(result);
+    const failure = txFailureResponse(submitted);
     if (failure) return failure;
 
-    return Response.json({ result: result.result }, { status: 201 });
+    return Response.json({ result: submitted.result }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err, "Failed to create credential");
   }

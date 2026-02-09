@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
+import { Wallet, isValidClassicAddress } from "xrpl";
 import type { TxResponse } from "xrpl";
 import type { ApiError } from "./xrpl/types";
+import { MAX_CREDENTIAL_TYPE_LENGTH } from "./xrpl/constants";
 
 // ---------------------------------------------------------------------------
 // Request helpers
@@ -23,6 +25,90 @@ export function validateRequired(
   if (missing.length > 0) {
     return Response.json(
       { error: `Missing required fields: ${missing.join(", ")}` } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Seed / wallet helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Try to derive a Wallet from a seed string.
+ * Returns `{ wallet }` on success or `{ error: Response }` on failure.
+ */
+export function walletFromSeed(seed: string): { wallet: Wallet } | { error: Response } {
+  try {
+    return { wallet: Wallet.fromSeed(seed) };
+  } catch {
+    return {
+      error: Response.json(
+        { error: "Invalid seed format" } satisfies ApiError,
+        { status: 400 },
+      ),
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Address validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Return a 400 Response if `address` is not a valid XRPL classic address.
+ * `fieldName` is used in the error message (e.g. "recipientAddress").
+ */
+export function validateAddress(address: string, fieldName: string): Response | null {
+  if (!isValidClassicAddress(address)) {
+    return Response.json(
+      { error: `Invalid ${fieldName}` } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+  return null;
+}
+
+/**
+ * Return a 400 Response if the wallet's address doesn't match the expected address.
+ */
+export function validateSeedMatchesAddress(wallet: Wallet, address: string): Response | null {
+  if (wallet.address !== address) {
+    return Response.json(
+      { error: "Seed does not match the account address in the URL" } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Field-specific validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Return a 400 Response if the credential type exceeds the maximum length.
+ */
+export function validateCredentialType(type: string): Response | null {
+  if (type.length > MAX_CREDENTIAL_TYPE_LENGTH) {
+    return Response.json(
+      { error: `credentialType must not exceed ${MAX_CREDENTIAL_TYPE_LENGTH} characters` } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+  return null;
+}
+
+/**
+ * Return a 400 Response if `amount` is not a finite positive number.
+ * `fieldName` is used in the error message (e.g. "amount", "takerGets.value").
+ */
+export function validatePositiveAmount(amount: string, fieldName: string): Response | null {
+  const parsed = Number(amount);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return Response.json(
+      { error: `${fieldName} must be a positive number` } satisfies ApiError,
       { status: 400 },
     );
   }

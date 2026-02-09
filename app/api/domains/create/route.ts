@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { Wallet, PermissionedDomainSet, isValidClassicAddress } from "xrpl";
+import { PermissionedDomainSet } from "xrpl";
 import type { AuthorizeCredential } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, walletFromSeed, validateAddress, validateCredentialType, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import { MIN_DOMAIN_CREDENTIALS, MAX_DOMAIN_CREDENTIALS } from "@/lib/xrpl/constants";
 import type { CreateDomainRequest, ApiError } from "@/lib/xrpl/types";
 
@@ -29,20 +29,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let wallet;
-    try {
-      wallet = Wallet.fromSeed(body.seed);
-    } catch {
-      return Response.json({ error: "Invalid seed format" }, { status: 400 });
-    }
+    const result = walletFromSeed(body.seed);
+    if ("error" in result) return result.error;
+    const { wallet } = result;
 
     for (const ac of body.acceptedCredentials) {
-      if (!isValidClassicAddress(ac.issuer)) {
-        return Response.json({ error: `Invalid issuer address: ${ac.issuer}` }, { status: 400 });
-      }
-      if (ac.credentialType.length > 128) {
-        return Response.json({ error: "credentialType must not exceed 128 characters" }, { status: 400 });
-      }
+      const badIssuer = validateAddress(ac.issuer, `issuer address: ${ac.issuer}`);
+      if (badIssuer) return badIssuer;
+      const badType = validateCredentialType(ac.credentialType);
+      if (badType) return badType;
     }
 
     const client = await getClient(resolveNetwork(body.network));
@@ -64,14 +59,14 @@ export async function POST(request: NextRequest) {
       tx.DomainID = body.domainID;
     }
 
-    const result = await client.submitAndWait(tx, { wallet });
+    const submitted = await client.submitAndWait(tx, { wallet });
 
-    const failure = txFailureResponse(result);
+    const failure = txFailureResponse(submitted);
     if (failure) return failure;
 
     // Extract DomainID from created node in metadata
     let domainID: string | undefined;
-    const meta = result.result.meta;
+    const meta = submitted.result.meta;
     if (typeof meta === "object" && meta !== null && "AffectedNodes" in meta) {
       const nodes = (meta as unknown as { AffectedNodes: Array<Record<string, unknown>> }).AffectedNodes;
       for (const node of nodes) {
@@ -88,7 +83,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return Response.json({ result: result.result, domainID }, { status: 201 });
+    return Response.json({ result: submitted.result, domainID }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err, "Failed to create domain");
   }

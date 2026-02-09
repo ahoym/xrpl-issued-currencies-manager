@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { Wallet, OfferCreate, isValidClassicAddress } from "xrpl";
+import { OfferCreate } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { toXrplAmount } from "@/lib/xrpl/currency";
 import { resolveOfferFlags, VALID_OFFER_FLAGS } from "@/lib/xrpl/offers";
-import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import { validateRequired, walletFromSeed, validateAddress, validatePositiveAmount, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import type { CreateOfferRequest, OfferFlag, ApiError } from "@/lib/xrpl/types";
 import { Assets } from "@/lib/assets";
 
@@ -43,35 +43,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (body.takerGets.currency !== Assets.XRP && body.takerGets.issuer && !isValidClassicAddress(body.takerGets.issuer)) {
-      return Response.json(
-        { error: "Invalid takerGets.issuer address" } satisfies ApiError,
-        { status: 400 },
-      );
+    if (body.takerGets.currency !== Assets.XRP && body.takerGets.issuer) {
+      const bad = validateAddress(body.takerGets.issuer, "takerGets.issuer address");
+      if (bad) return bad;
     }
 
-    if (body.takerPays.currency !== Assets.XRP && body.takerPays.issuer && !isValidClassicAddress(body.takerPays.issuer)) {
-      return Response.json(
-        { error: "Invalid takerPays.issuer address" } satisfies ApiError,
-        { status: 400 },
-      );
+    if (body.takerPays.currency !== Assets.XRP && body.takerPays.issuer) {
+      const bad = validateAddress(body.takerPays.issuer, "takerPays.issuer address");
+      if (bad) return bad;
     }
 
-    const parsedGetsValue = Number(body.takerGets.value);
-    if (!Number.isFinite(parsedGetsValue) || parsedGetsValue <= 0) {
-      return Response.json(
-        { error: "takerGets.value must be a positive number" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const badGets = validatePositiveAmount(body.takerGets.value, "takerGets.value");
+    if (badGets) return badGets;
 
-    const parsedPaysValue = Number(body.takerPays.value);
-    if (!Number.isFinite(parsedPaysValue) || parsedPaysValue <= 0) {
-      return Response.json(
-        { error: "takerPays.value must be a positive number" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const badPays = validatePositiveAmount(body.takerPays.value, "takerPays.value");
+    if (badPays) return badPays;
 
     if (body.expiration !== undefined) {
       if (!Number.isInteger(body.expiration) || body.expiration <= 0) {
@@ -101,12 +87,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let wallet;
-    try {
-      wallet = Wallet.fromSeed(body.seed);
-    } catch {
-      return Response.json({ error: "Invalid seed format" } satisfies ApiError, { status: 400 });
-    }
+    const seedResult = walletFromSeed(body.seed);
+    if ("error" in seedResult) return seedResult.error;
+    const wallet = seedResult.wallet;
 
     const client = await getClient(resolveNetwork(body.network));
 

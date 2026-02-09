@@ -23,6 +23,9 @@ export const DEFAULT_ACCOUNT_OFFERS_LIMIT = 200;
 /** Default number of items returned by orderbook and trades endpoints. */
 export const DEFAULT_ORDERBOOK_LIMIT = 20;
 
+/** Maximum value allowed for user-supplied `limit` query params. */
+export const MAX_API_LIMIT = 400;
+
 /**
  * Multiplier applied when fetching transactions to find trades.
  * Many transactions won't match the requested currency pair, so we
@@ -43,11 +46,14 @@ export const MIN_DOMAIN_CREDENTIALS = 1;
 /** Maximum number of accepted credentials in a permissioned domain. */
 export const MAX_DOMAIN_CREDENTIALS = 10;
 
+/** Maximum length of a credential type string. */
+export const MAX_CREDENTIAL_TYPE_LENGTH = 128;
+
 /** XRPL currency code minimum length (standard 3-char codes). */
 export const MIN_CURRENCY_CODE_LENGTH = 3;
 
-/** XRPL currency code maximum length (non-standard hex-encoded codes). */
-export const MAX_CURRENCY_CODE_LENGTH = 39;
+/** XRPL currency code maximum length (non-standard codes that fit in 20-byte field). */
+export const MAX_CURRENCY_CODE_LENGTH = 40;
 
 /** Length of a hex-encoded XRPL currency code. */
 export const HEX_CURRENCY_CODE_LENGTH = 40;

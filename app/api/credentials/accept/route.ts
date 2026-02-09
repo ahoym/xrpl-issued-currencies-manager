@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { Wallet, CredentialAccept, isValidClassicAddress } from "xrpl";
+import { CredentialAccept } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { validateRequired, txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { AcceptCredentialRequest } from "@/lib/xrpl/types";
+import { validateRequired, walletFromSeed, validateAddress, validateCredentialType, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import type { AcceptCredentialRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,20 +13,15 @@ export async function POST(request: NextRequest) {
     const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "issuer", "credentialType"]);
     if (invalid) return invalid;
 
-    let wallet;
-    try {
-      wallet = Wallet.fromSeed(body.seed);
-    } catch {
-      return Response.json({ error: "Invalid seed format" }, { status: 400 });
-    }
+    const result = walletFromSeed(body.seed);
+    if ("error" in result) return result.error;
+    const { wallet } = result;
 
-    if (!isValidClassicAddress(body.issuer)) {
-      return Response.json({ error: "Invalid issuer address" }, { status: 400 });
-    }
+    const badIssuer = validateAddress(body.issuer, "issuer address");
+    if (badIssuer) return badIssuer;
 
-    if (body.credentialType.length > 128) {
-      return Response.json({ error: "credentialType must not exceed 128 characters" }, { status: 400 });
-    }
+    const badType = validateCredentialType(body.credentialType);
+    if (badType) return badType;
 
     const client = await getClient(resolveNetwork(body.network));
 
@@ -37,12 +32,12 @@ export async function POST(request: NextRequest) {
       CredentialType: encodeCredentialType(body.credentialType),
     };
 
-    const result = await client.submitAndWait(tx, { wallet });
+    const submitted = await client.submitAndWait(tx, { wallet });
 
-    const failure = txFailureResponse(result);
+    const failure = txFailureResponse(submitted);
     if (failure) return failure;
 
-    return Response.json({ result: result.result }, { status: 201 });
+    return Response.json({ result: submitted.result }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err, "Failed to accept credential");
   }
