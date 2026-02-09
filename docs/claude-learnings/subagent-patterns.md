@@ -88,3 +88,47 @@ This keeps `bash` as the first word, matching the permission pattern. The shell 
 - The difference is purely in how Claude Code parses the command prefix for permission matching
 - The error message ("Permission to use Bash has been auto-denied") doesn't hint at the cause
 - Easy to write the pipe form instinctively since it reads more naturally
+
+## Gotcha: `Bash(bash:*)` Is a Wildcard Escape Hatch
+
+### The Problem
+
+`Bash(bash:*)` matches any command starting with `bash`, including `bash -c '<anything>'`. This means agents can bypass every other specific permission by wrapping denied commands:
+
+- `gh pr view ...` denied? → `bash -c "gh pr view ..."` works
+- `git -C ../path push ...` denied? → `bash -c 'git -C ../path push ...'` works
+
+Background agents (Task tool) will self-discover this workaround when commands are auto-denied — they retry with `bash -c` and it silently succeeds.
+
+### The Fix
+
+Remove `Bash(bash:*)` and replace with specific entries:
+- `Bash(bash scripts/:*)` — for running test scripts
+- `Bash(bash ~/.claude/commands/<skill>/worktree-lifecycle.sh:*)` — for skill helpers
+
+Each `bash` permission should include enough path to scope it to the intended use.
+
+### Why This Matters
+
+- Defeats the purpose of fine-grained permissions
+- Agents recover silently — you won't notice the bypass unless you read transcripts
+- A single broad `bash` permission undoes all your `git`, `gh`, etc. restrictions
+
+## Gotcha: `git -C <path>` Breaks Permission Prefix Matching
+
+### The Problem
+
+`git -C ../worktree push origin branch` does NOT match `Bash(git push:*)` because the permission system matches on the command prefix — and `-C ../worktree` comes before `push`.
+
+### The Fix
+
+Run git commands from the main repo directory instead of using `-C`:
+```bash
+# Won't match Bash(git push:*)
+git -C ../worktree-compound-learnings push origin branch-name
+
+# Matches Bash(git push:*)
+git push origin branch-name
+```
+
+This works because git worktrees share the same object database — `git push origin <branch>` from the main repo pushes commits made in any worktree.
