@@ -4,7 +4,7 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { validateRequired, walletFromSeed, validateSeedMatchesAddress, txFailureResponse, apiErrorResponse } from "@/lib/api";
 import { TF_CLEAR_NO_RIPPLE } from "@/lib/xrpl/constants";
-import type { ApiError } from "@/lib/xrpl/types";
+
 
 export async function POST(
   request: NextRequest,

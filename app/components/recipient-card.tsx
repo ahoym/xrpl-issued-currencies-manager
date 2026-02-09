@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { PersistedState, WalletInfo } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
 import { useFetchTrustLines } from "@/lib/hooks/use-trust-lines";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import { BalanceDisplay } from "./balance-display";
 import { ExplorerLink } from "./explorer-link";
 import { SecretField } from "./secret-field";
@@ -15,7 +16,6 @@ interface RecipientCardProps {
   recipient: WalletInfo;
   issuer: WalletInfo | null;
   currencies: string[];
-  network: PersistedState["network"];
   refreshKey: number;
   onRefresh: () => void;
 }
@@ -24,10 +24,10 @@ export function RecipientCard({
   recipient,
   issuer,
   currencies,
-  network,
   refreshKey,
   onRefresh,
 }: RecipientCardProps) {
+  const { state: { network } } = useAppState();
   const [collapsed, setCollapsed] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [trustingRlusd, setTrustingRlusd] = useState(false);
@@ -130,7 +130,6 @@ export function RecipientCard({
 
           <BalanceDisplay
             address={recipient.address}
-            network={network}
             refreshKey={refreshKey}
           />
 
@@ -156,7 +155,6 @@ export function RecipientCard({
                   recipient={recipient}
                   issuer={issuer}
                   currencies={currencies}
-                  network={network}
                   trustLineCurrencies={trustLineCurrencies}
                   onComplete={handleSetupComplete}
                   onClose={() => setExpanded(false)}

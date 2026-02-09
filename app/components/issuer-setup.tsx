@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { PersistedState, WalletInfo } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
 import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/ui";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import { BalanceDisplay } from "./balance-display";
 import { CurrencyManager } from "./currency-manager";
 import { ExplorerLink } from "./explorer-link";
@@ -11,7 +12,6 @@ import { SecretField } from "./secret-field";
 
 interface IssuerSetupProps {
   issuer: WalletInfo | null;
-  network: PersistedState["network"];
   currencies: string[];
   onLedgerCurrencies: Set<string>;
   refreshKey: number;
@@ -22,7 +22,6 @@ interface IssuerSetupProps {
 
 export function IssuerSetup({
   issuer,
-  network,
   currencies,
   onLedgerCurrencies,
   refreshKey,
@@ -30,6 +29,7 @@ export function IssuerSetup({
   onAddCurrency,
   onRemoveCurrency,
 }: IssuerSetupProps) {
+  const { state: { network } } = useAppState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done" | "needs_repair">("idle");
@@ -181,7 +181,6 @@ export function IssuerSetup({
               </div>
               <BalanceDisplay
                 address={issuer.address}
-                network={network}
                 refreshKey={refreshKey}
               />
               <CurrencyManager

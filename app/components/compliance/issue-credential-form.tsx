@@ -1,23 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import type { WalletInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import { inputClass, labelClass, primaryButtonClass, errorTextClass, successBannerClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 
 interface IssueCredentialFormProps {
   credentialIssuer: WalletInfo;
   recipients: WalletInfo[];
-  network: PersistedState["network"];
   onIssued: () => void;
 }
 
 export function IssueCredentialForm({
   credentialIssuer,
   recipients,
-  network,
   onIssued,
 }: IssueCredentialFormProps) {
+  const { state: { network } } = useAppState();
   const [subject, setSubject] = useState("");
   const [credType, setCredType] = useState("");
   const [expiration, setExpiration] = useState("");

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { WalletInfo, PersistedState, BalanceEntry } from "@/lib/types";
+import { useState, useEffect } from "react";
+import type { WalletInfo, BalanceEntry } from "@/lib/types";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 import { Assets } from "@/lib/assets";
+import { useBalances } from "@/lib/hooks/use-balances";
+import { useAppState } from "@/lib/hooks/use-app-state";
 
 interface TransferModalProps {
   sender: WalletInfo;
-  network: PersistedState["network"];
   recipients: WalletInfo[];
   onComplete: () => void;
   onClose: () => void;
@@ -17,13 +18,12 @@ interface TransferModalProps {
 
 export function TransferModal({
   sender,
-  network,
   recipients,
   onComplete,
   onClose,
 }: TransferModalProps) {
-  const [balances, setBalances] = useState<BalanceEntry[]>([]);
-  const [loadingBalances, setLoadingBalances] = useState(true);
+  const { state: { network } } = useAppState();
+  const { balances, loading: loadingBalances } = useBalances(sender.address, network);
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [amount, setAmount] = useState("");
   const [recipientMode, setRecipientMode] = useState<"known" | "other">("known");
@@ -38,29 +38,12 @@ export function TransferModal({
 
   const otherRecipients = recipients.filter((r) => r.address !== sender.address);
 
-  const fetchBalances = useCallback(async () => {
-    setLoadingBalances(true);
-    try {
-      const res = await fetch(
-        `/api/accounts/${encodeURIComponent(sender.address)}/balances?network=${network}`,
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setBalances(data.balances);
-        if (data.balances.length > 0) {
-          setSelectedCurrency("0");
-        }
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoadingBalances(false);
-    }
-  }, [sender.address, network]);
-
+  // Auto-select first currency when balances arrive
   useEffect(() => {
-    fetchBalances();
-  }, [fetchBalances]);
+    if (balances.length > 0 && !selectedCurrency) {
+      setSelectedCurrency("0");
+    }
+  }, [balances, selectedCurrency]);
 
   useEffect(() => {
     if (otherRecipients.length > 0 && !selectedRecipient) {

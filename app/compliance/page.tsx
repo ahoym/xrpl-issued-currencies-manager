@@ -104,20 +104,17 @@ export default function CompliancePage() {
               <IssueCredentialForm
                 credentialIssuer={state.credentialIssuer}
                 recipients={state.recipients}
-                network={state.network}
                 onIssued={handleCredentialChange}
               />
               <IssuedCredentialsTable
                 credentials={issuedCredentials}
                 loading={loadingIssued}
                 issuerSeed={state.credentialIssuer.seed}
-                network={state.network}
                 onDeleted={handleCredentialChange}
               />
               <RecipientCredentials
                 recipients={state.recipients}
                 issuedCredentials={issuedCredentials}
-                network={state.network}
                 onChanged={handleCredentialChange}
               />
             </>
@@ -138,14 +135,12 @@ export default function CompliancePage() {
                 domains={domains}
                 loading={loadingDomains}
                 domainOwner={state.domainOwner}
-                network={state.network}
                 onDeleted={refreshDomains}
                 onEdit={(d) => setEditingDomain({ domainID: d.domainID, acceptedCredentials: d.acceptedCredentials })}
               />
               <CreateDomainForm
                 domainOwner={state.domainOwner}
                 defaultCredentialIssuer={state.credentialIssuer?.address}
-                network={state.network}
                 editingDomain={editingDomain}
                 onSaved={refreshDomains}
                 onCancelEdit={() => setEditingDomain(null)}

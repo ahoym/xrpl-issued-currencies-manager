@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { CredentialInfo, PersistedState } from "@/lib/types";
+import type { CredentialInfo } from "@/lib/types";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import { fromRippleEpoch } from "@/lib/xrpl/constants";
 
 interface IssuedCredentialsTableProps {
   credentials: CredentialInfo[];
   loading: boolean;
   issuerSeed: string;
-  network: PersistedState["network"];
   onDeleted: () => void;
 }
 
@@ -16,9 +16,9 @@ export function IssuedCredentialsTable({
   credentials,
   loading,
   issuerSeed,
-  network,
   onDeleted,
 }: IssuedCredentialsTableProps) {
+  const { state: { network } } = useAppState();
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   async function handleDelete(subject: string, credentialType: string) {

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import type { PersistedState, BalanceEntry } from "@/lib/types";
+import { useState, useMemo } from "react";
+import type { BalanceEntry } from "@/lib/types";
+import { useBalances } from "@/lib/hooks/use-balances";
+import { useAppState } from "@/lib/hooks/use-app-state";
 
 interface BalanceDisplayProps {
   address: string;
-  network: PersistedState["network"];
   refreshKey?: number;
 }
 
@@ -36,33 +37,10 @@ function groupBalances(balances: BalanceEntry[]): GroupedBalance[] {
   return Array.from(groups.values());
 }
 
-export function BalanceDisplay({ address, network, refreshKey }: BalanceDisplayProps) {
-  const [balances, setBalances] = useState<BalanceEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function BalanceDisplay({ address, refreshKey }: BalanceDisplayProps) {
+  const { state: { network } } = useAppState();
+  const { balances, loading, error, refresh: fetchBalances } = useBalances(address, network, refreshKey);
   const [expandedCurrency, setExpandedCurrency] = useState<string | null>(null);
-
-  const fetchBalances = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/accounts/${address}/balances?network=${network}`);
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to fetch balances");
-        return;
-      }
-      setBalances(data.balances);
-    } catch {
-      setError("Network error");
-    } finally {
-      setLoading(false);
-    }
-  }, [address, network]);
-
-  useEffect(() => {
-    fetchBalances();
-  }, [fetchBalances, refreshKey]);
 
   const grouped = useMemo(() => groupBalances(balances), [balances]);
 

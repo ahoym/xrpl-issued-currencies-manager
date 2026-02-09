@@ -6,17 +6,13 @@ import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import { BalanceDisplay } from "../components/balance-display";
 import { TransferModal } from "../components/transfer-modal";
-import type { WalletInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
 import { ExplorerLink } from "../components/explorer-link";
 
 export default function TransactPage() {
   const { state, hydrated } = useAppState();
   const [refreshKey, setRefreshKey] = useState(0);
   const [sendingFrom, setSendingFrom] = useState<WalletInfo | null>(null);
-
-  if (!hydrated) {
-    return <LoadingScreen />;
-  }
 
   const allWallets = useMemo(() => {
     const wallets = [...state.recipients];
@@ -25,6 +21,10 @@ export default function TransactPage() {
     }
     return wallets;
   }, [state.issuer, state.recipients]);
+
+  if (!hydrated) {
+    return <LoadingScreen />;
+  }
 
   if (state.recipients.length === 0) {
     return <EmptyWallets title="Transact" maxWidth="max-w-4xl" />;
@@ -39,7 +39,6 @@ export default function TransactPage() {
           <WalletCard
             key={wallet.address}
             wallet={wallet}
-            network={state.network}
             refreshKey={refreshKey}
             onSend={() => setSendingFrom(wallet)}
           />
@@ -49,7 +48,6 @@ export default function TransactPage() {
       {sendingFrom && (
         <TransferModal
           sender={sendingFrom}
-          network={state.network}
           recipients={allWallets}
           onComplete={() => {
             setSendingFrom(null);
@@ -64,12 +62,10 @@ export default function TransactPage() {
 
 function WalletCard({
   wallet,
-  network,
   refreshKey,
   onSend,
 }: {
   wallet: WalletInfo;
-  network: PersistedState["network"];
   refreshKey: number;
   onSend: () => void;
 }) {
@@ -95,7 +91,6 @@ function WalletCard({
         <div className="px-4 pb-4">
           <BalanceDisplay
             address={wallet.address}
-            network={network}
             refreshKey={refreshKey}
           />
           <button

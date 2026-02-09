@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { WalletInfo, DomainInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo, DomainInfo } from "@/lib/types";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import { labelClass, primaryButtonClass, errorTextClass, successBannerClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 
 export interface EditingDomain {
@@ -12,7 +13,6 @@ export interface EditingDomain {
 interface CreateDomainFormProps {
   domainOwner: WalletInfo;
   defaultCredentialIssuer?: string;
-  network: PersistedState["network"];
   editingDomain?: EditingDomain | null;
   onSaved: () => void;
   onCancelEdit?: () => void;
@@ -21,11 +21,11 @@ interface CreateDomainFormProps {
 export function CreateDomainForm({
   domainOwner,
   defaultCredentialIssuer,
-  network,
   editingDomain,
   onSaved,
   onCancelEdit,
 }: CreateDomainFormProps) {
+  const { state: { network } } = useAppState();
   const [credentials, setCredentials] = useState<
     { issuer: string; credentialType: string }[]
   >([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);

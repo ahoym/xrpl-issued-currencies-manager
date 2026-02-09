@@ -4,7 +4,7 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
 import { validateRequired, walletFromSeed, validateAddress, validateCredentialType, txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { AcceptCredentialRequest, ApiError } from "@/lib/xrpl/types";
+import type { AcceptCredentialRequest } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { PersistedState, WalletInfo } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/ui";
+import { useAppState } from "@/lib/hooks/use-app-state";
 
 interface WalletSetupModalProps {
   recipient: WalletInfo;
   issuer: WalletInfo;
   currencies: string[];
-  network: PersistedState["network"];
   trustLineCurrencies: Set<string>;
   onComplete: () => void;
   onClose: () => void;
@@ -21,11 +21,11 @@ export function WalletSetupModal({
   recipient,
   issuer,
   currencies,
-  network,
   trustLineCurrencies,
   onComplete,
   onClose,
 }: WalletSetupModalProps) {
+  const { state: { network } } = useAppState();
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [amount, setAmount] = useState("1000");
   const [step, setStep] = useState<SetupStep>("idle");

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { WalletInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import { inputClass, labelClass, errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
@@ -24,7 +25,6 @@ interface TradeFormProps {
   focusedWallet: WalletInfo;
   sellingCurrency: CurrencyOption;
   buyingCurrency: CurrencyOption;
-  network: PersistedState["network"];
   prefill?: TradeFormPrefill;
   domainID?: string;
   onSubmitted: () => void;
@@ -54,11 +54,11 @@ export function TradeForm({
   focusedWallet,
   sellingCurrency,
   buyingCurrency,
-  network,
   prefill,
   domainID,
   onSubmitted,
 }: TradeFormProps) {
+  const { state: { network } } = useAppState();
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("");

@@ -116,7 +116,6 @@ export default function Home() {
       <div className="mt-6 space-y-6">
         <IssuerSetup
           issuer={state.issuer}
-          network={state.network}
           currencies={state.currencies}
           onLedgerCurrencies={onLedgerCurrencies}
           refreshKey={refreshKey}
@@ -129,7 +128,6 @@ export default function Home() {
           recipients={state.recipients}
           issuer={state.issuer}
           currencies={state.currencies}
-          network={state.network}
           disabled={!state.issuer || state.currencies.length === 0}
           refreshKey={refreshKey}
           onGenerate={addRecipient}

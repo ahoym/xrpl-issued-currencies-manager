@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { DomainInfo, WalletInfo, PersistedState } from "@/lib/types";
+import type { DomainInfo, WalletInfo } from "@/lib/types";
+import { useAppState } from "@/lib/hooks/use-app-state";
 
 interface DomainsListProps {
   domains: DomainInfo[];
   loading: boolean;
   domainOwner: WalletInfo;
-  network: PersistedState["network"];
   onDeleted: () => void;
   onEdit: (domain: DomainInfo) => void;
 }
@@ -16,10 +16,10 @@ export function DomainsList({
   domains,
   loading,
   domainOwner,
-  network,
   onDeleted,
   onEdit,
 }: DomainsListProps) {
+  const { state: { network } } = useAppState();
   const [deletingID, setDeletingID] = useState<string | null>(null);
 
   async function handleDelete(domainID: string) {

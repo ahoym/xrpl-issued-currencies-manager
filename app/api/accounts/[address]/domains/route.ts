@@ -15,7 +15,6 @@ export async function GET(
     const badAddress = validateAddress(address, "XRPL address");
     if (badAddress) return badAddress;
 
-    const sp = request.nextUrl.searchParams;
     const network = getNetworkParam(request);
 
     const client = await getClient(resolveNetwork(network));

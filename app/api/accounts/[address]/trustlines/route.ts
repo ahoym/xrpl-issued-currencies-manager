@@ -4,7 +4,7 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
 import { getNetworkParam, validateRequired, walletFromSeed, validateAddress, validateSeedMatchesAddress, txFailureResponse, apiErrorResponse } from "@/lib/api";
-import type { TrustLineRequest, ApiError } from "@/lib/xrpl/types";
+import type { TrustLineRequest } from "@/lib/xrpl/types";
 
 export async function GET(
   request: NextRequest,

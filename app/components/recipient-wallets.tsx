@@ -1,14 +1,14 @@
 "use client";
 
-import type { PersistedState, WalletInfo } from "@/lib/types";
+import type { WalletInfo } from "@/lib/types";
 import { useWalletGeneration } from "@/lib/hooks/use-wallet-generation";
+import { useAppState } from "@/lib/hooks/use-app-state";
 import { RecipientCard } from "./recipient-card";
 
 interface RecipientWalletsProps {
   recipients: WalletInfo[];
   issuer: WalletInfo | null;
   currencies: string[];
-  network: PersistedState["network"];
   disabled: boolean;
   refreshKey: number;
   onGenerate: (wallet: WalletInfo) => void;
@@ -19,12 +19,12 @@ export function RecipientWallets({
   recipients,
   issuer,
   currencies,
-  network,
   disabled,
   refreshKey,
   onGenerate,
   onRefresh,
 }: RecipientWalletsProps) {
+  const { state: { network } } = useAppState();
   const { loading, error, generate } = useWalletGeneration();
 
   return (
@@ -58,7 +58,6 @@ export function RecipientWallets({
               recipient={recipient}
               issuer={issuer}
               currencies={currencies}
-              network={network}
               refreshKey={refreshKey}
               onRefresh={onRefresh}
             />

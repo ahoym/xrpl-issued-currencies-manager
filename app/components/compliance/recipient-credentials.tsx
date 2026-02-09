@@ -1,21 +1,21 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { WalletInfo, CredentialInfo, PersistedState } from "@/lib/types";
+import type { WalletInfo, CredentialInfo } from "@/lib/types";
+import { useAppState } from "@/lib/hooks/use-app-state";
 
 interface RecipientCredentialsProps {
   recipients: WalletInfo[];
   issuedCredentials: CredentialInfo[];
-  network: PersistedState["network"];
   onChanged: () => void;
 }
 
 export function RecipientCredentials({
   recipients,
   issuedCredentials,
-  network,
   onChanged,
 }: RecipientCredentialsProps) {
+  const { state: { network } } = useAppState();
   const [acceptingKey, setAcceptingKey] = useState<string | null>(null);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
