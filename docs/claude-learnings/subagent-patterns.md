@@ -55,3 +55,36 @@ FILECONTENT
 - Any skill that needs to create commits on a different branch without disrupting the user's working tree
 - Background agents (Task tool with `run_in_background: true`) that need filesystem access outside the project sandbox
 - Skills that run concurrently with user work (worktree isolation prevents conflicts)
+
+## Gotcha: Heredoc Redirect vs Pipe for Permission Matching
+
+### The Problem
+
+When a subagent needs to pass multiline content to a script via stdin, the natural approach is:
+
+```bash
+cat <<'EOF' | bash ~/.claude/commands/skill/worktree-lifecycle.sh write ../worktree path/to/file.md
+Content here
+EOF
+```
+
+This **fails** in subagents. The Bash permission system matches on the command prefix — `cat <<'EOF' | bash ...` starts with `cat`, so it does NOT match `Bash(bash ~/.claude/commands/...:*)`. The command is auto-denied with no way to approve it (subagents can't prompt).
+
+### The Fix
+
+Use heredoc redirect syntax instead:
+
+```bash
+bash ~/.claude/commands/skill/worktree-lifecycle.sh write ../worktree path/to/file.md <<'EOF'
+Content here
+EOF
+```
+
+This keeps `bash` as the first word, matching the permission pattern. The shell redirects the heredoc to stdin of the `bash` command, achieving the same effect.
+
+### Why This Is Non-Obvious
+
+- Both forms are equivalent in shell behavior (content arrives on stdin)
+- The difference is purely in how Claude Code parses the command prefix for permission matching
+- The error message ("Permission to use Bash has been auto-denied") doesn't hint at the cause
+- Easy to write the pipe form instinctively since it reads more naturally
