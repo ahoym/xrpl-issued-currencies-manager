@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/hooks/use-app-state";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import { BalanceDisplay } from "../components/balance-display";
-import { TransferModal } from "../components/transfer-modal";
+import { TransferModal } from "./components/transfer-modal";
 import type { WalletInfo } from "@/lib/types";
 import { ExplorerLink } from "../components/explorer-link";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import type { WalletInfo } from "@/lib/types";
-import { ExplorerLink } from "./explorer-link";
+import { ExplorerLink } from "../../components/explorer-link";
 
 interface WalletSetupCardProps {
   title: string;

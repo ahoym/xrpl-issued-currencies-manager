@@ -48,7 +48,8 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 
 | Route | File | Purpose |
 |---|---|---|
-| `/` | `app/page.tsx` | Dashboard — manage issuer wallets, currencies, recipients |
+| `/` | `app/page.tsx` | Redirects to `/setup` |
+| `/setup` | `app/setup/page.tsx` | Setup — manage issuer wallets, currencies, recipients |
 | `/transact` | `app/transact/page.tsx` | Transfer issued currencies between wallets |
 | `/trade` | `app/trade/page.tsx` | DEX trading (orders, orderbook, trades) |
 | `/compliance` | `app/compliance/page.tsx` | Manage XLS-70 credentials and XLS-80 domains |

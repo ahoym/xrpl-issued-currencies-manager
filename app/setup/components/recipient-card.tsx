@@ -7,8 +7,8 @@ import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { useAppState } from "@/lib/hooks/use-app-state";
-import { BalanceDisplay } from "./balance-display";
-import { ExplorerLink } from "./explorer-link";
+import { BalanceDisplay } from "../../components/balance-display";
+import { ExplorerLink } from "../../components/explorer-link";
 import { SecretField } from "./secret-field";
 import { WalletSetupModal } from "./wallet-setup-modal";
 

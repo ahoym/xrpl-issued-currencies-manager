@@ -6,7 +6,7 @@ import { useAppState } from '@/lib/hooks/use-app-state';
 import { NetworkSelector } from './network-selector';
 
 const links = [
-  { href: '/', label: 'Setup' },
+  { href: '/setup', label: 'Setup' },
   { href: '/compliance', label: 'Compliance' },
   { href: '/transact', label: 'Transact' },
   { href: '/trade', label: 'Trade' },
@@ -23,7 +23,7 @@ export function NavBar() {
           XRPL Manager
         </span>
         {links.map((link) => {
-          const active = pathname === link.href;
+          const active = pathname === link.href || pathname.startsWith(link.href + '/');
           return (
             <Link
               key={link.href}

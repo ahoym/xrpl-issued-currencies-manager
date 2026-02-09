@@ -6,12 +6,12 @@ import { useWalletGeneration } from "@/lib/hooks/use-wallet-generation";
 import { useAccountCredentials } from "@/lib/hooks/use-account-credentials";
 import { useAccountDomains } from "@/lib/hooks/use-account-domains";
 import { LoadingScreen } from "../components/loading-screen";
-import { WalletSetupCard } from "../components/wallet-setup-card";
-import { IssueCredentialForm } from "../components/compliance/issue-credential-form";
-import { IssuedCredentialsTable } from "../components/compliance/issued-credentials-table";
-import { RecipientCredentials } from "../components/compliance/recipient-credentials";
-import { CreateDomainForm, type EditingDomain } from "../components/compliance/create-domain-form";
-import { DomainsList } from "../components/compliance/domains-list";
+import { WalletSetupCard } from "./components/wallet-setup-card";
+import { IssueCredentialForm } from "./components/issue-credential-form";
+import { IssuedCredentialsTable } from "./components/issued-credentials-table";
+import { RecipientCredentials } from "./components/recipient-credentials";
+import { CreateDomainForm, type EditingDomain } from "./components/create-domain-form";
+import { DomainsList } from "./components/domains-list";
 
 type Tab = "credentials" | "domains";
 

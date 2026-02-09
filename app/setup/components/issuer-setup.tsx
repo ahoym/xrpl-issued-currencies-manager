@@ -5,9 +5,9 @@ import type { WalletInfo } from "@/lib/types";
 import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/ui";
 import { useAppState } from "@/lib/hooks/use-app-state";
-import { BalanceDisplay } from "./balance-display";
+import { BalanceDisplay } from "../../components/balance-display";
 import { CurrencyManager } from "./currency-manager";
-import { ExplorerLink } from "./explorer-link";
+import { ExplorerLink } from "../../components/explorer-link";
 import { SecretField } from "./secret-field";
 
 interface IssuerSetupProps {

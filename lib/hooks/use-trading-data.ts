@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAppState } from "./use-app-state";
 import { useBalances } from "./use-balances";
 import type { OrderBookAmount, OrderBookEntry } from "@/lib/types";
-import type { RecentTrade } from "@/app/components/trade/recent-trades";
+import type { RecentTrade } from "@/app/trade/components/recent-trades";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 
