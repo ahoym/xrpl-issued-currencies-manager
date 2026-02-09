@@ -62,6 +62,26 @@ generate_wallet() {
   echo "{\"address\":\"${address}\",\"seed\":\"${seed}\",\"publicKey\":\"${publicKey}\"}"
 }
 
+# Helper: enable rippling on an issuer account
+enable_rippling() {
+  local seed="$1" address="$2"
+  local response http_code body
+  response=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/accounts/${address}/rippling" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"seed\": \"${seed}\",
+      \"network\": \"${NETWORK}\"
+    }")
+  http_code=$(echo "$response" | tail -1)
+  if [ "$http_code" -ne 200 ]; then
+    body=$(echo "$response" | sed '$d')
+    echo "FAIL: Enable rippling for ${address}"
+    echo "$body" | jq . 2>/dev/null || echo "$body"
+    exit 1
+  fi
+  echo "  Rippling enabled: ${address}"
+}
+
 # Helper: create a trust line
 create_trustline() {
   local seed="$1" address="$2" currency="$3" issuer="$4"
@@ -206,8 +226,13 @@ DOMAIN_OWNER_SEED=$(echo "$DOMAIN_OWNER_JSON" | jq -r '.seed')
 
 echo ""
 
-# --- Step 2: Trust lines ---
-echo "--- Step 2: Create trust lines ---"
+# --- Step 2: Enable rippling on issuer ---
+echo "--- Step 2: Enable rippling on issuer ---"
+enable_rippling "$ISSUER_SEED" "$ISSUER_ADDRESS"
+echo ""
+
+# --- Step 3: Trust lines ---
+echo "--- Step 3: Create trust lines ---"
 for R_ADDR in "$R1_ADDRESS" "$R2_ADDRESS"; do
   R_SEED="$R1_SEED"
   if [ "$R_ADDR" = "$R2_ADDRESS" ]; then R_SEED="$R2_SEED"; fi
@@ -218,33 +243,33 @@ for R_ADDR in "$R1_ADDRESS" "$R2_ADDRESS"; do
 done
 echo ""
 
-# --- Step 3: Issue currencies ---
-echo "--- Step 3: Issue currencies ---"
+# --- Step 4: Issue currencies ---
+echo "--- Step 4: Issue currencies ---"
 for R_ADDR in "$R1_ADDRESS" "$R2_ADDRESS"; do
   issue_currency "$ISSUER_SEED" "$R_ADDR" "XCAD" "1000"
   issue_currency "$ISSUER_SEED" "$R_ADDR" "XTHB" "1000"
 done
 echo ""
 
-# --- Step 4: Issue credentials ---
-echo "--- Step 4: Issue KYC credentials ---"
+# --- Step 5: Issue credentials ---
+echo "--- Step 5: Issue KYC credentials ---"
 create_credential "$CRED_ISSUER_SEED" "$R1_ADDRESS" "KYC"
 create_credential "$CRED_ISSUER_SEED" "$R2_ADDRESS" "KYC"
 echo ""
 
-# --- Step 5: Accept credentials ---
-echo "--- Step 5: Accept KYC credentials ---"
+# --- Step 6: Accept credentials ---
+echo "--- Step 6: Accept KYC credentials ---"
 accept_credential "$R1_SEED" "$CRED_ISSUER_ADDRESS" "KYC"
 accept_credential "$R2_SEED" "$CRED_ISSUER_ADDRESS" "KYC"
 echo ""
 
-# --- Step 6: Create permissioned domain ---
-echo "--- Step 6: Create permissioned domain ---"
+# --- Step 7: Create permissioned domain ---
+echo "--- Step 7: Create permissioned domain ---"
 create_domain "$DOMAIN_OWNER_SEED" "$CRED_ISSUER_ADDRESS" "KYC"
 echo ""
 
-# --- Step 7: Save state JSON ---
-echo "--- Step 7: Save state ---"
+# --- Step 8: Save state JSON ---
+echo "--- Step 8: Save state ---"
 STATE=$(jq -n \
   --arg network "$NETWORK" \
   --argjson issuer "$ISSUER_JSON" \
