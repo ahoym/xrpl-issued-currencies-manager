@@ -20,6 +20,8 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 - **Shared lib**: `lib/xrpl/` — client singleton (`client.ts`), network config (`networks.ts`), TypeScript types (`types.ts`)
 - **Test scripts**: `scripts/` — bash scripts using curl + jq for each endpoint
 - **OpenAPI spec**: `openapi.yaml` at project root
+- **Frontend architecture**: `docs/claude-learnings/frontend-architecture.md` — state management, hooks, page responsibilities, data transformations
+- **Development patterns**: `docs/claude-learnings/development-patterns.md` — API route skeleton, test script skeleton, naming conventions
 
 ### API Routes
 
@@ -45,6 +47,57 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) | `test-dex-offers.sh` |
 | `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param | `test-dex-offers.sh` |
 | `/api/dex/trades` | GET | Recent trades for a currency pair | — |
+
+### `lib/` Module Map
+
+**XRPL Core** (`lib/xrpl/`)
+
+| Module | Key Exports |
+|---|---|
+| `client.ts` | `getClient(network)` — singleton XRPL WebSocket client |
+| `networks.ts` | `NETWORKS`, `NetworkId`, `resolveNetwork()`, `DEFAULT_NETWORK`, `EXPLORER_URLS` |
+| `types.ts` | Request/response interfaces: `GenerateAccountResponse`, `IssueCurrencyRequest`, `TransferRequest`, `TrustLineRequest`, `CreateOfferRequest`, `CancelOfferRequest`, `CreateCredentialRequest`, `AcceptCredentialRequest`, `DeleteCredentialRequest`, `CreateDomainRequest`, `DeleteDomainRequest`, `DexAmount`, `OfferFlag`, `CurrencyBalance`, `ApiError` |
+| `constants.ts` | Ledger flags (`LSF_DEFAULT_RIPPLE`, `LSF_ACCEPTED`, `TF_CLEAR_NO_RIPPLE`), limits (`MAX_API_LIMIT`, `DEFAULT_ORDERBOOK_LIMIT`, etc.), epoch helpers (`toRippleEpoch()`, `fromRippleEpoch()`) |
+| `currency.ts` | `encodeXrplCurrency()`, `toXrplAmount()`, `fromXrplAmount()` — Node-only; re-exports `decodeCurrency` |
+| `decode-currency-client.ts` | `decodeCurrency()` — browser-safe hex-to-ASCII decoder |
+| `match-currency.ts` | `matchesCurrency()` — compare orderbook amounts against currency+issuer |
+| `offers.ts` | `VALID_OFFER_FLAGS`, `resolveOfferFlags()` — flag strings to bitwise flags |
+| `credentials.ts` | `encodeCredentialType()`, `decodeCredentialType()` — hex encoding for credential types (Node-only) |
+| `build-dex-amount.ts` | `buildDexAmount()` — construct `DexAmount` objects for XRP or issued currencies |
+
+**Shared Types** (`lib/`)
+
+| Module | Key Exports |
+|---|---|
+| `types.ts` | `WalletInfo`, `PersistedState`, `NetworkData`, `TrustLine`, `BalanceEntry`, `OrderBookAmount`, `OrderBookEntry`, `CredentialInfo`, `DomainInfo` |
+| `assets.ts` | `Assets` (`XRP`, `RLUSD`), `WELL_KNOWN_CURRENCIES` — per-network map of known issuers |
+
+**API Utilities** (`lib/`)
+
+| Module | Key Exports |
+|---|---|
+| `api.ts` | `validateRequired()`, `walletFromSeed()`, `validateAddress()`, `validateSeedMatchesAddress()`, `validatePositiveAmount()`, `validateCredentialType()`, `validateCurrencyPair()`, `getNetworkParam()`, `getTransactionResult()`, `txFailureResponse()`, `apiErrorResponse()` |
+| `rate-limit.ts` | `rateLimit()` — in-memory token-bucket rate limiter |
+
+**UI & Hooks** (`lib/ui/`, `lib/hooks/`)
+
+| Module | Key Exports |
+|---|---|
+| `ui/ui.ts` | Tailwind class constants (`inputClass`, `labelClass`, `primaryButtonClass`, `errorTextClass`, `successBannerClass`), `SUCCESS_MESSAGE_DURATION_MS` |
+| `hooks/use-app-state.tsx` | `AppStateProvider`, `useAppState()` — global state context |
+| `hooks/use-api-fetch.ts` | `useApiFetch<T>()` — generic GET hook with refreshKey |
+| `hooks/use-api-mutation.ts` | `useApiMutation<T>()` — generic POST hook |
+| `hooks/use-local-storage.ts` | `useLocalStorage<T>()` — localStorage sync with hydration |
+| `hooks/use-balances.ts` | `useBalances()` |
+| `hooks/use-trust-lines.ts` | `useFetchTrustLines()` |
+| `hooks/use-issuer-currencies.ts` | `useIssuerCurrencies()` — decoded currency Set from trust lines |
+| `hooks/use-account-credentials.ts` | `useAccountCredentials()` |
+| `hooks/use-account-domains.ts` | `useAccountDomains()` |
+| `hooks/use-trading-data.ts` | `useTradingData()` — aggregates balances, orderbook, offers, trades, currency options |
+| `hooks/use-trust-line-validation.ts` | `useTrustLineValidation()` — async trust line + rippling checks |
+| `hooks/use-domain-mode.ts` | `useDomainMode()` — domain selector state for permissioned DEX |
+| `hooks/use-wallet-generation.ts` | `useWalletGeneration()` |
+| `hooks/use-make-market-execution.ts` | `useMakeMarketExecution()` — batch offer placement with progress |
 
 ### Frontend Pages
 
@@ -74,3 +127,4 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 - **XRPL client singleton** — don't disconnect after each request; the module-level client in `lib/xrpl/client.ts` persists across requests for reuse
 - **Trust line prerequisite** — before issuing currency, the recipient must have a trust line to the issuer for that currency (validated server-side in `/api/currencies/issue`)
 - **Devnet-only amendments** — some XRPL amendments (e.g., PermissionedDEX) are only enabled on devnet. `test-permissioned-dex.sh` hard-codes devnet for this reason
+- **`openapi.yaml` is programmatically consumed** — must be updated when API routes change (add/modify endpoints, add fields)
