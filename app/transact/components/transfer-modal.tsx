@@ -64,6 +64,14 @@ export function TransferModal({
       return;
     }
 
+    // Sending back to the issuer (burn) — no trust line needed
+    if (destinationAddress === selectedBalance.issuer) {
+      setTrustLineOk(true);
+      setRipplingOk(null);
+      setCheckingTrustLine(false);
+      return;
+    }
+
     let cancelled = false;
     setCheckingTrustLine(true);
     setTrustLineOk(null);
@@ -127,6 +135,7 @@ export function TransferModal({
     parseFloat(amount) <= parseFloat(selectedBalance.value);
 
   const isIssuedCurrency = selectedBalance !== null && selectedBalance.currency !== Assets.XRP;
+  const isBurn = isIssuedCurrency && !!destinationAddress && destinationAddress === selectedBalance?.issuer;
   const trustLineBlocked = isIssuedCurrency && trustLineOk === false;
   const ripplingBlocked = isIssuedCurrency && trustLineOk === true && ripplingOk === false;
 
@@ -316,7 +325,11 @@ export function TransferModal({
             </div>
 
             {isIssuedCurrency && destinationAddress && (
-              checkingTrustLine ? (
+              isBurn ? (
+                <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  Recipient is the issuer. This will burn {selectedBalance?.currency} and reduce the outstanding supply.
+                </p>
+              ) : checkingTrustLine ? (
                 <p className="text-xs text-zinc-500">Checking trust line...</p>
               ) : trustLineOk === false ? (
                 <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
