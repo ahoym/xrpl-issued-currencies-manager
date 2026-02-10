@@ -136,7 +136,6 @@ export default function Home() {
           recipients={state.recipients}
           issuer={state.issuer}
           currencies={state.currencies}
-          disabled={!state.issuer || state.currencies.length === 0}
           refreshKey={refreshKey}
           onGenerate={addRecipient}
           onRefresh={() => setRefreshKey((k) => k + 1)}

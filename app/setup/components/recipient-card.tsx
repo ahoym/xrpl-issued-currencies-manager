@@ -56,6 +56,22 @@ export function RecipientCard({
     );
   }, [lines, issuer]);
 
+  const allTrustLineBadges = useMemo(() => {
+    const badges: { currency: string; issuerAddress: string; isLocal: boolean }[] = [];
+    const seen = new Set<string>();
+    for (const line of lines) {
+      const key = `${line.currency}:${line.account}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      badges.push({
+        currency: decodeCurrency(line.currency),
+        issuerAddress: line.account,
+        isLocal: issuer !== null && line.account === issuer.address,
+      });
+    }
+    return badges;
+  }, [lines, issuer]);
+
   const rlusdIssuer = WELL_KNOWN_CURRENCIES[network]?.RLUSD;
   const hasRlusdTrust = rlusdIssuer
     ? lines.some(
@@ -161,14 +177,19 @@ export function RecipientCard({
             <SecretField label="Seed" value={recipient.seed} />
           </div>
 
-          {trustLineCurrencies.size > 0 && (
+          {allTrustLineBadges.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
-              {Array.from(trustLineCurrencies).map((currency) => (
+              {allTrustLineBadges.map((badge) => (
                 <span
-                  key={currency}
-                  className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                  key={`${badge.currency}:${badge.issuerAddress}`}
+                  title={badge.issuerAddress}
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    badge.isLocal
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                  }`}
                 >
-                  {currency}
+                  {badge.currency}{!badge.isLocal && " (ext)"}
                 </span>
               ))}
             </div>
@@ -199,7 +220,7 @@ export function RecipientCard({
               onClick={() => { setShowCustomTrust((v) => !v); setCustomTrustError(null); }}
               className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
             >
-              {showCustomTrust ? "Cancel" : "Add Trust Line to External Issuer"}
+              {showCustomTrust ? "Cancel" : "Add Custom Trust Line"}
             </button>
             {showCustomTrust && (
               <div className="mt-2 space-y-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
@@ -246,7 +267,7 @@ export function RecipientCard({
             )}
           </div>
 
-          {issuer && currencies.length > 0 && (
+          {issuer && currencies.length > 0 ? (
             <div className="mt-2">
               {expanded ? (
                 <WalletSetupModal
@@ -266,7 +287,11 @@ export function RecipientCard({
                 </button>
               )}
             </div>
-          )}
+          ) : !issuer ? (
+            <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+              Set up an issuer to issue your own currencies to this recipient
+            </p>
+          ) : null}
         </div>
       )}
     </div>
