@@ -31,9 +31,11 @@ export function ExplorerLink({ address }: ExplorerLinkProps) {
       >
         {address}
       </a>
-      <button
-        type="button"
+      <span
+        role="button"
+        tabIndex={0}
         onClick={handleCopy}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleCopy(e as unknown as React.MouseEvent); }}
         className="inline-flex shrink-0 cursor-pointer items-center text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
         title="Copy address"
       >
@@ -47,7 +49,7 @@ export function ExplorerLink({ address }: ExplorerLinkProps) {
             <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
           </svg>
         )}
-      </button>
+      </span>
     </span>
   );
 }
