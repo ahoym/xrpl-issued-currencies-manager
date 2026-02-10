@@ -16,8 +16,13 @@ export async function GET(
     if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const limit = Math.min(parseInt(sp.get("limit") ?? String(DEFAULT_ACCOUNT_OFFERS_LIMIT), 10), MAX_API_LIMIT);
-    const marker = sp.get("marker") ?? undefined;
+    const rawLimit = parseInt(sp.get("limit") ?? "", 10);
+    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_ACCOUNT_OFFERS_LIMIT : rawLimit, MAX_API_LIMIT);
+    const rawMarker = sp.get("marker") ?? undefined;
+    if (rawMarker !== undefined && (rawMarker.length === 0 || rawMarker.length > 256)) {
+      return Response.json({ error: "Invalid marker value" }, { status: 400 });
+    }
+    const marker = rawMarker;
 
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 

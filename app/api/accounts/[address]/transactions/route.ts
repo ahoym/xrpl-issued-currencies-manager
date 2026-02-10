@@ -15,7 +15,8 @@ export async function GET(
     if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const limit = Math.min(parseInt(sp.get("limit") ?? String(DEFAULT_TRANSACTION_LIMIT), 10), MAX_API_LIMIT);
+    const rawLimit = parseInt(sp.get("limit") ?? "", 10);
+    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_TRANSACTION_LIMIT : rawLimit, MAX_API_LIMIT);
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({

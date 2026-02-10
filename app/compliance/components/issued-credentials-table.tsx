@@ -5,6 +5,15 @@ import type { CredentialInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { fromRippleEpoch } from "@/lib/xrpl/constants";
 
+function isSafeHttpUrl(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 interface IssuedCredentialsTableProps {
   credentials: CredentialInfo[];
   loading: boolean;
@@ -81,7 +90,7 @@ export function IssuedCredentialsTable({
                     </td>
                     <td className="py-1.5 font-mono">
                       {c.uri ? (
-                        /^https?:\/\//i.test(c.uri) ? (
+                        isSafeHttpUrl(c.uri) ? (
                           <a href={c.uri} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{c.uri}</a>
                         ) : (
                           <span className="text-zinc-500">{c.uri}</span>

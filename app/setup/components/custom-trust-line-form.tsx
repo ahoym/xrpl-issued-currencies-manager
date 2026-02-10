@@ -84,7 +84,9 @@ export function CustomTrustLineForm({
       <div>
         <label className={labelClass}>Limit</label>
         <input
-          type="text"
+          type="number"
+          step="any"
+          min="0"
           value={customLimit}
           onChange={(e) => setCustomLimit(e.target.value)}
           className={inputClass}
