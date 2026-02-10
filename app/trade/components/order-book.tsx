@@ -68,10 +68,17 @@ export function OrderBook({
     bidCumulative[i] = cum;
   }
 
-  // Max cumulative across both sides for consistent bar scaling
+  // Max cumulative across both sides for depth column
   const maxDepth = Math.max(
     askCumulative[0] ?? 0,
     bidCumulative[bidCumulative.length - 1] ?? 0,
+  );
+
+  // Max individual amount across both sides for bar scaling
+  const maxAmount = Math.max(
+    ...asks.map((a) => a.amount),
+    ...bids.map((b) => b.amount),
+    0,
   );
 
   const bestAsk = asks.length > 0 ? asks[asks.length - 1].price : null;
@@ -114,7 +121,7 @@ export function OrderBook({
           asks.map((a, i) => {
             const isOwn = accountAddress !== undefined && a.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
-            const depthPct = maxDepth > 0 ? (askCumulative[i] / maxDepth) * 100 : 0;
+            const barPct = maxAmount > 0 ? (a.amount / maxAmount) * 100 : 0;
             return (
               <div
                 key={`ask-${i}`}
@@ -132,7 +139,7 @@ export function OrderBook({
               >
                 <div
                   className="pointer-events-none absolute inset-y-0 right-0 bg-red-100 dark:bg-red-900/30"
-                  style={{ width: `${depthPct}%` }}
+                  style={{ width: `${barPct}%` }}
                 />
                 <span className="relative text-red-600 dark:text-red-400">
                   {a.price.toFixed(6)}
@@ -180,7 +187,7 @@ export function OrderBook({
           bids.map((b, i) => {
             const isOwn = accountAddress !== undefined && b.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
-            const depthPct = maxDepth > 0 ? (bidCumulative[i] / maxDepth) * 100 : 0;
+            const barPct = maxAmount > 0 ? (b.amount / maxAmount) * 100 : 0;
             return (
               <div
                 key={`bid-${i}`}
@@ -198,7 +205,7 @@ export function OrderBook({
               >
                 <div
                   className="pointer-events-none absolute inset-y-0 right-0 bg-green-100 dark:bg-green-900/30"
-                  style={{ width: `${depthPct}%` }}
+                  style={{ width: `${barPct}%` }}
                 />
                 <span className="relative text-green-600 dark:text-green-400">
                   {b.price.toFixed(6)}
