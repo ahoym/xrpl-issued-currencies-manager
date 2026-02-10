@@ -13,12 +13,25 @@ import { RecentTrades } from "./components/recent-trades";
 import { DomainSelector } from "./components/domain-selector";
 import { CurrencyPairSelector } from "./components/currency-pair-selector";
 import { BalancesPanel } from "./components/balances-panel";
+import { MakeMarketModal } from "./components/make-market-modal";
+import type { MakeMarketOrder } from "./components/make-market-modal";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import type { TradeFormPrefill } from "./components/trade-form";
 import type { WalletInfo } from "@/lib/types";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
+
+function buildDexAmount(
+  currency: string,
+  issuer: string | undefined,
+  value: string,
+) {
+  if (currency === Assets.XRP) {
+    return { currency: Assets.XRP, value };
+  }
+  return { currency, issuer, value };
+}
 
 export default function TradePage() {
   const { state, hydrated } = useAppState();
@@ -34,6 +47,12 @@ export default function TradePage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
   const prefillKeyRef = useRef(0);
+  const [showMakeMarket, setShowMakeMarket] = useState(false);
+
+  // Make-market execution state (lives in parent so button shows progress)
+  const [marketExec, setMarketExec] = useState<{ current: number; total: number } | null>(null);
+  const [marketResult, setMarketResult] = useState<{ ok: number; failed: number } | null>(null);
+  const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Domain state
   const [domainMode, setDomainMode] = useState<"open" | "select" | "custom">("open");
@@ -150,6 +169,102 @@ export default function TradePage() {
     }
   }
 
+  // Execute make-market orders in background
+  async function handleMakeMarketExecute(orders: MakeMarketOrder[]) {
+    // Close modal immediately so user can keep using the page
+    setShowMakeMarket(false);
+
+    // Clear any lingering result
+    if (resultTimerRef.current) {
+      clearTimeout(resultTimerRef.current);
+      resultTimerRef.current = null;
+    }
+    setMarketResult(null);
+    setMarketExec({ current: 0, total: orders.length });
+
+    // Snapshot currencies at time of execution
+    const base = sellingCurrency;
+    const quote = buyingCurrency;
+    if (!base || !quote) return;
+
+    let ok = 0;
+    let failed = 0;
+
+    for (let i = 0; i < orders.length; i++) {
+      setMarketExec({ current: i + 1, total: orders.length });
+      const order = orders[i];
+      const priceNum = parseFloat(order.price);
+      const qtyNum = parseFloat(order.qty);
+      const total = (qtyNum * priceNum).toFixed(6);
+
+      let takerGets;
+      let takerPays;
+
+      if (order.side === "Bid") {
+        takerGets = buildDexAmount(quote.currency, quote.issuer, total);
+        takerPays = buildDexAmount(base.currency, base.issuer, order.qty);
+      } else {
+        takerGets = buildDexAmount(base.currency, base.issuer, order.qty);
+        takerPays = buildDexAmount(quote.currency, quote.issuer, total);
+      }
+
+      const payload: Record<string, unknown> = {
+        seed: order.wallet.seed,
+        takerGets,
+        takerPays,
+        network: state.network,
+      };
+
+      if (activeDomainID) {
+        payload.domainID = activeDomainID;
+      }
+
+      try {
+        const res = await fetch("/api/dex/offers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          ok += 1;
+          setRefreshKey((k) => k + 1);
+        } else {
+          failed += 1;
+        }
+      } catch {
+        failed += 1;
+      }
+    }
+
+    // Done — show result, refresh data
+    setMarketExec(null);
+    setMarketResult({ ok, failed });
+    setRefreshKey((k) => k + 1);
+
+    // Auto-clear result after 4 seconds
+    resultTimerRef.current = setTimeout(() => {
+      setMarketResult(null);
+      resultTimerRef.current = null;
+    }, 4000);
+  }
+
+  // Button label
+  let makeMarketLabel = "Make Market";
+  let makeMarketDisabled = false;
+  let makeMarketExtraClass = "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600";
+
+  if (marketExec) {
+    makeMarketLabel = `Placing ${marketExec.current}/${marketExec.total}...`;
+    makeMarketDisabled = true;
+    makeMarketExtraClass = "bg-blue-500 dark:bg-blue-600 cursor-wait";
+  } else if (marketResult) {
+    const { ok, failed } = marketResult;
+    makeMarketLabel = failed > 0 ? `${ok}/${ok + failed} placed` : `${ok}/${ok} placed`;
+    makeMarketExtraClass = failed > 0
+      ? "bg-amber-600 dark:bg-amber-700"
+      : "bg-green-600 dark:bg-green-700";
+  }
+
   // --- RENDER ---
 
   if (!hydrated) {
@@ -162,7 +277,16 @@ export default function TradePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-bold">Trade</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Trade</h1>
+        <button
+          onClick={() => setShowMakeMarket(true)}
+          disabled={makeMarketDisabled}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-80 ${makeMarketExtraClass}`}
+        >
+          {makeMarketLabel}
+        </button>
+      </div>
 
       <WalletSelector
         wallets={state.recipients}
@@ -280,6 +404,17 @@ export default function TradePage() {
           </div>
         </div>
       </div>
+
+      {showMakeMarket && (
+        <MakeMarketModal
+          baseCurrency={sellingCurrency}
+          quoteCurrency={buyingCurrency}
+          recipients={state.recipients}
+          activeDomainID={activeDomainID}
+          onClose={() => setShowMakeMarket(false)}
+          onExecute={handleMakeMarketExecute}
+        />
+      )}
     </div>
   );
 }
