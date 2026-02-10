@@ -2,6 +2,24 @@
 
 Bash scripts for testing API endpoints and bootstrapping demo state. All scripts default to `BASE_URL=http://localhost:3000` and require `curl` + `jq`.
 
+## Targeting a Remote Deployment
+
+All scripts read the `BASE_URL` environment variable. To point them at a remote API (e.g. a Vercel deployment), export it once in your shell:
+
+```bash
+export BASE_URL=https://xrpl-issued-currencies-manager.vercel.app
+```
+
+Every script — `test-all.sh`, individual test scripts, `setup-full-state.sh`, and `make-market.sh` — will use this URL automatically.
+
+For a one-off run without exporting:
+
+```bash
+BASE_URL=https://xrpl-issued-currencies-manager.vercel.app scripts/test-account-info.sh
+```
+
+> **Note:** Do not include a trailing slash. All scripts append paths like `/api/...` directly to `BASE_URL`.
+
 ## Demo Setup
 
 Run these two scripts in order to bootstrap a fully populated demo environment:
