@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const client = await getClient(networkId);
 
     const wallet = Wallet.generate();
-    const { balance } = await client.fundWallet(wallet);
+    const { balance } = await client.fundWallet(wallet, { amount: "1000" });
 
     // Enable DefaultRipple so issued currencies can be transferred
     // between non-issuer wallets (rippling through the issuer)
