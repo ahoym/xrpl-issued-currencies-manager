@@ -6,7 +6,7 @@ import { useAppState } from "@/lib/hooks/use-app-state";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import { inputClass, labelClass, errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
-import { Assets } from "@/lib/assets";
+import { buildDexAmount } from "@/lib/xrpl/build-dex-amount";
 
 interface CurrencyOption {
   currency: string;
@@ -38,17 +38,6 @@ const EXECUTION_OPTIONS: { value: ExecutionType; label: string }[] = [
   { value: "immediateOrCancel", label: "Immediate or Cancel" },
   { value: "fillOrKill", label: "Fill or Kill" },
 ];
-
-function buildDexAmount(
-  currency: string,
-  issuer: string | undefined,
-  value: string,
-) {
-  if (currency === Assets.XRP) {
-    return { currency: Assets.XRP, value };
-  }
-  return { currency, issuer, value };
-}
 
 export function TradeForm({
   focusedWallet,
