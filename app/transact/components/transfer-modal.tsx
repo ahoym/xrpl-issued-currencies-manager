@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import type { WalletInfo, BalanceEntry } from "@/lib/types";
-import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
-import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
 import { Assets } from "@/lib/assets";
+import { ModalShell } from "@/app/components/modal-shell";
 import { useBalances } from "@/lib/hooks/use-balances";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { useTrustLineValidation } from "@/lib/hooks/use-trust-line-validation";
 
 interface TransferModalProps {
   sender: WalletInfo;
@@ -32,9 +32,6 @@ export function TransferModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [trustLineOk, setTrustLineOk] = useState<boolean | null>(null);
-  const [checkingTrustLine, setCheckingTrustLine] = useState(false);
-  const [ripplingOk, setRipplingOk] = useState<boolean | null>(null);
 
   const otherRecipients = recipients.filter((r) => r.address !== sender.address);
 
@@ -56,70 +53,12 @@ export function TransferModal({
   const destinationAddress =
     recipientMode === "known" ? selectedRecipient : customRecipient.trim();
 
-  // Check if the recipient has a trust line and the issuer has rippling enabled
-  useEffect(() => {
-    if (!selectedBalance || selectedBalance.currency === Assets.XRP || !destinationAddress) {
-      setTrustLineOk(null);
-      setRipplingOk(null);
-      return;
-    }
-
-    // Sending back to the issuer (burn) — no trust line needed
-    if (destinationAddress === selectedBalance.issuer) {
-      setTrustLineOk(true);
-      setRipplingOk(null);
-      setCheckingTrustLine(false);
-      return;
-    }
-
-    let cancelled = false;
-    setCheckingTrustLine(true);
-    setTrustLineOk(null);
-    setRipplingOk(null);
-
-    (async () => {
-      try {
-        const res = await fetch(
-          `/api/accounts/${encodeURIComponent(destinationAddress)}/trustlines?network=${network}`,
-        );
-        if (!res.ok || cancelled) {
-          if (!cancelled) setTrustLineOk(null);
-          return;
-        }
-        const data = await res.json();
-        const lines: { currency: string; account: string }[] = data.trustLines ?? [];
-        const match = lines.some(
-          (l) => l.account === selectedBalance.issuer &&
-            (l.currency === selectedBalance.currency ||
-              // handle hex-encoded currency codes
-              decodeCurrency(l.currency) === selectedBalance.currency),
-        );
-        if (!cancelled) setTrustLineOk(match);
-
-        // If trust line exists and sender is not the issuer, check rippling
-        if (match && selectedBalance.issuer && sender.address !== selectedBalance.issuer) {
-          try {
-            const issuerRes = await fetch(
-              `/api/accounts/${encodeURIComponent(selectedBalance.issuer)}?network=${network}`,
-            );
-            if (issuerRes.ok && !cancelled) {
-              const issuerData = await issuerRes.json();
-              const flags: number = issuerData.account_data?.Flags ?? 0;
-              if (!cancelled) setRipplingOk((flags & LSF_DEFAULT_RIPPLE) !== 0);
-            }
-          } catch {
-            // non-fatal — leave as null
-          }
-        }
-      } catch {
-        if (!cancelled) setTrustLineOk(null);
-      } finally {
-        if (!cancelled) setCheckingTrustLine(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [selectedBalance, destinationAddress, network, sender.address]);
+  const { trustLineOk, checkingTrustLine, ripplingOk } = useTrustLineValidation({
+    selectedBalance,
+    destinationAddress,
+    network,
+    senderAddress: sender.address,
+  });
 
   const currencyLabel = (b: BalanceEntry) => {
     if (b.currency === Assets.XRP) return `${Assets.XRP} (${b.value})`;
@@ -186,25 +125,7 @@ export function TransferModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Send Currency
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-          >
-            ✕
-          </button>
-        </div>
-
+    <ModalShell title="Send Currency" onClose={onClose}>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           From: <span className="font-mono">{sender.address}</span>
         </p>
@@ -359,7 +280,6 @@ export function TransferModal({
             </button>
           </form>
         )}
-      </div>
-    </div>
+    </ModalShell>
   );
 }

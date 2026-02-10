@@ -33,6 +33,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/accounts/[address]/offers` | GET | List account's open DEX offers | `test-dex-offers.sh` |
 | `/api/accounts/[address]/credentials` | GET | List account's credentials (XLS-70) | `test-credentials.sh` |
 | `/api/accounts/[address]/domains` | GET | List account's permissioned domains (XLS-80) | `test-domains.sh` |
+| `/api/accounts/[address]/rippling` | POST | Enable DefaultRipple flag & repair NoRipple trust lines | `test-rippling.sh` |
 | `/api/currencies/issue` | POST | Issue currency (Payment from issuer) | `test-issue-currency.sh` |
 | `/api/transfers` | POST | Transfer issued currency | `test-transfer.sh` |
 | `/api/credentials/create` | POST | Issue a credential (CredentialCreate) | `test-credentials.sh` |
@@ -43,6 +44,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/dex/offers` | POST | Place a DEX offer (OfferCreate), optional `domainID` for permissioned DEX | `test-dex-offers.sh`, `test-permissioned-dex.sh` |
 | `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) | `test-dex-offers.sh` |
 | `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param | `test-dex-offers.sh` |
+| `/api/dex/trades` | GET | Recent trades for a currency pair | — |
 
 ### Frontend Pages
 
@@ -58,6 +60,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 
 | Script | Purpose |
 |---|---|
+| `test-all.sh` | Runs all individual test scripts and reports pass/fail summary |
 | `setup-full-state.sh` | Bootstraps a full demo environment (wallets, trust lines, currencies, credentials, domain) and saves state to `examples/` |
 | `make-market.sh` | Places 3-level bid/ask ladders across 6 currency pairs on the DEX; auto-reads latest state from `examples/` |
 | `test-rippling.sh` | Tests DefaultRipple flag behavior and verifies peer-to-peer transfers work after enabling rippling |

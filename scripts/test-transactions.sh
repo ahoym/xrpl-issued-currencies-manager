@@ -15,16 +15,5 @@ ADDRESS=$(jq -r '.address' "$ACCOUNT_FILE")
 echo "=== Transactions ==="
 echo "GET ${BASE_URL}/api/accounts/${ADDRESS}/transactions?limit=5"
 
-RESPONSE=$(curl -s -w "\n%{http_code}" "${BASE_URL}/api/accounts/${ADDRESS}/transactions?network=testnet&limit=5")
-
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-BODY=$(echo "$RESPONSE" | sed '$d')
-
-if [ "$HTTP_CODE" -eq 200 ]; then
-  echo "PASS: Transactions retrieved (HTTP ${HTTP_CODE})"
-  echo "$BODY" | jq .
-else
-  echo "FAIL: HTTP ${HTTP_CODE}"
-  echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
-  exit 1
-fi
+BODY=$(api_get "/api/accounts/${ADDRESS}/transactions?network=${NETWORK}&limit=5")
+echo "$BODY" | jq .

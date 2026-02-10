@@ -7,61 +7,28 @@ echo "=== End-to-End: Credentials ==="
 # Step 1: Generate credential issuer account
 echo ""
 echo "--- Step 1: Generate credential issuer account ---"
-ISSUER=$(curl -s -X POST "${BASE_URL}/api/accounts/generate" \
-  -H "Content-Type: application/json" \
-  -d '{"network":"testnet"}')
-
+ISSUER=$(generate_account "$NETWORK")
 ISSUER_ADDRESS=$(echo "$ISSUER" | jq -r '.address')
 ISSUER_SEED=$(echo "$ISSUER" | jq -r '.seed')
 echo "Credential Issuer: ${ISSUER_ADDRESS}"
 
-if [ "$ISSUER_ADDRESS" = "null" ] || [ -z "$ISSUER_ADDRESS" ]; then
-  echo "FAIL: Could not generate credential issuer account"
-  exit 1
-fi
-
 # Step 2: Generate subject account
 echo ""
 echo "--- Step 2: Generate subject account ---"
-SUBJECT=$(curl -s -X POST "${BASE_URL}/api/accounts/generate" \
-  -H "Content-Type: application/json" \
-  -d '{"network":"testnet"}')
-
+SUBJECT=$(generate_account "$NETWORK")
 SUBJECT_ADDRESS=$(echo "$SUBJECT" | jq -r '.address')
 SUBJECT_SEED=$(echo "$SUBJECT" | jq -r '.seed')
 echo "Subject: ${SUBJECT_ADDRESS}"
 
-if [ "$SUBJECT_ADDRESS" = "null" ] || [ -z "$SUBJECT_ADDRESS" ]; then
-  echo "FAIL: Could not generate subject account"
-  exit 1
-fi
-
 # Step 3: Create credential
 echo ""
 echo "--- Step 3: Create credential (issuer -> subject, type=KYC) ---"
-CREATE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/create" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"seed\": \"${ISSUER_SEED}\",
-    \"subject\": \"${SUBJECT_ADDRESS}\",
-    \"credentialType\": \"KYC\",
-    \"network\": \"testnet\"
-  }")
-
-CREATE_CODE=$(echo "$CREATE" | tail -1)
-if [ "$CREATE_CODE" -eq 201 ]; then
-  echo "PASS: Credential created"
-else
-  CREATE_BODY=$(echo "$CREATE" | sed '$d')
-  echo "FAIL: Credential creation failed (HTTP ${CREATE_CODE})"
-  echo "$CREATE_BODY" | jq . 2>/dev/null || echo "$CREATE_BODY"
-  exit 1
-fi
+create_credential "$ISSUER_SEED" "$SUBJECT_ADDRESS" "KYC" "$NETWORK" > /dev/null
 
 # Step 4: List credentials for subject (should be unaccepted)
 echo ""
 echo "--- Step 4: List subject credentials (expect unaccepted) ---"
-LIST=$(curl -s "${BASE_URL}/api/accounts/${SUBJECT_ADDRESS}/credentials?network=testnet&role=subject")
+LIST=$(api_get "/api/accounts/${SUBJECT_ADDRESS}/credentials?network=${NETWORK}&role=subject")
 CRED_COUNT=$(echo "$LIST" | jq '.credentials | length')
 ACCEPTED=$(echo "$LIST" | jq -r '.credentials[0].accepted')
 echo "Credential count: ${CRED_COUNT}, accepted: ${ACCEPTED}"
@@ -77,29 +44,12 @@ fi
 # Step 5: Accept credential
 echo ""
 echo "--- Step 5: Accept credential ---"
-ACCEPT=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/accept" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"seed\": \"${SUBJECT_SEED}\",
-    \"issuer\": \"${ISSUER_ADDRESS}\",
-    \"credentialType\": \"KYC\",
-    \"network\": \"testnet\"
-  }")
-
-ACCEPT_CODE=$(echo "$ACCEPT" | tail -1)
-if [ "$ACCEPT_CODE" -eq 201 ]; then
-  echo "PASS: Credential accepted"
-else
-  ACCEPT_BODY=$(echo "$ACCEPT" | sed '$d')
-  echo "FAIL: Credential accept failed (HTTP ${ACCEPT_CODE})"
-  echo "$ACCEPT_BODY" | jq . 2>/dev/null || echo "$ACCEPT_BODY"
-  exit 1
-fi
+accept_credential "$SUBJECT_SEED" "$ISSUER_ADDRESS" "KYC" "$NETWORK" > /dev/null
 
 # Step 6: List credentials (should now be accepted)
 echo ""
 echo "--- Step 6: List subject credentials (expect accepted) ---"
-LIST2=$(curl -s "${BASE_URL}/api/accounts/${SUBJECT_ADDRESS}/credentials?network=testnet&role=subject")
+LIST2=$(api_get "/api/accounts/${SUBJECT_ADDRESS}/credentials?network=${NETWORK}&role=subject")
 ACCEPTED2=$(echo "$LIST2" | jq -r '.credentials[0].accepted')
 echo "Accepted: ${ACCEPTED2}"
 
@@ -114,29 +64,17 @@ fi
 # Step 7: Delete credential (by issuer)
 echo ""
 echo "--- Step 7: Delete credential ---"
-DELETE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}/api/credentials/delete" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"seed\": \"${ISSUER_SEED}\",
-    \"subject\": \"${SUBJECT_ADDRESS}\",
-    \"credentialType\": \"KYC\",
-    \"network\": \"testnet\"
-  }")
-
-DELETE_CODE=$(echo "$DELETE" | tail -1)
-if [ "$DELETE_CODE" -eq 201 ]; then
-  echo "PASS: Credential deleted"
-else
-  DELETE_BODY=$(echo "$DELETE" | sed '$d')
-  echo "FAIL: Credential delete failed (HTTP ${DELETE_CODE})"
-  echo "$DELETE_BODY" | jq . 2>/dev/null || echo "$DELETE_BODY"
-  exit 1
-fi
+api_post "/api/credentials/delete" "{
+  \"seed\": \"${ISSUER_SEED}\",
+  \"subject\": \"${SUBJECT_ADDRESS}\",
+  \"credentialType\": \"KYC\",
+  \"network\": \"${NETWORK}\"
+}" > /dev/null
 
 # Step 8: Verify credential is gone
 echo ""
 echo "--- Step 8: Verify credential deleted ---"
-LIST3=$(curl -s "${BASE_URL}/api/accounts/${SUBJECT_ADDRESS}/credentials?network=testnet&role=subject")
+LIST3=$(api_get "/api/accounts/${SUBJECT_ADDRESS}/credentials?network=${NETWORK}&role=subject")
 CRED_COUNT3=$(echo "$LIST3" | jq '.credentials | length')
 echo "Credential count: ${CRED_COUNT3}"
 

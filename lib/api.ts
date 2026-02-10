@@ -3,6 +3,7 @@ import { Wallet, isValidClassicAddress } from "xrpl";
 import type { TxResponse } from "xrpl";
 import type { ApiError } from "./xrpl/types";
 import { MAX_CREDENTIAL_TYPE_LENGTH } from "./xrpl/constants";
+import { Assets } from "./assets";
 
 // ---------------------------------------------------------------------------
 // Request helpers
@@ -113,6 +114,67 @@ export function validatePositiveAmount(amount: string, fieldName: string): Respo
     );
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Currency pair validation (orderbook / trades)
+// ---------------------------------------------------------------------------
+
+/** Validated currency pair returned by `validateCurrencyPair`. */
+export interface CurrencyPair {
+  baseCurrency: string;
+  baseIssuer: string | undefined;
+  quoteCurrency: string;
+  quoteIssuer: string | undefined;
+}
+
+/**
+ * Validate base/quote currency pair query params from a NextRequest.
+ * Returns either a 400 Response (error) or a validated CurrencyPair object.
+ */
+export function validateCurrencyPair(request: NextRequest): Response | CurrencyPair {
+  const sp = request.nextUrl.searchParams;
+  const baseCurrency = sp.get("base_currency");
+  const baseIssuer = sp.get("base_issuer") ?? undefined;
+  const quoteCurrency = sp.get("quote_currency");
+  const quoteIssuer = sp.get("quote_issuer") ?? undefined;
+
+  if (!baseCurrency || !quoteCurrency) {
+    return Response.json(
+      { error: "Missing required query params: base_currency, quote_currency" } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  if (baseCurrency !== Assets.XRP && !baseIssuer) {
+    return Response.json(
+      { error: "base_issuer is required for non-XRP base currency" } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  if (quoteCurrency !== Assets.XRP && !quoteIssuer) {
+    return Response.json(
+      { error: "quote_issuer is required for non-XRP quote currency" } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  if (baseIssuer && !isValidClassicAddress(baseIssuer)) {
+    return Response.json(
+      { error: "Invalid base_issuer address" } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  if (quoteIssuer && !isValidClassicAddress(quoteIssuer)) {
+    return Response.json(
+      { error: "Invalid quote_issuer address" } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  return { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer };
 }
 
 // ---------------------------------------------------------------------------

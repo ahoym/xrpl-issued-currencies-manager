@@ -7,11 +7,12 @@ import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { useAppState } from "@/lib/hooks/use-app-state";
-import { inputClass, labelClass, errorTextClass } from "@/lib/ui/ui";
 import { BalanceDisplay } from "../../components/balance-display";
 import { ExplorerLink } from "../../components/explorer-link";
 import { SecretField } from "./secret-field";
 import { WalletSetupModal } from "./wallet-setup-modal";
+import { TrustLineList } from "./trust-line-list";
+import { CustomTrustLineForm } from "./custom-trust-line-form";
 
 interface RecipientCardProps {
   recipient: WalletInfo;
@@ -31,15 +32,9 @@ export function RecipientCard({
   const { state: { network } } = useAppState();
   const [collapsed, setCollapsed] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [showCustomTrust, setShowCustomTrust] = useState(false);
   const [trustingRlusd, setTrustingRlusd] = useState(false);
   const [rlusdError, setRlusdError] = useState<string | null>(null);
-
-  const [showCustomTrust, setShowCustomTrust] = useState(false);
-  const [customIssuer, setCustomIssuer] = useState("");
-  const [customCurrency, setCustomCurrency] = useState("");
-  const [customLimit, setCustomLimit] = useState(DEFAULT_TRUST_LINE_LIMIT);
-  const [customTrusting, setCustomTrusting] = useState(false);
-  const [customTrustError, setCustomTrustError] = useState<string | null>(null);
 
   const { lines, refetch } = useFetchTrustLines(
     recipient.address,
@@ -109,42 +104,10 @@ export function RecipientCard({
     }
   }
 
-  async function handleCustomTrust() {
-    if (customTrusting) return;
-    const issuerAddr = customIssuer.trim();
-    const currency = customCurrency.trim();
-    if (!issuerAddr) { setCustomTrustError("Issuer address is required"); return; }
-    if (!currency) { setCustomTrustError("Currency code is required"); return; }
-    setCustomTrusting(true);
-    setCustomTrustError(null);
-    try {
-      const res = await fetch(`/api/accounts/${recipient.address}/trustlines`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seed: recipient.seed,
-          currency,
-          issuer: issuerAddr,
-          limit: customLimit,
-          network,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCustomTrustError(data.error ?? "Failed to create trust line");
-      } else {
-        refetch();
-        onRefresh();
-        setCustomIssuer("");
-        setCustomCurrency("");
-        setCustomLimit(DEFAULT_TRUST_LINE_LIMIT);
-        setShowCustomTrust(false);
-      }
-    } catch {
-      setCustomTrustError("Network error");
-    } finally {
-      setCustomTrusting(false);
-    }
+  function handleTrustLineCreated() {
+    refetch();
+    onRefresh();
+    setShowCustomTrust(false);
   }
 
   function handleSetupComplete() {
@@ -154,13 +117,11 @@ export function RecipientCard({
 
   return (
     <div className="rounded-md border border-zinc-200 dark:border-zinc-700">
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={() => setCollapsed((v) => !v)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setCollapsed((v) => !v); } }}
         aria-expanded={!collapsed}
-        className="flex w-full cursor-pointer items-center justify-between p-4 text-left font-mono text-sm"
+        className="flex w-full cursor-pointer items-center justify-between bg-transparent border-none p-4 text-left font-mono text-sm"
       >
         <div>
           <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
@@ -169,7 +130,7 @@ export function RecipientCard({
         <span className="ml-4 text-zinc-400 dark:text-zinc-500">
           {collapsed ? "▸" : "▾"}
         </span>
-      </div>
+      </button>
 
       {!collapsed && (
         <div className="px-4 pb-4">
@@ -177,23 +138,7 @@ export function RecipientCard({
             <SecretField label="Seed" value={recipient.seed} />
           </div>
 
-          {allTrustLineBadges.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {allTrustLineBadges.map((badge) => (
-                <span
-                  key={`${badge.currency}:${badge.issuerAddress}`}
-                  title={badge.issuerAddress}
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    badge.isLocal
-                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                  }`}
-                >
-                  {badge.currency}{!badge.isLocal && " (ext)"}
-                </span>
-              ))}
-            </div>
-          )}
+          <TrustLineList badges={allTrustLineBadges} />
 
           <BalanceDisplay
             address={recipient.address}
@@ -217,53 +162,18 @@ export function RecipientCard({
 
           <div className="mt-2">
             <button
-              onClick={() => { setShowCustomTrust((v) => !v); setCustomTrustError(null); }}
+              onClick={() => setShowCustomTrust((v) => !v)}
               className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
             >
               {showCustomTrust ? "Cancel" : "Add Custom Trust Line"}
             </button>
             {showCustomTrust && (
-              <div className="mt-2 space-y-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
-                <div>
-                  <label className={labelClass}>Issuer Address</label>
-                  <input
-                    type="text"
-                    value={customIssuer}
-                    onChange={(e) => setCustomIssuer(e.target.value)}
-                    placeholder="rXXXXXXXX..."
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Currency Code</label>
-                  <input
-                    type="text"
-                    value={customCurrency}
-                    onChange={(e) => setCustomCurrency(e.target.value)}
-                    placeholder="USD"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Limit</label>
-                  <input
-                    type="text"
-                    value={customLimit}
-                    onChange={(e) => setCustomLimit(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <button
-                  onClick={handleCustomTrust}
-                  disabled={customTrusting}
-                  className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {customTrusting ? "Creating..." : "Create Trust Line"}
-                </button>
-                {customTrustError && (
-                  <p className={errorTextClass}>{customTrustError}</p>
-                )}
-              </div>
+              <CustomTrustLineForm
+                recipientAddress={recipient.address}
+                recipientSeed={recipient.seed}
+                network={network}
+                onSuccess={handleTrustLineCreated}
+              />
             )}
           </div>
 

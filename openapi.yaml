@@ -187,6 +187,128 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /api/accounts/{address}/credentials:
+    get:
+      summary: List credentials for an account (XLS-70)
+      operationId: getAccountCredentials
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [issuer, subject]
+          description: Filter by role
+      responses:
+        "200":
+          description: Account credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  credentials:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CredentialInfo"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/accounts/{address}/domains:
+    get:
+      summary: List permissioned domains owned by an account (XLS-80)
+      operationId: getAccountDomains
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: Account domains
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  domains:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DomainInfo"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/accounts/{address}/rippling:
+    post:
+      summary: Enable DefaultRipple and clear NoRipple on existing trust lines
+      operationId: enableRippling
+      parameters:
+        - $ref: "#/components/parameters/address"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seed]
+              properties:
+                seed:
+                  type: string
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+      responses:
+        "200":
+          description: Rippling enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      trustLinesUpdated:
+                        type: integer
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /api/currencies/issue:
     post:
       summary: Issue currency from issuer to recipient
@@ -406,6 +528,337 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OrderBookResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/dex/trades:
+    get:
+      summary: Recent trades for a currency pair
+      operationId: getRecentTrades
+      parameters:
+        - name: base_currency
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: base_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: quote_currency
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: quote_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: domain
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by permissioned domain ID
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: Recent trades
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  base:
+                    type: object
+                    properties:
+                      currency:
+                        type: string
+                      issuer:
+                        type: string
+                  quote:
+                    type: object
+                    properties:
+                      currency:
+                        type: string
+                      issuer:
+                        type: string
+                  trades:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        side:
+                          type: string
+                          enum: [buy, sell]
+                        price:
+                          type: string
+                        baseAmount:
+                          type: string
+                        quoteAmount:
+                          type: string
+                        account:
+                          type: string
+                        time:
+                          type: string
+                        hash:
+                          type: string
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/credentials/create:
+    post:
+      summary: Issue a credential (CredentialCreate)
+      operationId: createCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seed, subject, credentialType]
+              properties:
+                seed:
+                  type: string
+                subject:
+                  type: string
+                credentialType:
+                  type: string
+                expiration:
+                  type: integer
+                uri:
+                  type: string
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+      responses:
+        "201":
+          description: Credential created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/credentials/accept:
+    post:
+      summary: Accept a credential (CredentialAccept)
+      operationId: acceptCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seed, issuer, credentialType]
+              properties:
+                seed:
+                  type: string
+                issuer:
+                  type: string
+                credentialType:
+                  type: string
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+      responses:
+        "201":
+          description: Credential accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/credentials/delete:
+    post:
+      summary: Delete a credential (CredentialDelete)
+      operationId: deleteCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seed, credentialType]
+              properties:
+                seed:
+                  type: string
+                subject:
+                  type: string
+                issuer:
+                  type: string
+                credentialType:
+                  type: string
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+      responses:
+        "201":
+          description: Credential deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/domains/create:
+    post:
+      summary: Create or update a permissioned domain (PermissionedDomainSet)
+      operationId: createDomain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seed, acceptedCredentials]
+              properties:
+                seed:
+                  type: string
+                domainID:
+                  type: string
+                  description: Existing domain ID to update (omit to create new)
+                acceptedCredentials:
+                  type: array
+                  minItems: 1
+                  maxItems: 10
+                  items:
+                    type: object
+                    required: [issuer, credentialType]
+                    properties:
+                      issuer:
+                        type: string
+                      credentialType:
+                        type: string
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+      responses:
+        "201":
+          description: Domain created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                  domainID:
+                    type: string
+                    description: 64-character hex domain ID
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/domains/delete:
+    post:
+      summary: Delete a permissioned domain (PermissionedDomainDelete)
+      operationId: deleteDomain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [seed, domainID]
+              properties:
+                seed:
+                  type: string
+                domainID:
+                  type: string
+                network:
+                  type: string
+                  enum: [testnet, devnet]
+      responses:
+        "201":
+          description: Domain deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
         "400":
           description: Validation error
           content:
@@ -679,3 +1132,42 @@ components:
         marker:
           type: string
           description: Pagination marker for the next page
+
+    CredentialInfo:
+      type: object
+      required: [issuer, subject, credentialType, accepted]
+      properties:
+        issuer:
+          type: string
+        subject:
+          type: string
+        credentialType:
+          type: string
+        accepted:
+          type: boolean
+        expiration:
+          type: integer
+        uri:
+          type: string
+
+    DomainInfo:
+      type: object
+      required: [domainID, owner, acceptedCredentials, sequence]
+      properties:
+        domainID:
+          type: string
+          description: 64-character hex domain ID
+        owner:
+          type: string
+        acceptedCredentials:
+          type: array
+          items:
+            type: object
+            required: [issuer, credentialType]
+            properties:
+              issuer:
+                type: string
+              credentialType:
+                type: string
+        sequence:
+          type: integer

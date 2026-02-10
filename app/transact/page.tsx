@@ -73,13 +73,11 @@ function WalletCard({
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={() => setCollapsed((v) => !v)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setCollapsed((v) => !v); } }}
         aria-expanded={!collapsed}
-        className="flex w-full cursor-pointer items-center justify-between p-4 text-left"
+        className="flex w-full cursor-pointer items-center justify-between bg-transparent border-none p-4 text-left"
       >
         <p className="min-w-0 truncate font-mono text-sm">
           <ExplorerLink address={wallet.address} />
@@ -87,7 +85,7 @@ function WalletCard({
         <span className="ml-4 text-zinc-400 dark:text-zinc-500">
           {collapsed ? "▸" : "▾"}
         </span>
-      </div>
+      </button>
 
       {!collapsed && (
         <div className="px-4 pb-4">

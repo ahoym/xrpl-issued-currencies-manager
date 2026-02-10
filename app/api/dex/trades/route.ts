@@ -1,13 +1,12 @@
 import { NextRequest } from "next/server";
-import { getBalanceChanges, isValidClassicAddress } from "xrpl";
+import { getBalanceChanges } from "xrpl";
 import type { TransactionMetadata, Amount } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
-import { getNetworkParam, apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, validateCurrencyPair, apiErrorResponse } from "@/lib/api";
 import { DEFAULT_ORDERBOOK_LIMIT, MAX_API_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
-import type { ApiError } from "@/lib/xrpl/types";
 import { Assets } from "@/lib/assets";
 
 /** Convert an XRPL Amount to {currency, issuer} for comparison */
@@ -19,49 +18,14 @@ function amountCurrency(amt: Amount): { currency: string; issuer?: string } {
 export async function GET(request: NextRequest) {
   try {
     const sp = request.nextUrl.searchParams;
-    const baseCurrency = sp.get("base_currency");
-    const baseIssuer = sp.get("base_issuer") ?? undefined;
-    const quoteCurrency = sp.get("quote_currency");
-    const quoteIssuer = sp.get("quote_issuer") ?? undefined;
     const rawLimit = parseInt(sp.get("limit") ?? "", 10);
     const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit, MAX_API_LIMIT);
     const network = getNetworkParam(request);
     const domain = sp.get("domain") ?? undefined;
 
-    if (!baseCurrency || !quoteCurrency) {
-      return Response.json(
-        { error: "Missing required query params: base_currency, quote_currency" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (baseCurrency !== Assets.XRP && !baseIssuer) {
-      return Response.json(
-        { error: "base_issuer is required for non-XRP base currency" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (quoteCurrency !== Assets.XRP && !quoteIssuer) {
-      return Response.json(
-        { error: "quote_issuer is required for non-XRP quote currency" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (baseIssuer && !isValidClassicAddress(baseIssuer)) {
-      return Response.json(
-        { error: "Invalid base_issuer address" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (quoteIssuer && !isValidClassicAddress(quoteIssuer)) {
-      return Response.json(
-        { error: "Invalid quote_issuer address" } satisfies ApiError,
-        { status: 400 },
-      );
-    }
+    const pairOrError = validateCurrencyPair(request);
+    if (pairOrError instanceof Response) return pairOrError;
+    const { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer } = pairOrError;
 
     // Determine the issuer account to query — since all issued currency movements
     // touch the issuer's RippleState entries, querying the issuer's account_tx

@@ -3,7 +3,7 @@ import { Wallet, AccountSet, AccountSetAsfFlags } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { getTransactionResult, apiErrorResponse } from "@/lib/api";
-import type { GenerateAccountResponse } from "@/lib/xrpl/types";
+import type { GenerateAccountResponse, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       const setTxResult = getTransactionResult(setResult.result.meta);
       if (setTxResult && setTxResult !== "tesSUCCESS") {
         return Response.json(
-          { error: `Failed to enable DefaultRipple: ${setTxResult}` },
+          { error: `Failed to enable DefaultRipple: ${setTxResult}` } satisfies ApiError,
           { status: 422 },
         );
       }

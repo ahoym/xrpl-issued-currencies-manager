@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { WalletInfo } from "@/lib/types";
 import { inputClass, labelClass, errorTextClass } from "@/lib/ui/ui";
+import { ModalShell } from "@/app/components/modal-shell";
 
 interface CurrencyOption {
   currency: string;
@@ -67,10 +68,7 @@ export function MakeMarketModal({
 
   if (recipients.length === 0) {
     return (
-      <ModalShell onClose={onClose}>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Make Market
-        </h2>
+      <ModalShell title="Make Market" onClose={onClose}>
         <p className={`mt-4 ${errorTextClass}`}>
           No recipient wallets configured. Add wallets in Setup first.
         </p>
@@ -80,10 +78,7 @@ export function MakeMarketModal({
 
   if (!baseCurrency || !quoteCurrency) {
     return (
-      <ModalShell onClose={onClose}>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Make Market
-        </h2>
+      <ModalShell title="Make Market" onClose={onClose}>
         <p className={`mt-4 ${errorTextClass}`}>
           Select a currency pair first.
         </p>
@@ -145,10 +140,7 @@ export function MakeMarketModal({
 
   if (step === "preview") {
     return (
-      <ModalShell onClose={onClose}>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Preview Orders
-        </h2>
+      <ModalShell title="Preview Orders" onClose={onClose}>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           {baseCurrency.currency} / {quoteCurrency.currency} &middot; Mid
           price: {midPrice}
@@ -218,18 +210,7 @@ export function MakeMarketModal({
 
   // step === "form"
   return (
-    <ModalShell onClose={onClose}>
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          Make Market
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-        >
-          ✕
-        </button>
-      </div>
+    <ModalShell title="Make Market" onClose={onClose}>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
         Place a 3-level bid/ask ladder for {baseCurrency.currency} /{" "}
         {quoteCurrency.currency}
@@ -338,23 +319,3 @@ export function MakeMarketModal({
   );
 }
 
-function ModalShell({
-  onClose,
-  children,
-}: {
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-        {children}
-      </div>
-    </div>
-  );
-}
