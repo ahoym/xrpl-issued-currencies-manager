@@ -9,6 +9,23 @@ servers:
     description: Local development server
 
 paths:
+  /api/ping:
+    get:
+      summary: Health check
+      operationId: ping
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
   /api/accounts/generate:
     post:
       summary: Generate and fund a new XRPL account
@@ -521,6 +538,12 @@ paths:
             default: 20
           description: Number of offers per side
         - $ref: "#/components/parameters/network"
+        - name: domain
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by permissioned domain ID
       responses:
         "200":
           description: Order book
@@ -1048,6 +1071,9 @@ components:
         network:
           type: string
           enum: [testnet, devnet]
+        domainID:
+          type: string
+          description: Permissioned domain ID for domain-scoped offers
 
     CancelOfferRequest:
       type: object
@@ -1105,6 +1131,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/OrderBookOffer"
+        domain:
+          type: string
+          description: Permissioned domain ID, echoed back when provided
 
     AccountOffersResponse:
       type: object
