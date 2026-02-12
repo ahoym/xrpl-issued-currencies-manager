@@ -105,3 +105,57 @@ Potential DEX integration points:
 - [OfferCancel Transaction](https://xrpl.org/docs/references/protocol/transactions/types/offercancel)
 - [Offer Ledger Entry](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer)
 - [Trade in the DEX Tutorial](https://xrpl.org/docs/tutorials/how-tos/use-tokens/trade-in-the-decentralized-exchange)
+
+## `book_offers` Funded Amount Behavior
+
+> Learned from implementation experience building the order book UI.
+
+### Unfunded offer handling at the protocol level
+
+The XRPL `book_offers` response **already omits completely unfunded offers** — they are lazily cleaned up when encountered during transaction processing and never appear in API results. However, **partially funded offers** where `taker_gets_funded` or `taker_pays_funded` round down to `"0"` **can still appear**. These must be filtered client-side.
+
+### Funded amount fields
+
+| Field | When present | Meaning |
+|---|---|---|
+| `taker_gets_funded` | Offer is NOT fully funded | Actual fillable amount the taker would receive |
+| `taker_pays_funded` | Offer is NOT fully funded | Actual amount the taker would need to pay |
+| `owner_funds` | Highest-ranked offer per trader | Creator's available balance of `TakerGets` currency |
+
+Key behaviors:
+- **Fully funded offers**: `taker_gets_funded` / `taker_pays_funded` are **absent** — use `taker_gets` / `taker_pays` as-is
+- **Partially funded offers**: these fields show the actual fillable amounts (no extra API calls needed — same `book_offers` response)
+- **Effectively unfunded** (funded value rounds to 0): fields are present with `"0"` — **must filter these out**
+- `owner_funds` only appears on the **highest-ranked offer** when a trader has multiple offers in the same book
+
+### Accurate order book display pattern
+
+When displaying order book data, use `taker_gets_funded ?? taker_gets` (and same for pays) to show actual fillable size instead of the stated offer size. This affects:
+
+1. **Order book rows**: Use funded amounts for size/total columns so users see real available liquidity
+2. **Depth aggregation**: Sum funded amounts (not raw amounts) for accurate bid/ask volume totals and level counts
+3. **Filtering**: Must filter where BOTH `amount > 0` AND `price > 0` — filtering only on amount misses the case where `taker_pays_funded` is `"0"` (producing a 0-price row that still has positive amount)
+
+### Implementation pattern
+
+```typescript
+// In normalizeOffer (API layer):
+...(offer.taker_gets_funded && {
+  taker_gets_funded: fromXrplAmount(offer.taker_gets_funded),
+}),
+...(offer.taker_pays_funded && {
+  taker_pays_funded: fromXrplAmount(offer.taker_pays_funded),
+}),
+
+// In order book component (UI layer):
+const amount = new BigNumber(
+  (o.taker_gets_funded ?? o.taker_gets).value
+);
+const total = new BigNumber(
+  (o.taker_pays_funded ?? o.taker_pays).value
+);
+const price = total.div(amount);
+
+// Filter out effectively-unfunded offers:
+.filter((o) => o.amount.gt(0) && o.price.gt(0));
+```
