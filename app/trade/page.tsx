@@ -72,6 +72,7 @@ export default function TradePage() {
     makeMarketLabel,
     makeMarketDisabled,
     makeMarketExtraClass,
+    marketError,
   } = useMakeMarketExecution({
     sellingCurrency,
     buyingCurrency,
@@ -108,13 +109,20 @@ export default function TradePage() {
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Trade</h1>
-        <button
-          onClick={() => setShowMakeMarket(true)}
-          disabled={makeMarketDisabled}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-80 ${makeMarketExtraClass}`}
-        >
-          {makeMarketLabel}
-        </button>
+        <div className="flex items-center gap-3">
+          {marketError && (
+            <span className="max-w-xs truncate text-xs text-red-600 dark:text-red-400">
+              {marketError}
+            </span>
+          )}
+          <button
+            onClick={() => setShowMakeMarket(true)}
+            disabled={makeMarketDisabled}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-80 ${makeMarketExtraClass}`}
+          >
+            {makeMarketLabel}
+          </button>
+        </div>
       </div>
 
       <WalletSelector

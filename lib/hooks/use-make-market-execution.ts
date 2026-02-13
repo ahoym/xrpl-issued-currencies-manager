@@ -26,7 +26,7 @@ export function useMakeMarketExecution({
 }: UseMakeMarketExecutionOptions) {
   const [showMakeMarket, setShowMakeMarket] = useState(false);
   const [marketExec, setMarketExec] = useState<{ current: number; total: number } | null>(null);
-  const [marketResult, setMarketResult] = useState<{ ok: number; failed: number } | null>(null);
+  const [marketResult, setMarketResult] = useState<{ ok: number; failed: number; firstError?: string } | null>(null);
   const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMakeMarketExecute = useCallback(
@@ -46,6 +46,7 @@ export function useMakeMarketExecution({
 
       let ok = 0;
       let failed = 0;
+      let firstError: string | undefined;
 
       for (let i = 0; i < orders.length; i++) {
         setMarketExec({ current: i + 1, total: orders.length });
@@ -87,14 +88,19 @@ export function useMakeMarketExecution({
             onRefresh();
           } else {
             failed += 1;
+            if (!firstError) {
+              const errData = await res.json().catch(() => null);
+              firstError = errData?.error ?? `HTTP ${res.status}`;
+            }
           }
         } catch {
           failed += 1;
+          if (!firstError) firstError = "Network error";
         }
       }
 
       setMarketExec(null);
-      setMarketResult({ ok, failed });
+      setMarketResult({ ok, failed, firstError });
       onRefresh();
 
       resultTimerRef.current = setTimeout(() => {
@@ -122,6 +128,8 @@ export function useMakeMarketExecution({
       : "bg-green-600 dark:bg-green-700";
   }
 
+  const marketError = marketResult?.firstError ?? null;
+
   return {
     showMakeMarket,
     setShowMakeMarket,
@@ -129,5 +137,6 @@ export function useMakeMarketExecution({
     makeMarketLabel,
     makeMarketDisabled,
     makeMarketExtraClass,
+    marketError,
   };
 }
