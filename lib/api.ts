@@ -217,9 +217,8 @@ export function apiErrorResponse(
   fallbackMessage: string,
   { checkNotFound = false } = {},
 ): Response {
-  const message = process.env.NODE_ENV === "production" || !(err instanceof Error)
-    ? fallbackMessage
-    : err.message;
+  const detail = err instanceof Error ? err.message : String(err);
+  const message = detail || fallbackMessage;
   const status = checkNotFound && message.includes("actNotFound") ? 404 : 500;
   return Response.json({ error: message } satisfies ApiError, { status });
 }
