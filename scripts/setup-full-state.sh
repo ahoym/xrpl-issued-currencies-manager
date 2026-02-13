@@ -37,7 +37,11 @@ fi
 mkdir -p "$EXAMPLES_DIR"
 OUTPUT_FILE="${EXAMPLES_DIR}/setup-state-${NETWORK}-$(date +%Y-%m-%d).json"
 
-RLUSD_ISSUER="rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV"
+# RLUSD issuer only exists on testnet
+case "$NETWORK" in
+  testnet) RLUSD_ISSUER="rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV" ;;
+  *)       RLUSD_ISSUER="" ;;
+esac
 
 # Helper: generate a funded wallet and extract fields
 generate_wallet() {
@@ -239,7 +243,9 @@ for R_ADDR in "$R1_ADDRESS" "$R2_ADDRESS"; do
 
   create_trustline "$R_SEED" "$R_ADDR" "XCAD" "$ISSUER_ADDRESS"
   create_trustline "$R_SEED" "$R_ADDR" "XTHB" "$ISSUER_ADDRESS"
-  create_trustline "$R_SEED" "$R_ADDR" "RLUSD" "$RLUSD_ISSUER"
+  if [ -n "$RLUSD_ISSUER" ]; then
+    create_trustline "$R_SEED" "$R_ADDR" "RLUSD" "$RLUSD_ISSUER"
+  fi
 done
 echo ""
 

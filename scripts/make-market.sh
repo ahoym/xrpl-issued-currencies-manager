@@ -45,7 +45,11 @@ R1_SEED=$(jq -r '.recipients[0].seed' "$STATE_FILE")
 R2_ADDRESS=$(jq -r '.recipients[1].address' "$STATE_FILE")
 R2_SEED=$(jq -r '.recipients[1].seed' "$STATE_FILE")
 
-RLUSD_ISSUER="rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV"
+# RLUSD issuer only exists on testnet
+case "$NETWORK" in
+  testnet) RLUSD_ISSUER="rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV" ;;
+  *)       RLUSD_ISSUER="" ;;
+esac
 
 echo "Issuer:      ${ISSUER_ADDRESS}"
 echo "Recipient 1: ${R1_ADDRESS} (places bids)"
@@ -186,17 +190,22 @@ place_ladder "XTHB" "$ISSUER_ADDRESS" "XRP" "" "0.5" "both"
 # XCAD/XTHB — full two-sided book
 place_ladder "XCAD" "$ISSUER_ADDRESS" "XTHB" "$ISSUER_ADDRESS" "20" "both"
 
-# RLUSD/XRP — bids only (recipients hold no RLUSD to sell)
-echo "  Note: recipients have RLUSD trust lines but no balance"
-place_ladder "RLUSD" "$RLUSD_ISSUER" "XRP" "" "2" "bids"
+if [ -n "$RLUSD_ISSUER" ]; then
+  # RLUSD/XRP — bids only (recipients hold no RLUSD to sell)
+  echo "  Note: recipients have RLUSD trust lines but no balance"
+  place_ladder "RLUSD" "$RLUSD_ISSUER" "XRP" "" "2" "bids"
 
-# XCAD/RLUSD — asks only (can sell XCAD; no RLUSD to bid with)
-echo "  Note: no RLUSD balance to place bids"
-place_ladder "XCAD" "$ISSUER_ADDRESS" "RLUSD" "$RLUSD_ISSUER" "5" "asks"
+  # XCAD/RLUSD — asks only (can sell XCAD; no RLUSD to bid with)
+  echo "  Note: no RLUSD balance to place bids"
+  place_ladder "XCAD" "$ISSUER_ADDRESS" "RLUSD" "$RLUSD_ISSUER" "5" "asks"
 
-# XTHB/RLUSD — asks only (can sell XTHB; no RLUSD to bid with)
-echo "  Note: no RLUSD balance to place bids"
-place_ladder "XTHB" "$ISSUER_ADDRESS" "RLUSD" "$RLUSD_ISSUER" "0.25" "asks"
+  # XTHB/RLUSD — asks only (can sell XTHB; no RLUSD to bid with)
+  echo "  Note: no RLUSD balance to place bids"
+  place_ladder "XTHB" "$ISSUER_ADDRESS" "RLUSD" "$RLUSD_ISSUER" "0.25" "asks"
+else
+  echo "--- Skipping RLUSD pairs (no RLUSD issuer on ${NETWORK}) ---"
+  echo ""
+fi
 
 # =====================================================================
 #  Summary
