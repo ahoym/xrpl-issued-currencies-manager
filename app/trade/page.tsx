@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { useTradingData } from "@/lib/hooks/use-trading-data";
 import { useMakeMarketExecution } from "@/lib/hooks/use-make-market-execution";
 import { useDomainMode } from "@/lib/hooks/use-domain-mode";
+import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { WalletSelector } from "./components/wallet-selector";
 import { CustomCurrencyForm } from "./components/custom-currency-form";
 import { DomainSelector } from "./components/domain-selector";
 import { CurrencyPairSelector } from "./components/currency-pair-selector";
 import { TradeGrid } from "./components/trade-grid";
 import { DEPTH_OPTIONS, type DepthLevel } from "./components/order-book";
+import { OrdersSheet, OrdersSection } from "./components/orders-sheet";
 import { MakeMarketModal } from "./components/make-market-modal";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
@@ -70,6 +72,8 @@ export default function TradePage() {
     loadingOffers,
     recentTrades,
     loadingTrades,
+    filledOrders,
+    loadingFilled,
   } = useTradingData({
     address: focusedWallet?.address,
     sellingValue,
@@ -110,6 +114,62 @@ export default function TradePage() {
     setBuyingValue("");
   }, []);
 
+  // Filter offers to the selected pair and domain
+  const pairSelected = sellingCurrency !== null && buyingCurrency !== null;
+  const pairOffers = useMemo(() => {
+    if (!sellingCurrency || !buyingCurrency) return [];
+    return accountOffers.filter((o) => {
+      if (activeDomainID) {
+        if (o.domainID !== activeDomainID) return false;
+      } else {
+        if (o.domainID) return false;
+      }
+      const getsMatchesSelling = matchesCurrency(o.taker_gets, sellingCurrency.currency, sellingCurrency.issuer);
+      const paysMatchesBuying = matchesCurrency(o.taker_pays, buyingCurrency.currency, buyingCurrency.issuer);
+      const getsMatchesBuying = matchesCurrency(o.taker_gets, buyingCurrency.currency, buyingCurrency.issuer);
+      const paysMatchesSelling = matchesCurrency(o.taker_pays, sellingCurrency.currency, sellingCurrency.issuer);
+      return (getsMatchesSelling && paysMatchesBuying) || (getsMatchesBuying && paysMatchesSelling);
+    });
+  }, [accountOffers, sellingCurrency, buyingCurrency, activeDomainID]);
+
+  // Cancel an offer
+  const [cancellingSeq, setCancellingSeq] = useState<number | null>(null);
+  const handleCancel = useCallback(
+    async (seq: number) => {
+      if (!focusedWallet || cancellingSeq !== null) return;
+      setCancellingSeq(seq);
+      try {
+        const res = await fetch("/api/dex/offers/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ seed: focusedWallet.seed, offerSequence: seq, network: state.network }),
+        });
+        if (res.ok) onRefresh();
+      } catch {
+        // ignore
+      } finally {
+        setCancellingSeq(null);
+      }
+    },
+    [focusedWallet, cancellingSeq, state.network, onRefresh],
+  );
+
+  // Shared orders props
+  const ordersProps = {
+    filledOrders,
+    loadingFilled,
+    offers: pairOffers,
+    loadingOffers,
+    pairSelected,
+    baseCurrency: sellingCurrency?.currency,
+    baseIssuer: sellingCurrency?.issuer,
+    quoteCurrency: buyingCurrency?.currency,
+    quoteIssuer: buyingCurrency?.issuer,
+    cancellingSeq,
+    onCancel: handleCancel,
+    network: state.network,
+  };
+
   // --- RENDER ---
 
   if (!hydrated) {
@@ -121,7 +181,7 @@ export default function TradePage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 lg:pb-[calc(33vh+1.5rem)]">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Trade</h1>
         <div className="flex items-center gap-3">
@@ -182,8 +242,6 @@ export default function TradePage() {
         activeDomainID={activeDomainID}
         orderBook={orderBook}
         loadingOrderBook={loadingOrderBook}
-        accountOffers={accountOffers}
-        loadingOffers={loadingOffers}
         recentTrades={recentTrades}
         loadingTrades={loadingTrades}
         balances={balances}
@@ -193,6 +251,8 @@ export default function TradePage() {
         depth={depth}
         onDepthChange={setDepth}
       />
+
+      <OrdersSection {...ordersProps} />
 
       {showMakeMarket && (
         <MakeMarketModal
@@ -204,6 +264,8 @@ export default function TradePage() {
           onExecute={handleMakeMarketExecute}
         />
       )}
+
+      <OrdersSheet {...ordersProps} />
     </div>
   );
 }

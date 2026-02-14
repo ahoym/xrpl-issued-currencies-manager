@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { OrderBook, type DepthLevel } from "./order-book";
 import { TradeForm } from "./trade-form";
-import { MyOpenOrders } from "./my-open-orders";
 import { RecentTrades } from "./recent-trades";
 import { BalancesPanel } from "./balances-panel";
-import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import type { TradeFormPrefill } from "./trade-form";
 import type { WalletInfo, BalanceEntry } from "@/lib/types";
-import type { CurrencyOption, OrderBookData, AccountOffer } from "@/lib/hooks/use-trading-data";
+import type { CurrencyOption, OrderBookData } from "@/lib/hooks/use-trading-data";
 import type { RecentTrade } from "./recent-trades";
 
 interface TradeGridProps {
@@ -19,8 +17,6 @@ interface TradeGridProps {
   activeDomainID: string | undefined;
   orderBook: OrderBookData | null;
   loadingOrderBook: boolean;
-  accountOffers: AccountOffer[];
-  loadingOffers: boolean;
   recentTrades: RecentTrade[];
   loadingTrades: boolean;
   balances: BalanceEntry[];
@@ -38,8 +34,6 @@ export function TradeGrid({
   activeDomainID,
   orderBook,
   loadingOrderBook,
-  accountOffers,
-  loadingOffers,
   recentTrades,
   loadingTrades,
   balances,
@@ -49,75 +43,10 @@ export function TradeGrid({
   depth,
   onDepthChange,
 }: TradeGridProps) {
-  const [cancellingSeq, setCancellingSeq] = useState<number | null>(null);
   const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
   const prefillKeyRef = useRef(0);
 
   const pairSelected = sellingCurrency !== null && buyingCurrency !== null;
-
-  // Filter offers to the selected pair and domain
-  const pairOffers = useMemo(() => {
-    if (!sellingCurrency || !buyingCurrency) return [];
-    return accountOffers.filter((o) => {
-      if (activeDomainID) {
-        if (o.domainID !== activeDomainID) return false;
-      } else {
-        if (o.domainID) return false;
-      }
-
-      const getsMatchesSelling = matchesCurrency(
-        o.taker_gets,
-        sellingCurrency.currency,
-        sellingCurrency.issuer,
-      );
-      const paysMatchesBuying = matchesCurrency(
-        o.taker_pays,
-        buyingCurrency.currency,
-        buyingCurrency.issuer,
-      );
-      const getsMatchesBuying = matchesCurrency(
-        o.taker_gets,
-        buyingCurrency.currency,
-        buyingCurrency.issuer,
-      );
-      const paysMatchesSelling = matchesCurrency(
-        o.taker_pays,
-        sellingCurrency.currency,
-        sellingCurrency.issuer,
-      );
-      return (
-        (getsMatchesSelling && paysMatchesBuying) ||
-        (getsMatchesBuying && paysMatchesSelling)
-      );
-    });
-  }, [accountOffers, sellingCurrency, buyingCurrency, activeDomainID]);
-
-  // Cancel an offer
-  const handleCancel = useCallback(
-    async (seq: number) => {
-      if (!focusedWallet || cancellingSeq !== null) return;
-      setCancellingSeq(seq);
-      try {
-        const res = await fetch("/api/dex/offers/cancel", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            seed: focusedWallet.seed,
-            offerSequence: seq,
-            network,
-          }),
-        });
-        if (res.ok) {
-          onRefresh();
-        }
-      } catch {
-        // ignore
-      } finally {
-        setCancellingSeq(null);
-      }
-    },
-    [focusedWallet, cancellingSeq, network, onRefresh],
-  );
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-7">
@@ -133,7 +62,7 @@ export function TradeGrid({
         />
       </div>
 
-      {/* Middle column: Order Book + My Open Orders */}
+      {/* Middle column: Order Book */}
       <div className="space-y-6 lg:col-span-3">
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           {activeDomainID && (
@@ -167,16 +96,6 @@ export function TradeGrid({
             </div>
           )}
         </div>
-
-        <MyOpenOrders
-          offers={pairOffers}
-          loading={loadingOffers}
-          pairSelected={pairSelected}
-          baseCurrency={sellingCurrency?.currency}
-          quoteCurrency={buyingCurrency?.currency}
-          cancellingSeq={cancellingSeq}
-          onCancel={handleCancel}
-        />
       </div>
 
       {/* Right column: Balances + Trade Form */}

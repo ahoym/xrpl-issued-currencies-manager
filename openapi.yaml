@@ -433,6 +433,78 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /api/accounts/{address}/filled-orders:
+    get:
+      summary: List an account's filled orders for a currency pair
+      operationId: getFilledOrders
+      parameters:
+        - $ref: "#/components/parameters/address"
+        - $ref: "#/components/parameters/network"
+        - name: base_currency
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Base currency code (e.g., "XRP" or "USD")
+        - name: base_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Base currency issuer (required for non-XRP)
+        - name: quote_currency
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Quote currency code
+        - name: quote_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Quote currency issuer (required for non-XRP)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Maximum number of filled orders to return (max 400)
+      responses:
+        "200":
+          description: Filled orders for the account
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [address, filledOrders]
+                properties:
+                  address:
+                    type: string
+                  filledOrders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FilledOrder"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /api/dex/offers:
     post:
       summary: Place a DEX offer (OfferCreate)
@@ -920,6 +992,26 @@ components:
       properties:
         error:
           type: string
+
+    FilledOrder:
+      type: object
+      required: [side, price, baseAmount, quoteAmount, time, hash]
+      properties:
+        side:
+          type: string
+          enum: [buy, sell]
+        price:
+          type: string
+        baseAmount:
+          type: string
+        quoteAmount:
+          type: string
+        time:
+          type: string
+          description: ISO 8601 timestamp
+        hash:
+          type: string
+          description: Transaction hash
 
     GenerateAccountResponse:
       type: object

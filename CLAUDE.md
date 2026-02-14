@@ -33,6 +33,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/accounts/[address]/trustlines` | GET, POST | View/create trust lines | `test-trustlines.sh` |
 | `/api/accounts/[address]/transactions` | GET | Transaction history | `test-transactions.sh` |
 | `/api/accounts/[address]/offers` | GET | List account's open DEX offers | `test-dex-offers.sh` |
+| `/api/accounts/[address]/filled-orders` | GET | Filled order history for a currency pair | — |
 | `/api/accounts/[address]/credentials` | GET | List account's credentials (XLS-70) | `test-credentials.sh` |
 | `/api/accounts/[address]/domains` | GET | List account's permissioned domains (XLS-80) | `test-domains.sh` |
 | `/api/accounts/[address]/rippling` | POST | Enable DefaultRipple flag & repair NoRipple trust lines | `test-rippling.sh` |
@@ -64,6 +65,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `offers.ts` | `VALID_OFFER_FLAGS`, `resolveOfferFlags()` — flag strings to bitwise flags |
 | `credentials.ts` | `encodeCredentialType()`, `decodeCredentialType()` — hex encoding for credential types (Node-only) |
 | `build-dex-amount.ts` | `buildDexAmount()` — construct `DexAmount` objects for XRP or issued currencies |
+| `filled-orders.ts` | `parseFilledOrders()` — extract filled orders from `account_tx` response for a currency pair |
 
 **Shared Types** (`lib/`)
 
