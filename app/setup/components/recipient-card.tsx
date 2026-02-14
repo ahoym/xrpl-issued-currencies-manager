@@ -7,6 +7,7 @@ import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
 import { DEFAULT_TRUST_LINE_LIMIT } from "@/lib/xrpl/constants";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { errorTextClass } from "@/lib/ui/ui";
 import { BalanceDisplay } from "../../components/balance-display";
 import { ExplorerLink } from "../../components/explorer-link";
 import { SecretField } from "./secret-field";
@@ -35,6 +36,9 @@ export function RecipientCard({
   const [showCustomTrust, setShowCustomTrust] = useState(false);
   const [trustingRlusd, setTrustingRlusd] = useState(false);
   const [rlusdError, setRlusdError] = useState<string | null>(null);
+  const [funding, setFunding] = useState(false);
+  const [fundResult, setFundResult] = useState<string | null>(null);
+  const [fundError, setFundError] = useState<string | null>(null);
 
   const { lines, refetch } = useFetchTrustLines(
     recipient.address,
@@ -104,6 +108,29 @@ export function RecipientCard({
     }
   }
 
+  async function handleFund() {
+    setFunding(true);
+    setFundResult(null);
+    setFundError(null);
+    try {
+      const res = await fetch(`/api/accounts/${recipient.address}/fund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ network }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFundError(data.error ?? "Faucet request failed");
+      } else {
+        setFundResult(`Funded ${data.amount} XRP`);
+      }
+    } catch {
+      setFundError("Network error — could not reach faucet");
+    } finally {
+      setFunding(false);
+    }
+  }
+
   function handleTrustLineCreated() {
     refetch();
     onRefresh();
@@ -144,6 +171,18 @@ export function RecipientCard({
             address={recipient.address}
             refreshKey={refreshKey}
           />
+
+          <div className="mt-2 flex items-center gap-3">
+            <button
+              onClick={handleFund}
+              disabled={funding}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-50"
+            >
+              {funding ? "Requesting..." : "Fund from Faucet"}
+            </button>
+            {fundResult && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{fundResult}</span>}
+            {fundError && <span className={`text-xs ${errorTextClass}`}>{fundError}</span>}
+          </div>
 
           {rlusdIssuer && !hasRlusdTrust && (
             <div className="mt-2">

@@ -33,6 +33,9 @@ export function IssuerSetup({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done" | "needs_repair">("idle");
+  const [funding, setFunding] = useState(false);
+  const [fundResult, setFundResult] = useState<string | null>(null);
+  const [fundError, setFundError] = useState<string | null>(null);
 
   const checkRippling = useCallback(async () => {
     if (!issuer) return;
@@ -112,6 +115,30 @@ export function IssuerSetup({
     }
   }
 
+  async function handleFund() {
+    if (!issuer) return;
+    setFunding(true);
+    setFundResult(null);
+    setFundError(null);
+    try {
+      const res = await fetch(`/api/accounts/${issuer.address}/fund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ network }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFundError(data.error ?? "Faucet request failed");
+      } else {
+        setFundResult(`Funded ${data.amount} XRP`);
+      }
+    } catch {
+      setFundError("Network error — could not reach faucet");
+    } finally {
+      setFunding(false);
+    }
+  }
+
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -183,6 +210,17 @@ export function IssuerSetup({
                 address={issuer.address}
                 refreshKey={refreshKey}
               />
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleFund}
+                  disabled={funding}
+                  className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {funding ? "Requesting..." : "Fund from Faucet"}
+                </button>
+                {fundResult && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{fundResult}</span>}
+                {fundError && <span className={`text-xs ${errorTextClass}`}>{fundError}</span>}
+              </div>
               <CurrencyManager
                 currencies={currencies}
                 onLedgerCurrencies={onLedgerCurrencies}
