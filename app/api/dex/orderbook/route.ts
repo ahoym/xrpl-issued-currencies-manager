@@ -10,8 +10,8 @@ import { Assets } from "@/lib/assets";
 function normalizeOffer(offer: BookOffer) {
   return {
     account: offer.Account,
-    taker_gets: fromXrplAmount(offer.TakerGets),
-    taker_pays: fromXrplAmount(offer.TakerPays),
+    taker_gets: fromXrplAmount(offer.taker_gets_funded),
+    taker_pays: fromXrplAmount(offer.taker_pays_funded),
     quality: offer.quality,
     owner_funds: offer.owner_funds,
     flags: offer.Flags,
