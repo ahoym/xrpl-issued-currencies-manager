@@ -111,7 +111,6 @@ export function TradeGrid({
               prefill={prefill}
               domainID={activeDomainID || undefined}
               onSubmitted={onRefresh}
-              balances={balances}
             />
           ) : (
             <div className="py-8 text-center">
