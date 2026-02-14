@@ -49,6 +49,25 @@ export interface DepthSummary {
   askLevels: number;
 }
 
+export interface FilledOrder {
+  side: "buy" | "sell";
+  price: string;
+  baseAmount: string;
+  quoteAmount: string;
+  time: string;
+  hash: string;
+}
+
+export interface AccountOffer {
+  seq: number;
+  flags: number;
+  taker_gets: OrderBookAmount;
+  taker_pays: OrderBookAmount;
+  quality: string;
+  expiration?: number;
+  domainID?: string;
+}
+
 export interface CredentialInfo {
   issuer: string;
   subject: string;
