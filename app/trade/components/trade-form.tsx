@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import type { WalletInfo } from "@/lib/types";
+import { useState, useEffect, useRef, useMemo } from "react";
+import type { WalletInfo, BalanceEntry } from "@/lib/types";
+import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
@@ -27,6 +28,7 @@ interface TradeFormProps {
   buyingCurrency: CurrencyOption;
   prefill?: TradeFormPrefill;
   domainID?: string;
+  balances?: BalanceEntry[];
   onSubmitted: () => void;
 }
 
@@ -45,6 +47,7 @@ export function TradeForm({
   buyingCurrency,
   prefill,
   domainID,
+  balances,
   onSubmitted,
 }: TradeFormProps) {
   const { state: { network } } = useAppState();
@@ -76,8 +79,25 @@ export function TradeForm({
       ? (parseFloat(amount) * parseFloat(price)).toFixed(6)
       : "";
 
+  const insufficientBalance = useMemo(() => {
+    if (!balances || !amount || !price) return false;
+    const amtNum = parseFloat(amount);
+    const priceNum = parseFloat(price);
+    if (isNaN(amtNum) || isNaN(priceNum) || amtNum <= 0 || priceNum <= 0) return false;
+
+    // Buy tab: spending quote currency (buyingCurrency), spending total
+    // Sell tab: spending base currency (sellingCurrency), spending amount
+    const spendCurrency = tab === "buy" ? buyingCurrency : sellingCurrency;
+    const spendAmount = tab === "buy" ? amtNum * priceNum : amtNum;
+
+    const bal = balances.find((b) => matchesCurrency(b, spendCurrency.currency, spendCurrency.issuer));
+    if (!bal) return spendAmount > 0;
+    return spendAmount > parseFloat(bal.value);
+  }, [balances, amount, price, tab, sellingCurrency, buyingCurrency]);
+
   const canSubmit =
     !submitting &&
+    !insufficientBalance &&
     amount !== "" &&
     !isNaN(parseFloat(amount)) &&
     parseFloat(amount) > 0 &&
@@ -272,6 +292,12 @@ export function TradeForm({
                 <>Sell <span className="font-semibold">{amount} {sellingCurrency.currency}</span> to receive <span className="font-semibold">{total} {buyingCurrency.currency}</span></>
               )}
             </div>
+          )}
+
+          {insufficientBalance && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Insufficient balance
+            </p>
           )}
 
           <div>

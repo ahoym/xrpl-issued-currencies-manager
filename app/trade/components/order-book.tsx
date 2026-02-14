@@ -1,7 +1,17 @@
 "use client";
 
-import type { OrderBookEntry } from "@/lib/types";
+import type { OrderBookEntry, DepthSummary } from "@/lib/types";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
+
+export const DEPTH_OPTIONS = [10, 25, 50, 100] as const;
+export type DepthLevel = (typeof DEPTH_OPTIONS)[number];
+
+function formatCompact(n: number): string {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toFixed(2);
+}
 
 interface OrderBookProps {
   orderBook: { buy: OrderBookEntry[]; sell: OrderBookEntry[] } | null;
@@ -12,6 +22,8 @@ interface OrderBookProps {
   accountAddress?: string;
   onRefresh: () => void;
   onSelectOrder?: (price: string, amount: string, tab: "buy" | "sell") => void;
+  depth: DepthLevel;
+  onDepthChange: (d: DepthLevel) => void;
 }
 
 export function OrderBook({
@@ -23,6 +35,8 @@ export function OrderBook({
   accountAddress,
   onRefresh,
   onSelectOrder,
+  depth,
+  onDepthChange,
 }: OrderBookProps) {
   // xrpl.js getOrderbook splits by lsfSell flag, not by book side.
   // Re-categorize by checking which currency is in taker_gets/taker_pays.
@@ -55,16 +69,28 @@ export function OrderBook({
   // Sort bids highest-first so the best (highest) bid appears at the top, adjacent to the spread
   bids.sort((a, b) => b.price - a.price);
 
+  // Depth summary computed from FULL unsliced arrays
+  const depthSummary: DepthSummary = {
+    bidVolume: bids.reduce((acc, b) => acc + b.total, 0),
+    bidLevels: bids.length,
+    askVolume: asks.reduce((acc, a) => acc + a.amount, 0),
+    askLevels: asks.length,
+  };
+
+  // Slice to display depth
+  const displayedAsks = asks.slice(-depth);  // best asks at bottom (lowest prices)
+  const displayedBids = bids.slice(0, depth); // best bids at top (highest prices)
+
   // Cumulative depth: asks accumulate from best ask (bottom) upward,
   // bids accumulate from best bid (top) downward.
-  const askCumulative: number[] = new Array(asks.length);
-  for (let i = asks.length - 1, cum = 0; i >= 0; i--) {
-    cum += asks[i].amount;
+  const askCumulative: number[] = new Array(displayedAsks.length);
+  for (let i = displayedAsks.length - 1, cum = 0; i >= 0; i--) {
+    cum += displayedAsks[i].amount;
     askCumulative[i] = cum;
   }
-  const bidCumulative: number[] = new Array(bids.length);
-  for (let i = 0, cum = 0; i < bids.length; i++) {
-    cum += bids[i].amount;
+  const bidCumulative: number[] = new Array(displayedBids.length);
+  for (let i = 0, cum = 0; i < displayedBids.length; i++) {
+    cum += displayedBids[i].amount;
     bidCumulative[i] = cum;
   }
 
@@ -76,8 +102,8 @@ export function OrderBook({
 
   // Max individual amount across both sides for bar scaling
   const maxAmount = Math.max(
-    ...asks.map((a) => a.amount),
-    ...bids.map((b) => b.amount),
+    ...displayedAsks.map((a) => a.amount),
+    ...displayedBids.map((b) => b.amount),
     0,
   );
 
@@ -92,13 +118,24 @@ export function OrderBook({
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Order Book
         </h3>
-        <button
-          onClick={onRefresh}
-          disabled={loading}
-          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
-        >
-          {loading ? "Loading..." : "Refresh"}
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={depth}
+            onChange={(e) => onDepthChange(Number(e.target.value) as DepthLevel)}
+            className="rounded border border-zinc-200 bg-transparent px-1.5 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
+          >
+            {DEPTH_OPTIONS.map((d) => (
+              <option key={d} value={d}>{d} levels</option>
+            ))}
+          </select>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            {loading ? "Loading..." : "Refresh"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-2">
@@ -113,12 +150,12 @@ export function OrderBook({
         <div className="mb-1 mt-1.5 text-[10px] font-medium uppercase tracking-wider text-red-400 dark:text-red-500">
           Asks
         </div>
-        {asks.length === 0 ? (
+        {displayedAsks.length === 0 ? (
           <p className="py-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
             No asks
           </p>
         ) : (
-          asks.map((a, i) => {
+          displayedAsks.map((a, i) => {
             const isOwn = accountAddress !== undefined && a.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
             const barPct = maxAmount > 0 ? (a.amount / maxAmount) * 100 : 0;
@@ -179,12 +216,12 @@ export function OrderBook({
         <div className="mb-1 mt-1.5 text-[10px] font-medium uppercase tracking-wider text-green-500 dark:text-green-500">
           Bids
         </div>
-        {bids.length === 0 ? (
+        {displayedBids.length === 0 ? (
           <p className="py-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
             No bids
           </p>
         ) : (
-          bids.map((b, i) => {
+          displayedBids.map((b, i) => {
             const isOwn = accountAddress !== undefined && b.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
             const barPct = maxAmount > 0 ? (b.amount / maxAmount) * 100 : 0;
@@ -222,6 +259,14 @@ export function OrderBook({
               </div>
             );
           })
+        )}
+
+        {depthSummary.bidLevels + depthSummary.askLevels > 0 && (
+          <p className="mt-1.5 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+            {depthSummary.bidLevels} bids · {formatCompact(depthSummary.bidVolume)} {quoteCurrency} depth
+            <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">|</span>
+            {depthSummary.askLevels} asks · {formatCompact(depthSummary.askVolume)} {baseCurrency} depth
+          </p>
         )}
       </div>
     </div>

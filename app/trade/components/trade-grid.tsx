@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useCallback } from "react";
-import { OrderBook } from "./order-book";
+import { OrderBook, type DepthLevel } from "./order-book";
 import { TradeForm } from "./trade-form";
 import { MyOpenOrders } from "./my-open-orders";
 import { RecentTrades } from "./recent-trades";
@@ -27,6 +27,8 @@ interface TradeGridProps {
   loadingBalances: boolean;
   network: string;
   onRefresh: () => void;
+  depth: DepthLevel;
+  onDepthChange: (d: DepthLevel) => void;
 }
 
 export function TradeGrid({
@@ -44,6 +46,8 @@ export function TradeGrid({
   loadingBalances,
   network,
   onRefresh,
+  depth,
+  onDepthChange,
 }: TradeGridProps) {
   const [cancellingSeq, setCancellingSeq] = useState<number | null>(null);
   const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
@@ -125,6 +129,7 @@ export function TradeGrid({
           pairSelected={pairSelected}
           baseCurrency={sellingCurrency?.currency}
           quoteCurrency={buyingCurrency?.currency}
+          network={network}
         />
       </div>
 
@@ -151,6 +156,8 @@ export function TradeGrid({
                 prefillKeyRef.current += 1;
                 setPrefill({ price, amount, tab, key: prefillKeyRef.current });
               }}
+              depth={depth}
+              onDepthChange={onDepthChange}
             />
           ) : (
             <div className="py-8 text-center">
@@ -174,7 +181,7 @@ export function TradeGrid({
 
       {/* Right column: Balances + Trade Form */}
       <div className="space-y-6 lg:col-span-2">
-        <BalancesPanel balances={balances} loading={loadingBalances} />
+        <BalancesPanel balances={balances} loading={loadingBalances} onRefresh={onRefresh} />
 
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           {pairSelected && focusedWallet ? (
@@ -185,6 +192,7 @@ export function TradeGrid({
               prefill={prefill}
               domainID={activeDomainID || undefined}
               onSubmitted={onRefresh}
+              balances={balances}
             />
           ) : (
             <div className="py-8 text-center">

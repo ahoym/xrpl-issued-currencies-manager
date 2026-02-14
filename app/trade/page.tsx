@@ -10,6 +10,7 @@ import { CustomCurrencyForm } from "./components/custom-currency-form";
 import { DomainSelector } from "./components/domain-selector";
 import { CurrencyPairSelector } from "./components/currency-pair-selector";
 import { TradeGrid } from "./components/trade-grid";
+import { DEPTH_OPTIONS, type DepthLevel } from "./components/order-book";
 import { MakeMarketModal } from "./components/make-market-modal";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
@@ -20,8 +21,8 @@ export default function TradePage() {
   const { state, hydrated } = useAppState();
 
   const [focusedWallet, setFocusedWallet] = useState<WalletInfo | null>(null);
-  const [sellingValue, setSellingValue] = useState(`${Assets.RLUSD}|${WELL_KNOWN_CURRENCIES[state.network]?.RLUSD ?? ""}`);
-  const [buyingValue, setBuyingValue] = useState(`${Assets.XRP}|`);
+  const [sellingValue, setSellingValue] = useState("");
+  const [buyingValue, setBuyingValue] = useState("");
   const [customCurrencies, setCustomCurrencies] = useState<
     { currency: string; issuer: string }[]
   >([]);
@@ -29,6 +30,20 @@ export default function TradePage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const onRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const [depth, setDepth] = useState<DepthLevel>(DEPTH_OPTIONS[1]);
+
+  // Smart defaults based on network
+  useEffect(() => {
+    if (!hydrated) return;
+    const rlusdIssuer = WELL_KNOWN_CURRENCIES[state.network]?.RLUSD;
+    if (rlusdIssuer) {
+      setSellingValue(`${Assets.RLUSD}|${rlusdIssuer}`);
+      setBuyingValue(`${Assets.XRP}|`);
+    } else {
+      setSellingValue(`${Assets.XRP}|`);
+      setBuyingValue("");
+    }
+  }, [hydrated, state.network]);
 
   // Domain state
   const {
@@ -175,6 +190,8 @@ export default function TradePage() {
         loadingBalances={loadingBalances}
         network={state.network}
         onRefresh={onRefresh}
+        depth={depth}
+        onDepthChange={setDepth}
       />
 
       {showMakeMarket && (

@@ -42,6 +42,13 @@ export interface OrderBookEntry {
   sequence: number;
 }
 
+export interface DepthSummary {
+  bidVolume: number;
+  bidLevels: number;
+  askVolume: number;
+  askLevels: number;
+}
+
 export interface CredentialInfo {
   issuer: string;
   subject: string;

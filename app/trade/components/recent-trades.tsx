@@ -1,5 +1,7 @@
 "use client";
 
+import { EXPLORER_URLS, NetworkId } from "@/lib/xrpl/networks";
+
 export interface RecentTrade {
   side: "buy" | "sell";
   price: string;
@@ -16,6 +18,7 @@ interface RecentTradesProps {
   pairSelected: boolean;
   baseCurrency?: string;
   quoteCurrency?: string;
+  network: string;
 }
 
 function formatTime(iso: string): string {
@@ -34,7 +37,10 @@ export function RecentTrades({
   pairSelected,
   baseCurrency,
   quoteCurrency,
+  network,
 }: RecentTradesProps) {
+  const explorerBase = EXPLORER_URLS[network as NetworkId];
+
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -71,7 +77,8 @@ export function RecentTrades({
               {trades.map((trade) => (
                 <tr
                   key={trade.hash}
-                  className="border-b border-zinc-50 dark:border-zinc-900"
+                  className="cursor-pointer border-b border-zinc-50 dark:border-zinc-900"
+                  onClick={() => window.open(`${explorerBase}/transactions/${trade.hash}`, "_blank", "noopener,noreferrer")}
                 >
                   <td className="py-1.5 pr-2">
                     <span

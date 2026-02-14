@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAppState } from "./use-app-state";
 import { useBalances } from "./use-balances";
+import { usePollInterval } from "./use-poll-interval";
+import { useOfferExpirationTimers } from "./use-offer-expiration-timers";
 import type { OrderBookAmount, OrderBookEntry } from "@/lib/types";
 import type { RecentTrade } from "@/app/trade/components/recent-trades";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
@@ -110,10 +112,10 @@ export function useTradingData({
 
   // Fetch order book
   const fetchOrderBook = useCallback(
-    async (selling: CurrencyOption, buying: CurrencyOption, net: string, domain?: string) => {
-      setLoadingOrderBook(true);
+    async (selling: CurrencyOption, buying: CurrencyOption, net: string, domain?: string, silent = false) => {
+      if (!silent) setLoadingOrderBook(true);
       try {
-        const params = new URLSearchParams({ base_currency: selling.currency, quote_currency: buying.currency, network: net });
+        const params = new URLSearchParams({ base_currency: selling.currency, quote_currency: buying.currency, network: net, limit: "200" });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
         if (buying.issuer) params.set("quote_issuer", buying.issuer);
         if (domain) params.set("domain", domain);
@@ -128,7 +130,7 @@ export function useTradingData({
       } catch {
         setOrderBook(null);
       } finally {
-        setLoadingOrderBook(false);
+        if (!silent) setLoadingOrderBook(false);
       }
     },
     [],
@@ -142,8 +144,8 @@ export function useTradingData({
 
   // Fetch account offers
   const fetchAccountOffers = useCallback(
-    async (addr: string, net: string) => {
-      setLoadingOffers(true);
+    async (addr: string, net: string, silent = false) => {
+      if (!silent) setLoadingOffers(true);
       try {
         const res = await fetch(`/api/accounts/${addr}/offers?network=${net}`);
         const data = await res.json();
@@ -155,7 +157,7 @@ export function useTradingData({
       } catch {
         setAccountOffers([]);
       } finally {
-        setLoadingOffers(false);
+        if (!silent) setLoadingOffers(false);
       }
     },
     [],
@@ -169,8 +171,8 @@ export function useTradingData({
 
   // Fetch recent trades
   const fetchRecentTrades = useCallback(
-    async (selling: CurrencyOption, buying: CurrencyOption, net: string, domain?: string) => {
-      setLoadingTrades(true);
+    async (selling: CurrencyOption, buying: CurrencyOption, net: string, domain?: string, silent = false) => {
+      if (!silent) setLoadingTrades(true);
       try {
         const params = new URLSearchParams({ base_currency: selling.currency, quote_currency: buying.currency, network: net });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
@@ -187,7 +189,7 @@ export function useTradingData({
       } catch {
         setRecentTrades([]);
       } finally {
-        setLoadingTrades(false);
+        if (!silent) setLoadingTrades(false);
       }
     },
     [],
@@ -198,6 +200,54 @@ export function useTradingData({
       fetchRecentTrades(sellingCurrency, buyingCurrency, network, activeDomainID || undefined);
     }
   }, [sellingCurrency, buyingCurrency, network, refreshKey, fetchRecentTrades, activeDomainID]);
+
+  // Silent refresh — fires all 3 fetches in parallel without loading spinners
+  const silentRefresh = useCallback(async () => {
+    if (!sellingCurrency || !buyingCurrency) return;
+    await Promise.all([
+      fetchOrderBook(sellingCurrency, buyingCurrency, network, activeDomainID || undefined, true),
+      address ? fetchAccountOffers(address, network, true) : Promise.resolve(),
+      fetchRecentTrades(sellingCurrency, buyingCurrency, network, activeDomainID || undefined, true),
+    ]);
+  }, [sellingCurrency, buyingCurrency, network, activeDomainID, address, fetchOrderBook, fetchAccountOffers, fetchRecentTrades]);
+
+  // Poll every 3 seconds when a currency pair is selected
+  const pollingEnabled = sellingCurrency !== null && buyingCurrency !== null;
+  usePollInterval(silentRefresh, 3_000, pollingEnabled);
+
+  // Refresh account offers when an offer expires
+  const handleOfferExpire = useCallback(() => {
+    if (address) fetchAccountOffers(address, network, true);
+  }, [address, network, fetchAccountOffers]);
+
+  useOfferExpirationTimers(address ? accountOffers : [], handleOfferExpire);
+
+  // Reactive fill detection — refresh account offers when a new trade involving this user appears
+  const seenTradeHashesRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (!address || recentTrades.length === 0) return;
+
+    const seen = seenTradeHashesRef.current;
+
+    // First load: seed the set without triggering refresh
+    if (seen.size === 0) {
+      for (const t of recentTrades) seen.add(t.hash);
+      return;
+    }
+
+    let hasNewOwnTrade = false;
+    for (const t of recentTrades) {
+      if (!seen.has(t.hash)) {
+        seen.add(t.hash);
+        if (t.account === address) hasNewOwnTrade = true;
+      }
+    }
+
+    if (hasNewOwnTrade) {
+      fetchAccountOffers(address, network, true);
+    }
+  }, [recentTrades, address, network, fetchAccountOffers]);
 
   return {
     balances,
