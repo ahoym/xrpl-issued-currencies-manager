@@ -270,7 +270,7 @@ function OrdersContent({
 }
 
 export function OrdersSheet(props: OrdersProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 hidden lg:block">

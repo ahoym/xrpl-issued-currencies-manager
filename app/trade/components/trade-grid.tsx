@@ -80,7 +80,6 @@ export function TradeGrid({
               baseIssuer={sellingCurrency!.issuer}
               quoteCurrency={buyingCurrency!.currency}
               accountAddress={focusedWallet?.address}
-              onRefresh={onRefresh}
               onSelectOrder={(price, amount, tab) => {
                 prefillKeyRef.current += 1;
                 setPrefill({ price, amount, tab, key: prefillKeyRef.current });
