@@ -1,0 +1,21 @@
+No learnings were selected. No learnings will be captured this session.
+
+---
+
+## Iteration 6 Complete
+
+**Task completed**: Deep Research: AMM discovery patterns → `amm-discovery.md`
+
+**Key findings**:
+
+1. **`book_offers` / `getOrderbook()` do NOT include AMM liquidity** — synthetic offers are injected at the payment engine layer during transaction execution, not at the API query layer. The AMM Pool Panel is essential for users to see AMM depth.
+
+2. **User LP position discovery**: `account_lines` → filter `0x03`-prefix currencies → each LP token's issuer IS the AMM pseudo-account → call `amm_info` with `amm_account` to get the pool's pair and reserves.
+
+3. **LP token currency codes are not reversible** (SHA-256 hash). Must use `amm_info` lookups.
+
+4. **No changes needed to the implementation plan** — the pair-based discovery approach (Task 1.4) is sufficient for the initial build. User position discovery is documented as future enhancement #7.
+
+**Cross-references updated**: info.md (area #5 resolved), assumptions-and-questions.md (A15-A17 added), implementation-plan.md (future enhancements #7, #9), codebase-summary.md (gotchas #10-#11).
+
+**All research tasks are complete.** The loop is marked `WOOT_COMPLETE_WOOT` — 4 blocking questions (Q1-Q4) require user judgment before implementation can begin.

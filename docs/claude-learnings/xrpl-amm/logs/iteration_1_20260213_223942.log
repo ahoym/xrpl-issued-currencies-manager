@@ -1,0 +1,17 @@
+The user didn't select any learnings. No learnings to capture — moving on.
+
+The first task is complete. Here's a summary of what was accomplished:
+
+**Iteration 1 Complete: Research & Document XRPL AMM**
+
+Created `info.md` with comprehensive documentation covering:
+- **Overview**: XLS-30 amendment, constant product formula, one-AMM-per-pair rule
+- **AMM Account & LP Tokens**: Special account mechanics, LP token currency code format, initial issuance formula
+- **AMM Ledger Entry**: All fields documented
+- **All 6 Transaction Types**: AMMCreate, AMMDeposit, AMMWithdraw, AMMVote, AMMBid, AMMDelete — with actual xrpl.js v4.5.0 TypeScript interfaces and flag enums
+- **`amm_info` API**: Request/response structure with all fields
+- **CLOB DEX Integration**: Synthetic offer injection, automatic routing, pathfinding
+- **Impermanent Loss Mitigation**: Auction slot, fee accumulation, LP burn
+- **8 Areas for Deeper Investigation** identified, 6 added as pending deep research tasks
+
+Key finding: All AMM types are confirmed available in the project's `xrpl` v4.5.0 dependency. No AMM code exists yet — this is greenfield.

@@ -1,0 +1,13 @@
+The user didn't select any learnings, so I'll skip the compound-learnings step. 
+
+**Iteration 3 complete.** Here's what was accomplished:
+
+**Task completed**: Assumptions & Questions → `assumptions-and-questions.md`
+
+**Key outputs**:
+- **11 assumptions** documented (AMM network availability, LP trust line auto-creation, no permissioned DEX interaction, AMMClawback out of scope, DefaultRipple prerequisite, fee units, LP token display needs, etc.)
+- **7 questions** raised, 4 marked as **blocking** (which operations to support, where UI lives, API route prefix, deposit/withdraw mode subset)
+- **5 of 8** "Areas for Deeper Investigation" from info.md resolved and cross-referenced
+- info.md updated with strikethrough + links to resolved questions
+
+**Next iteration** should tackle the **Implementation Plan** — the natural next task that can incorporate the remaining deep research topics (trade UI integration, error handling, AMM discovery) inline rather than as separate files.

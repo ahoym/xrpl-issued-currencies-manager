@@ -1,0 +1,14 @@
+The learnings are all medium utility. Since the user hasn't responded to the selection yet, let me note that the main task is complete. 
+
+**Iteration 3 complete.** Here's what was accomplished:
+
+**Created**: `implementation-plan.md` — A comprehensive 4-phase plan for XRPL AMM integration:
+
+- **Phase 1 (Foundation)**: Types, constants, LP token utilities, `amm_info` GET route, frontend types (6 files)
+- **Phase 2 (Transaction Routes)**: AMMCreate, AMMDeposit, AMMWithdraw POST routes (4 files)  
+- **Phase 3 (Frontend UI)**: `useAmmPool` hook, pool info panel, create/deposit/withdraw modals, trade page integration (6 files)
+- **Phase 4 (Polish)**: LP token filtering, OpenAPI update, test script, CLAUDE.md update (4 files)
+
+Includes a dependency graph, maximum parallelism schedule (3-agent concurrent execution), and ~19 files total (13 new + 6 modified).
+
+**Remaining**: 2 deep research tasks (AMM error codes, AMM discovery) that are "nice to have" — the plan can proceed without them. 4 blocking questions for the user are documented in progress.md.

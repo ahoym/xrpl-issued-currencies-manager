@@ -1,0 +1,18 @@
+The user didn't select any learnings. No learnings to capture — moving on.
+
+The deep research task is complete. Here's a summary of what was accomplished in this iteration:
+
+**Completed: Deep Research — AMM Error Handling & Edge Cases**
+
+Created `amm-error-handling.md` with:
+- **7 AMM-specific tec codes** (162–168) with descriptions and applicable transactions
+- **Per-transaction error maps** for AMMCreate (11 codes), AMMDeposit (10 codes), AMMWithdraw (9 codes), and amm_info (2 codes)
+- **User-friendly message suggestions** for each error code
+- **6 edge cases** documented: frozen assets, empty pool state, pool deletion/trust line cleanup, rounding/minimum amounts, single-asset fee impact, concurrent operation race conditions
+- **Recommended error handling pattern** using per-route error maps (matching existing `transfers/route.ts` pattern)
+
+**Key correction discovered**: AMMCreate costs **0.2 XRP** (not 2 XRP) after the 2024 reserve reduction. Updated all 5 artifacts that referenced the old value.
+
+**Cross-references updated**: info.md, assumptions-and-questions.md (added A12-A14), implementation-plan.md (Tasks 2.1-2.3), codebase-summary.md.
+
+**Remaining**: 1 pending task (AMM discovery deep research).
