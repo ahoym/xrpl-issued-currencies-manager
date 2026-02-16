@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import BigNumber from "bignumber.js";
 import type { FilledOrder, AccountOffer } from "@/lib/types";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { fromRippleEpoch } from "@/lib/xrpl/constants";
@@ -31,15 +32,15 @@ function computeOfferFields(
 
   if (isBuy) {
     // Buy: taker_gets = quote (what creator gives), taker_pays = base (what creator receives)
-    const baseAmount = parseFloat(offer.taker_pays.value);
-    const quoteAmount = parseFloat(offer.taker_gets.value);
-    const price = baseAmount > 0 ? quoteAmount / baseAmount : 0;
+    const baseAmount = new BigNumber(offer.taker_pays.value);
+    const quoteAmount = new BigNumber(offer.taker_gets.value);
+    const price = baseAmount.gt(0) ? quoteAmount.div(baseAmount) : new BigNumber(0);
     return { side: "buy" as const, price, baseAmount, quoteAmount };
   } else {
     // Sell: taker_gets = base (what creator gives), taker_pays = quote (what creator receives)
-    const baseAmount = parseFloat(offer.taker_gets.value);
-    const quoteAmount = parseFloat(offer.taker_pays.value);
-    const price = baseAmount > 0 ? quoteAmount / baseAmount : 0;
+    const baseAmount = new BigNumber(offer.taker_gets.value);
+    const quoteAmount = new BigNumber(offer.taker_pays.value);
+    const price = baseAmount.gt(0) ? quoteAmount.div(baseAmount) : new BigNumber(0);
     return { side: "sell" as const, price, baseAmount, quoteAmount };
   }
 }
@@ -246,13 +247,13 @@ function OrdersContent({
                         </span>
                       </td>
                       <td className="py-1.5 pr-2 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                        {parseFloat(order.price).toFixed(4)}
+                        {new BigNumber(order.price).toFixed(4)}
                       </td>
                       <td className="py-1.5 pr-2 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                        {parseFloat(order.baseAmount).toFixed(4)}
+                        {new BigNumber(order.baseAmount).toFixed(4)}
                       </td>
                       <td className="py-1.5 pr-2 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                        {parseFloat(order.quoteAmount).toFixed(4)}
+                        {new BigNumber(order.quoteAmount).toFixed(4)}
                       </td>
                       <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
                         {formatTime(order.time)}

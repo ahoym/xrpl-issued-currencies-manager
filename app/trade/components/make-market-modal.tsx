@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import BigNumber from "bignumber.js";
 import type { WalletInfo } from "@/lib/types";
 import { inputClass, labelClass, errorTextClass } from "@/lib/ui/ui";
 import { ModalShell } from "@/app/components/modal-shell";
@@ -62,9 +63,9 @@ export function MakeMarketModal({
   const [error, setError] = useState<string | null>(null);
 
   // Validation
-  const midPriceNum = parseFloat(midPrice);
+  const bnMidPrice = midPrice ? new BigNumber(midPrice) : null;
   const midPriceValid =
-    midPrice !== "" && !isNaN(midPriceNum) && midPriceNum > 0;
+    bnMidPrice !== null && bnMidPrice.isFinite() && bnMidPrice.gt(0);
 
   if (recipients.length === 0) {
     return (
@@ -91,15 +92,16 @@ export function MakeMarketModal({
     field: keyof LadderLevel,
     value: string,
   ) {
+    const parsed = new BigNumber(value);
     setLevels((prev) =>
       prev.map((l, i) =>
-        i === index ? { ...l, [field]: parseFloat(value) || 0 } : l,
+        i === index ? { ...l, [field]: parsed.isFinite() ? parsed.toNumber() : 0 } : l,
       ),
     );
   }
 
   function handlePreview() {
-    if (!midPriceValid || !baseCurrency || !quoteCurrency) return;
+    if (!midPriceValid || !bnMidPrice || !baseCurrency || !quoteCurrency) return;
 
     const orders: MakeMarketOrder[] = [];
     const bidWallet = recipients[bidWalletIdx];
@@ -107,10 +109,10 @@ export function MakeMarketModal({
 
     for (let i = 0; i < levels.length; i++) {
       const { spreadPct, qty } = levels[i];
-      const halfSpread = spreadPct / 2 / 100;
+      const halfSpread = new BigNumber(spreadPct).div(2).div(100);
 
-      const bidPrice = midPriceNum * (1 - halfSpread);
-      const askPrice = midPriceNum * (1 + halfSpread);
+      const bidPrice = bnMidPrice.times(new BigNumber(1).minus(halfSpread));
+      const askPrice = bnMidPrice.times(new BigNumber(1).plus(halfSpread));
 
       orders.push({
         side: "Bid",

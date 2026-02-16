@@ -1,5 +1,6 @@
 "use client";
 
+import BigNumber from "bignumber.js";
 import { EXPLORER_URLS, NetworkId } from "@/lib/xrpl/networks";
 
 export interface RecentTrade {
@@ -92,13 +93,13 @@ export function RecentTrades({
                     </span>
                   </td>
                   <td className="py-1.5 pr-2 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                    {parseFloat(trade.price).toFixed(4)}
+                    {new BigNumber(trade.price).toFixed(4)}
                   </td>
                   <td className="py-1.5 pr-2 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                    {parseFloat(trade.baseAmount).toFixed(4)}
+                    {new BigNumber(trade.baseAmount).toFixed(4)}
                   </td>
                   <td className="py-1.5 pr-2 text-right font-mono text-zinc-700 dark:text-zinc-300">
-                    {parseFloat(trade.quoteAmount).toFixed(4)}
+                    {new BigNumber(trade.quoteAmount).toFixed(4)}
                   </td>
                   <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
                     {formatTime(trade.time)}

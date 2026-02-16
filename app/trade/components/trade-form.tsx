@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import BigNumber from "bignumber.js";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import type { OfferFlag } from "@/lib/xrpl/types";
@@ -71,19 +72,22 @@ export function TradeForm({
     }
   }, [prefill]);
 
+  const bnAmount = amount ? new BigNumber(amount) : null;
+  const bnPrice = price ? new BigNumber(price) : null;
+
   const total =
-    amount && price
-      ? (parseFloat(amount) * parseFloat(price)).toFixed(6)
+    bnAmount && bnPrice && bnAmount.isFinite() && bnPrice.isFinite()
+      ? bnAmount.times(bnPrice).toFixed(6)
       : "";
 
   const canSubmit =
     !submitting &&
-    amount !== "" &&
-    !isNaN(parseFloat(amount)) &&
-    parseFloat(amount) > 0 &&
-    price !== "" &&
-    !isNaN(parseFloat(price)) &&
-    parseFloat(price) > 0;
+    bnAmount !== null &&
+    bnAmount.isFinite() &&
+    bnAmount.gt(0) &&
+    bnPrice !== null &&
+    bnPrice.isFinite() &&
+    bnPrice.gt(0);
 
   function buildFlags(): OfferFlag[] {
     const flags: OfferFlag[] = [];
