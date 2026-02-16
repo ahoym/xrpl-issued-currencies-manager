@@ -129,4 +129,5 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 - **XRPL client singleton** — don't disconnect after each request; the module-level client in `lib/xrpl/client.ts` persists across requests for reuse
 - **Trust line prerequisite** — before issuing currency, the recipient must have a trust line to the issuer for that currency (validated server-side in `/api/currencies/issue`)
 - **Devnet-only amendments** — some XRPL amendments (e.g., PermissionedDEX) are only enabled on devnet. `test-permissioned-dex.sh` hard-codes devnet for this reason
+- **Next.js 16 uses `proxy.ts`, not `middleware.ts`** — having both causes a build error. All request-level logic (rate limiting, logging) goes in `proxy.ts` via the `proxy()` export
 - **`openapi.yaml` is programmatically consumed** — must be updated when API routes change (add/modify endpoints, add fields)

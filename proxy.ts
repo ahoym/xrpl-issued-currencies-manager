@@ -49,6 +49,7 @@ function getClientIp(req: NextRequest): string {
 // ---------------------------------------------------------------------------
 
 export function proxy(req: NextRequest) {
+  const start = Date.now();
   const { pathname } = req.nextUrl;
   const method = req.method;
 
@@ -61,6 +62,9 @@ export function proxy(req: NextRequest) {
 
   if (!result.allowed) {
     const retryAfter = Math.ceil(result.retryAfterMs / 1000);
+    console.log(
+      `${new Date().toISOString()} ${method} ${pathname} 429 ${Date.now() - start}ms`,
+    );
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       {
@@ -71,6 +75,10 @@ export function proxy(req: NextRequest) {
       },
     );
   }
+
+  console.log(
+    `${new Date().toISOString()} ${method} ${pathname} ${Date.now() - start}ms`,
+  );
 
   return NextResponse.next();
 }
