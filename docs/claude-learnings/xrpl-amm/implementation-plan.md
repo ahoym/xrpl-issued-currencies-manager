@@ -144,10 +144,13 @@ GET /api/amm/info?baseCurrency=XRP&quoteCurrency=USD&quoteIssuer=rXXX&network=te
   "lpToken": { "currency": "03ABCDEF...", "issuer": "rAMMAccount...", "value": "707.106" },
   "tradingFee": 300,
   "tradingFeeDisplay": "0.30%",
+  "spotPrice": "0.5",
   "auctionSlot": { ... } | null,
   "voteSlots": [ ... ]
 }
 ```
+
+**`spotPrice`**: Implied exchange rate derived from pool balances (`asset2_value / asset1_value`). Represents the price of 1 unit of asset1 in terms of asset2. This allows the frontend to display the AMM price alongside the DEX orderbook spread for comparison without re-deriving it client-side. See assumptions A19, A21.
 
 **Error handling**: The `amm_info` command returns an error if no AMM exists for the pair. Catch this specifically and return `{ exists: false }` instead of a 500 error.
 
@@ -166,6 +169,7 @@ interface AmmPoolInfo {
   lpToken?: { currency: string; issuer: string; value: string };
   tradingFee?: number;
   tradingFeeDisplay?: string;
+  spotPrice?: string;           // asset2/asset1 implied rate from pool balances
   auctionSlot?: AmmAuctionSlot | null;
   voteSlots?: AmmVoteSlot[];
 }
@@ -340,18 +344,25 @@ Built on `useApiFetch` — same pattern as `useTradingData` sub-fetches.
 
 Displays AMM pool state when one exists for the selected pair. Positioned in the trade grid layout.
 
-**Content when pool exists**:
-- Pool reserves: "1,000 XRP + 500 USD" with relative proportions
+**Content when pool exists (all users)**:
+- Pool reserves: "1,000 XRP + 500 USD" with relative proportions — communicates available depth
+- Implied spot price: e.g., "1 XRP = 0.50 USD" — derived from `asset2_balance / asset1_balance`. Displayed prominently so users can compare against the orderbook spread (best bid vs best ask) visible in the OrderBook panel above
 - Trading fee: "0.30%"
 - Total LP tokens outstanding
-- User's LP token balance (if any) and pool share percentage
+
+**Content when pool exists (LP holders only)** — show when user holds LP tokens for this pair:
+- User's LP token balance and pool share percentage
 - "Deposit" and "Withdraw" buttons (open modals)
+
+**Content when pool exists (non-LP users)** — de-emphasize LP-specific fields; focus on pool composition, implied price, and fee. Show "Deposit" button to encourage participation.
 
 **Content when no pool exists**:
 - "No AMM pool exists for this pair"
 - "Create Pool" button (opens create modal)
 
-**Layout**: Compact card that fits below the OrderBook in the center column, or as a collapsible section. Follows existing Tailwind dark mode patterns (`dark:bg-zinc-*`).
+**UX rationale**: The panel serves all traders, not just LPs. A key scenario: the orderbook may look thin (few limit orders), but the AMM pool could be well-funded with continuous liquidity along its bonding curve. Without this panel, users would see a thin orderbook and incorrectly conclude there's no liquidity. The implied spot price alongside the orderbook spread gives transparency into where liquidity comes from and which venue offers a better rate. See assumptions A15, A19, A20, A21 in [assumptions-and-questions.md](./assumptions-and-questions.md).
+
+**Layout**: Compact card that fits below the OrderBook in the center column, or as a collapsible section. Follows existing Tailwind dark mode patterns (`dark:bg-zinc-*`). Stacking below the OrderBook naturally creates a "venue comparison" view — orderbook spread on top, AMM implied price below.
 
 ### Task 3.3 — AMM Create Modal
 
