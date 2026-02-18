@@ -20,8 +20,8 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 - **Shared lib**: `lib/xrpl/` — client singleton (`client.ts`), network config (`networks.ts`), TypeScript types (`types.ts`)
 - **Test scripts**: `scripts/` — bash scripts using curl + jq for each endpoint
 - **OpenAPI spec**: `openapi.yaml` at project root
-- **Frontend architecture**: `docs/claude-learnings/frontend-architecture.md` — state management, hooks, page responsibilities, data transformations
-- **Development patterns**: `docs/claude-learnings/development-patterns.md` — API route skeleton, test script skeleton, naming conventions
+- **Frontend architecture**: `docs/claude-learnings/frontend-architecture.md` — state management (AppStateContext, PersistedState), data fetching patterns (useApiFetch/useApiMutation, mutation-refresh cycle), per-page hook and API usage, shared component catalog
+- **Deep reference docs**: `docs/claude-learnings/` — task-specific research and patterns. See `docs/claude-learnings/README.md` for a guided index.
 
 ### API Routes
 
