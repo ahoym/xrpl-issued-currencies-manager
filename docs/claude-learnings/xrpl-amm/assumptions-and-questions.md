@@ -159,3 +159,34 @@ LP token codes use SHA-256 hashing (one-way). To identify which pair an LP token
 ### A17. User LP position discovery uses `account_lines` → `amm_info` fan-out
 
 LP tokens appear as trust lines with `0x03`-prefix currency codes. The `account` (issuer) field of the trust line is the AMM pseudo-account. Call `amm_info` with `amm_account` to get the pool's asset pair and reserves. This is the practical way to answer "which AMM pools does this user have positions in?" See [amm-discovery.md](./amm-discovery.md).
+
+### A18. LP tokens are pair-specific, not generic across AMMs
+
+Each AMM pool issues its own unique LP token with a distinct currency code (SHA-512 hash) and a distinct issuer (the pool's pseudo-account address). LP tokens from different pools are completely separate assets — holding LP tokens from an XRP/USD pool and a USD/EUR pool means holding two different tokens that are not interchangeable. Each one only redeems for assets from its specific pool.
+
+### A19. AMM Pool Panel is valuable for non-LP users (not just liquidity providers)
+
+The AMM Pool Panel serves all traders, not just LPs. For users who have no LP position, the most relevant information is:
+
+1. **Pool composition** — the two assets and their current balances, which shows available liquidity depth
+2. **Implied spot price** — the exchange rate derived from the pool's constant-product formula (`asset2_balance / asset1_balance`), useful for comparing against DEX orderbook prices
+3. **Trading fee** — the pool's fee percentage, since it affects effective swap cost
+4. **Pool existence** — knowing there's AMM liquidity available (in addition to DEX orderbook liquidity) helps traders decide how to trade
+
+LP-specific information (LP token balance, pool share, vote weight, auction slot) can be de-emphasized or hidden when the user holds no LP tokens for the pair.
+
+### A20. AMM depth can be significant even when the orderbook looks thin
+
+A realistic scenario: few people actively placing limit orders on the DEX orderbook (making it look thin/sparse), but the AMM pool is well-funded. The AMM provides continuous liquidity at every price point along its bonding curve, so even with zero orderbook depth, a user could execute a reasonably-sized trade without massive slippage — as long as the pool is large relative to their trade size.
+
+This reinforces why the AMM Pool Panel is essential (see also A15 — AMM liquidity is NOT visible in `book_offers`). Without it, a user might look at a thin orderbook and incorrectly conclude there's no liquidity when the AMM pool has plenty. Showing pool asset balances gives users a sense of that depth.
+
+### A21. AMM spot price vs orderbook spread enables meaningful comparison
+
+Displaying the AMM implied price alongside the DEX orderbook spread (best bid vs best ask) lets users:
+
+- See whether the AMM price is inside or outside the orderbook spread
+- Judge which venue offers a better rate for their trade
+- Spot arbitrage gaps (AMM price diverging from orderbook mid-price)
+
+Note: XRPL auto-routes trades through whichever path gives the best price (A5), so the comparison is primarily for **transparency** — helping users understand *why* they're getting a particular rate and where the liquidity comes from.
