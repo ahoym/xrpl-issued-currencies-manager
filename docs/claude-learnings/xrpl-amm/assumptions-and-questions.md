@@ -54,40 +54,23 @@ LP tokens use a non-standard 160-bit currency code starting with `0x03` followed
 
 ## Questions
 
-### Q1. **[BLOCKING]** What AMM operations should the UI support?
+### ~~Q1. What AMM operations should the UI support?~~
 
-The full set of AMM transactions is: **Create**, **Deposit**, **Withdraw**, **Vote**, **Bid**, **Delete**. Which should we implement?
+**Resolved (2026-02-21)**: Create + Deposit + Withdraw + Pool Info. No Vote/Bid/Delete initially.
 
-- **Minimum viable**: Create + Deposit + Withdraw (core liquidity management)
-- **Extended**: + Vote (fee governance) + pool info display
-- **Full**: + Bid (auction slot) + Delete (cleanup empty pools)
+### ~~Q2. Where should AMM UI live?~~
 
-**Recommendation**: Start with Create + Deposit + Withdraw + pool info display. Vote and Bid add complexity (auction mechanics, weighted voting) with lower user value for an educational/management tool. Delete is only needed for edge cases.
+**Resolved (2026-02-21)**: Compact panel in TradeGrid left column (above RecentTrades). All forms (create, deposit, withdraw) as modals. Panel sits above the orders/recent activity section.
 
-### Q2. **[BLOCKING]** Where should AMM UI live?
+### ~~Q3. Should the API routes be under `/api/amm/` or `/api/dex/amm/`?~~
 
-Options:
-1. **New tab within `/trade` page** — e.g., "Order Book" | "AMM Pools" tabs. Shares wallet/pair selection.
-2. **Separate `/amm` page** — Dedicated page with its own navigation entry. Cleaner separation.
-3. **Integrated panel on `/trade`** — AMM pool info shown alongside order book; deposit/withdraw in modals.
+**Resolved (2026-02-21)**: `/api/amm/*` — peer to `/api/dex/`.
 
-**Recommendation**: Option 3 (integrated panel) — shows AMM and CLOB side by side, which reflects how XRPL actually works (unified liquidity). Deposit/withdraw forms open as modals (using existing `ModalShell`).
+### ~~Q4. Which deposit/withdraw modes should the UI expose?~~
 
-### Q3. **[BLOCKING]** Should the API routes be under `/api/amm/` or `/api/dex/amm/`?
-
-The existing DEX routes are under `/api/dex/`. Options:
-1. **`/api/amm/*`** — Parallel to `/api/dex/` (create, deposit, withdraw, vote, bid, delete, info)
-2. **`/api/dex/amm/*`** — Nested under DEX (reflects AMM as part of the DEX)
-
-**Recommendation**: Option 1 (`/api/amm/*`) — AMM is conceptually a peer of the order book, not a sub-feature. Cleaner URLs and easier to document.
-
-### Q4. **[BLOCKING]** Which deposit/withdraw modes should the UI expose?
-
-`AMMDeposit` has 6 flag modes, `AMMWithdraw` has 7. Exposing all is overwhelming. Suggested subset:
-- **Deposit**: Two-asset proportional (`tfTwoAsset`) + Single-asset (`tfSingleAsset`)
+**Resolved (2026-02-21)**:
+- **Deposit**: Two-asset proportional (`tfTwoAsset`) + Single-asset (`tfSingleAsset`) + Two-asset-if-empty (`tfTwoAssetIfEmpty`) for refunding drained pools
 - **Withdraw**: Withdraw all (`tfWithdrawAll`) + Two-asset (`tfTwoAsset`) + Single-asset (`tfSingleAsset`)
-
-Should we start with this subset or expose more modes?
 
 ### Q5. What should happen when a user selects a currency pair that has an existing AMM?
 
@@ -181,7 +164,7 @@ A realistic scenario: few people actively placing limit orders on the DEX orderb
 
 This reinforces why the AMM Pool Panel is essential (see also A15 — AMM liquidity is NOT visible in `book_offers`). Without it, a user might look at a thin orderbook and incorrectly conclude there's no liquidity when the AMM pool has plenty. Showing pool asset balances gives users a sense of that depth.
 
-### A21. AMM spot price vs orderbook spread enables meaningful comparison
+### A21. AMM spot price vs orderbook spread enables meaningful comparison (confirmed)
 
 Displaying the AMM implied price alongside the DEX orderbook spread (best bid vs best ask) lets users:
 
@@ -190,3 +173,19 @@ Displaying the AMM implied price alongside the DEX orderbook spread (best bid vs
 - Spot arbitrage gaps (AMM price diverging from orderbook mid-price)
 
 Note: XRPL auto-routes trades through whichever path gives the best price (A5), so the comparison is primarily for **transparency** — helping users understand *why* they're getting a particular rate and where the liquidity comes from.
+
+### A22. spotPrice is normalized to the user's base/quote orientation
+
+The `amm_info` response returns assets in pool creation order, which may not match the user's currently selected base/quote pair. The `/api/amm/info` route normalizes `spotPrice` to always represent the price of 1 unit of base in terms of quote (matching how the orderbook displays prices). The route compares the query's `baseCurrency`/`baseIssuer` against the response's `amount`/`amount2` currencies and inverts the ratio if needed.
+
+### A23. AMMCreate cost is displayed dynamically, not hardcoded
+
+The AMMCreate special cost (owner reserve destruction) varies by network and can change via governance. Rather than hardcoding "0.2 XRP", the create modal fetches the current owner reserve via `server_info` and displays the actual value. xrpl.js autofill handles setting the correct `Fee` field on the transaction itself.
+
+### A24. Error handling uses extended `txFailureResponse()`, not per-route helpers
+
+Rather than defining a separate `ammErrorResponse()` function or duplicating error-checking logic in each AMM route, the existing `txFailureResponse()` in `lib/api.ts` is extended with an optional `errorMap?: Record<string, string>` parameter. When provided, it uses the friendly message from the map. Existing callers are unaffected. Each AMM route defines its own error map constant (e.g., `AMM_CREATE_ERRORS`) and passes it to the shared function.
+
+### A25. `tfTwoAssetIfEmpty` is included in initial deposit modes
+
+Originally considered a future enhancement, the `tfTwoAssetIfEmpty` deposit mode is included in the initial implementation because: (1) it's minimal extra code (~20 lines across deposit route and modal), (2) without it, users seeing an empty pool have no recourse through the UI, and (3) the deposit modal detects the empty pool state from `amm_info` and auto-switches to this mode.

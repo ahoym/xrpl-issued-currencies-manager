@@ -209,18 +209,23 @@ if (txResult && txResult !== "tesSUCCESS") {
 - Include the raw `code` field so the frontend can optionally display technical details
 - Still include the full `result` for debugging
 
-### Implementation Recommendation
+### Implementation Recommendation (confirmed 2026-02-21)
 
-Rather than modifying `txFailureResponse()` globally (which could break existing routes), each AMM route should define its own error map and use a local helper:
+Extend `txFailureResponse()` in `lib/api.ts` with an optional `errorMap?: Record<string, string>` parameter. This keeps the pattern centralized without breaking existing callers:
 
 ```typescript
-function ammErrorResponse(result: TxResponse, errorMap: Record<string, string>): Response | null {
+// lib/api.ts — extended signature
+export function txFailureResponse(
+  result: TxResponse,
+  errorMap?: Record<string, string>,
+): Response | null {
   const txResult = getTransactionResult(result.result.meta);
   if (txResult && txResult !== "tesSUCCESS") {
+    const friendlyMessage = errorMap?.[txResult];
     return Response.json(
       {
-        error: errorMap[txResult] || `Transaction failed: ${txResult}`,
-        code: txResult,
+        error: friendlyMessage || `Transaction failed: ${txResult}`,
+        ...(friendlyMessage ? { code: txResult } : {}),
         result: result.result,
       },
       { status: 422 },
@@ -230,7 +235,13 @@ function ammErrorResponse(result: TxResponse, errorMap: Record<string, string>):
 }
 ```
 
-This could also be added to `lib/api.ts` as a generic overload of `txFailureResponse` accepting an optional error map parameter.
+Each AMM route defines its own error map constant and passes it:
+```typescript
+const failure = txFailureResponse(result, AMM_CREATE_ERRORS);
+if (failure) return failure;
+```
+
+Existing callers pass no second argument and continue to work unchanged.
 
 ## Impact on Implementation Plan
 

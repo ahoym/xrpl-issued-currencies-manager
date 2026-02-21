@@ -4,18 +4,21 @@
 
 ## Assumptions for Planning
 
-These are the recommended defaults from [assumptions-and-questions.md](./assumptions-and-questions.md). The user should confirm or override before implementation begins.
+Confirmed by user on 2026-02-21.
 
-| Decision | Assumed Default | Reference |
+| Decision | Confirmed Value | Reference |
 |---|---|---|
 | Supported operations | Create + Deposit + Withdraw + Pool Info (no Vote/Bid/Delete initially) | Q1 |
-| UI location | Integrated panel on `/trade` page; deposit/withdraw as modals | Q2 |
+| UI location | Compact panel in TradeGrid left column (above RecentTrades); all forms as modals | Q2 |
 | API route prefix | `/api/amm/*` (peer to `/api/dex/`) | Q3 |
-| Deposit modes | Two-asset proportional (`tfTwoAsset`) + Single-asset (`tfSingleAsset`) | Q4 |
+| Deposit modes | Two-asset proportional (`tfTwoAsset`) + Single-asset (`tfSingleAsset`) + Two-asset-if-empty (`tfTwoAssetIfEmpty`) | Q4 |
 | Withdraw modes | Withdraw all (`tfWithdrawAll`) + Two-asset (`tfTwoAsset`) + Single-asset (`tfSingleAsset`) | Q4 |
 | AMM discovery | Auto-query `amm_info` on currency pair change; show pool info or "Create Pool" CTA | Q5 |
 | LP token display | Hidden from main balances; dedicated section in AMM panel | Q6 |
 | Test scripts | `test-amm.sh` covering full lifecycle | Q7 |
+| spotPrice orientation | Server-side, normalized to user's base/quote (price of 1 base in quote terms) | — |
+| AMMCreate cost display | Dynamic via `server_info` owner reserve lookup, not hardcoded | — |
+| Error handling | Extend `txFailureResponse()` with optional `errorMap` param in `lib/api.ts` | — |
 
 ---
 
@@ -57,7 +60,7 @@ interface DepositAmmRequest {
   amount?: DexAmount;       // For single-asset or two-asset deposit
   amount2?: DexAmount;      // For two-asset deposit
   lpTokenOut?: DexAmount;   // Desired LP tokens (for tfLPToken mode)
-  mode: "two-asset" | "single-asset";
+  mode: "two-asset" | "single-asset" | "two-asset-if-empty";
   network?: string;
 }
 
@@ -150,7 +153,7 @@ GET /api/amm/info?baseCurrency=XRP&quoteCurrency=USD&quoteIssuer=rXXX&network=te
 }
 ```
 
-**`spotPrice`**: Implied exchange rate derived from pool balances (`asset2_value / asset1_value`). Represents the price of 1 unit of asset1 in terms of asset2. This allows the frontend to display the AMM price alongside the DEX orderbook spread for comparison without re-deriving it client-side. See assumptions A19, A21.
+**`spotPrice`**: Implied exchange rate normalized to the user's base/quote orientation — price of 1 unit of base in terms of quote. The `amm_info` response returns assets in creation order (which may not match the user's pair selection), so the route compares the query's `baseCurrency`/`baseIssuer` against the response's `amount`/`amount2` and inverts if needed. This allows the frontend to display the AMM price alongside the DEX orderbook spread for comparison without re-deriving it client-side. See assumptions A19, A21.
 
 **Error handling**: The `amm_info` command returns an error if no AMM exists for the pair. Catch this specifically and return `{ exists: false }` instead of a 500 error.
 
@@ -189,7 +192,28 @@ interface AmmVoteSlot {
 }
 ```
 
-**Estimated files changed**: 4 modified + 2 new = 6 files
+### Task 1.6 — Extend `txFailureResponse()` with Optional Error Map
+
+**File**: `lib/api.ts` (modify)
+
+Add an optional `errorMap?: Record<string, string>` parameter to `txFailureResponse()`. When provided, the function looks up the transaction result code in the map and uses the friendly message instead of the generic "Transaction failed: {code}" message. This centralizes the pattern rather than requiring per-route helper functions.
+
+```typescript
+// Before:
+export function txFailureResponse(result: TxResponse): Response | null;
+
+// After:
+export function txFailureResponse(result: TxResponse, errorMap?: Record<string, string>): Response | null;
+```
+
+When `errorMap` is provided and the result code is found, include both the friendly message and the raw code:
+```json
+{ "error": "Friendly message from map", "code": "tecAMM_UNFUNDED", "result": { ... } }
+```
+
+Existing callers pass no `errorMap` and continue to work unchanged.
+
+**Estimated files changed**: 4 modified + 2 new = 6 files (Phase 1 total)
 **Risk**: Low — no UI changes, no behavioral changes to existing features
 
 ---
@@ -225,11 +249,11 @@ Body: CreateAmmRequest
      TradingFee: body.tradingFee,
    };
    ```
-7. `client.submitAndWait(tx, { wallet })` — xrpl.js autofill handles the special fee (0.2 XRP after 2024 reserve reduction)
-8. Check result with `txFailureResponse()`
+7. `client.submitAndWait(tx, { wallet })` — xrpl.js autofill handles the special fee dynamically
+8. Check result with `txFailureResponse(result, AMM_CREATE_ERRORS)` (extended with optional errorMap)
 9. Return 201 with AMM account address and LP tokens received
 
-**Error handling**: Define `AMM_CREATE_ERRORS` map with 11 known tec/ter/tem codes. See [amm-error-handling.md](./amm-error-handling.md) for the complete map and user-friendly messages.
+**Error handling**: Define `AMM_CREATE_ERRORS` map with 11 known tec/ter/tem codes. Pass as the `errorMap` param to the extended `txFailureResponse()` in `lib/api.ts`. See [amm-error-handling.md](./amm-error-handling.md) for the complete map and user-friendly messages.
 
 **Key edge cases**:
 - DefaultRipple not enabled on issuer → `terNO_RIPPLE` (provide helpful error message)
@@ -250,21 +274,27 @@ Body: DepositAmmRequest
 **Implementation**:
 1. `validateRequired(body, ["seed", "asset", "asset2", "mode"])`
 2. Mode-specific validation:
-   - `"two-asset"` → require `amount` and `amount2`
-   - `"single-asset"` → require `amount` (only one asset)
+   - `"two-asset"` → require `amount` and `amount2`, flag `tfTwoAsset`
+   - `"single-asset"` → require `amount` (only one asset), flag `tfSingleAsset`
+   - `"two-asset-if-empty"` → require `amount` and `amount2`, flag `tfTwoAssetIfEmpty` (for refunding empty pools)
 3. Build transaction with appropriate flags:
    ```typescript
+   const flagMap = {
+     "two-asset": AMMDepositFlags.tfTwoAsset,
+     "single-asset": AMMDepositFlags.tfSingleAsset,
+     "two-asset-if-empty": AMMDepositFlags.tfTwoAssetIfEmpty,
+   };
    const tx: AMMDeposit = {
      TransactionType: "AMMDeposit",
      Account: wallet.address,
      Asset: buildCurrencySpec(body.asset),
      Asset2: buildCurrencySpec(body.asset2),
-     Flags: mode === "two-asset" ? AMMDepositFlags.tfTwoAsset : AMMDepositFlags.tfSingleAsset,
+     Flags: flagMap[body.mode],
    };
    if (body.amount) tx.Amount = toXrplAmount(body.amount);
    if (body.amount2) tx.Amount2 = toXrplAmount(body.amount2);
    ```
-4. Submit, check result using `AMM_DEPOSIT_ERRORS` map (see [amm-error-handling.md](./amm-error-handling.md)), return LP tokens received
+4. Submit, check result using `txFailureResponse(result, AMM_DEPOSIT_ERRORS)`, return LP tokens received
 
 **Helper needed**: `buildCurrencySpec({ currency, issuer? })` → XRPL `Currency` object. This is the `Asset`/`Asset2` field format (just currency identifier, no amount). Different from `toXrplAmount` which includes a value.
 
@@ -295,7 +325,7 @@ Body: WithdrawAmmRequest
    - `"two-asset"` → `AMMWithdrawFlags.tfTwoAsset` + require `amount` and `amount2`
    - `"single-asset"` → `AMMWithdrawFlags.tfSingleAsset` + require `amount`
 3. Build and submit transaction
-4. Check result using `AMM_WITHDRAW_ERRORS` map (see [amm-error-handling.md](./amm-error-handling.md)), return redeemed asset amounts
+4. Check result using `txFailureResponse(result, AMM_WITHDRAW_ERRORS)`, return redeemed asset amounts
 
 **Error handling**: Define `AMM_WITHDRAW_ERRORS` map with 9 known codes. Key: `tecAMM_BALANCE` means the withdrawal would drain one side entirely.
 
@@ -342,27 +372,45 @@ Built on `useApiFetch` — same pattern as `useTradingData` sub-fetches.
 
 **New file**: `app/trade/components/amm-pool-panel.tsx`
 
-Displays AMM pool state when one exists for the selected pair. Positioned in the trade grid layout.
+Compact card displaying AMM pool state for the selected pair. Positioned in the **left column of `TradeGrid`** above `RecentTrades`.
+
+**Placement**: `trade-grid.tsx` left column (`lg:col-span-2`): `AmmPoolPanel` → `RecentTrades`. The panel is a small card — all forms (create, deposit, withdraw) open as modals.
+
+```
+Left (2 cols)           Center (3 cols)     Right (2 cols)
+┌──────────────┐       ┌──────────────┐    ┌──────────────┐
+│ AMM Pool     │       │              │    │ Balances     │
+│ Panel        │       │  OrderBook   │    │              │
+├──────────────┤       │              │    ├──────────────┤
+│              │       │              │    │              │
+│ RecentTrades │       │              │    │  TradeForm   │
+│              │       └──────────────┘    │              │
+└──────────────┘                           └──────────────┘
+```
 
 **Content when pool exists (all users)**:
-- Pool reserves: "1,000 XRP + 500 USD" with relative proportions — communicates available depth
-- Implied spot price: e.g., "1 XRP = 0.50 USD" — derived from `asset2_balance / asset1_balance`. Displayed prominently so users can compare against the orderbook spread (best bid vs best ask) visible in the OrderBook panel above
+- Implied spot price: e.g., "1 XRP = 0.50 USD" — normalized to user's base/quote orientation. Displayed prominently for comparison against the orderbook spread visible in the center column
+- Pool reserves: "1,000 XRP + 500 USD" — communicates available depth
 - Trading fee: "0.30%"
-- Total LP tokens outstanding
 
-**Content when pool exists (LP holders only)** — show when user holds LP tokens for this pair:
+**Content when pool exists (LP holders only)** — additionally show:
 - User's LP token balance and pool share percentage
 - "Deposit" and "Withdraw" buttons (open modals)
 
 **Content when pool exists (non-LP users)** — de-emphasize LP-specific fields; focus on pool composition, implied price, and fee. Show "Deposit" button to encourage participation.
 
+**Content when pool is empty** (exists but zero reserves):
+- "Pool is empty" indicator
+- "Re-fund Pool" button (opens deposit modal in two-asset-if-empty mode)
+
 **Content when no pool exists**:
-- "No AMM pool exists for this pair"
-- "Create Pool" button (opens create modal)
+- "No AMM pool" + "Create Pool" button (opens create modal)
 
-**UX rationale**: The panel serves all traders, not just LPs. A key scenario: the orderbook may look thin (few limit orders), but the AMM pool could be well-funded with continuous liquidity along its bonding curve. Without this panel, users would see a thin orderbook and incorrectly conclude there's no liquidity. The implied spot price alongside the orderbook spread gives transparency into where liquidity comes from and which venue offers a better rate. See assumptions A15, A19, A20, A21 in [assumptions-and-questions.md](./assumptions-and-questions.md).
+**Frozen asset state**: If `asset_frozen` or `asset2_frozen`, show warning banner and disable action buttons.
 
-**Layout**: Compact card that fits below the OrderBook in the center column, or as a collapsible section. Follows existing Tailwind dark mode patterns (`dark:bg-zinc-*`). Stacking below the OrderBook naturally creates a "venue comparison" view — orderbook spread on top, AMM implied price below.
+**UX rationale**: The panel serves all traders, not just LPs. The orderbook may look thin while the AMM pool is well-funded with continuous liquidity along its bonding curve. Without this panel, users would incorrectly conclude there's no liquidity. The implied spot price alongside the orderbook spread gives transparency into where liquidity comes from. See assumptions A15, A19, A20, A21 in [assumptions-and-questions.md](./assumptions-and-questions.md).
+
+**Design**: Compact card following existing Tailwind dark mode patterns (`dark:bg-zinc-*`). If the panel becomes too tall, iterate by collapsing detail rows behind a disclosure toggle — show just spot price + one action button by default.
 
 ### Task 3.3 — AMM Create Modal
 
@@ -373,7 +421,7 @@ Two-step modal (form → preview) following `MakeMarketModal` pattern.
 **Form step**:
 - Asset amounts: Two inputs showing base and quote with current balance hints
 - Trading fee: Slider or input, 0%–1%, default 0.30%. Show fee presets (0.10% stable, 0.30% normal, 1.00% volatile)
-- Warning: "Creating an AMM pool costs ~0.2 XRP (owner reserve)" — prominent, non-dismissible
+- Warning: "Creating an AMM pool costs {ownerReserve} XRP (owner reserve)" — prominent, non-dismissible. **Cost is fetched dynamically** via `server_info` to get the current owner reserve, not hardcoded.
 
 **Preview step**:
 - Summary: "Create XRP/USD pool with 1,000 XRP + 500 USD at 0.30% fee"
@@ -397,6 +445,12 @@ Two-step modal (form → preview) following `MakeMarketModal` pattern.
 - One amount input + asset selector dropdown
 - Warning: "Single-asset deposits incur the pool's trading fee (0.30%)"
 
+**Empty Pool state** (triggered when pool exists but reserves are zero):
+- Modal auto-switches to two-asset-if-empty mode
+- Shows "This pool is empty — provide both assets to re-fund it"
+- Two amount inputs (no ratio reference since pool is empty)
+- Submits with `mode: "two-asset-if-empty"`
+
 **New file**: `app/trade/components/amm-withdraw-modal.tsx`
 
 **Mode selector**: Radio/tab — "Withdraw All" | "Both Assets" | "Single Asset"
@@ -409,26 +463,26 @@ Two-step modal (form → preview) following `MakeMarketModal` pattern.
 - Amount inputs similar to deposit
 - Shows LP tokens that will be burned
 
-### Task 3.5 — Trade Page Integration
+### Task 3.5 — TradeGrid & Trade Page Integration
 
-**File**: `app/trade/page.tsx` (modify)
+**Files**: `app/trade/components/trade-grid.tsx` (modify), `app/trade/page.tsx` (modify)
 
-Changes:
-1. Add `useAmmPool()` hook call alongside existing `useTradingData()`
-2. Add `AmmPoolPanel` component to the layout — below OrderBook or as a new grid section
-3. Add modal state management (`showCreateAmm`, `showDepositAmm`, `showWithdrawAmm`)
-4. Render modal components conditionally
-5. Pass `onSuccess` callbacks that trigger data refresh
+**`trade-grid.tsx` changes**:
+1. Accept `ammPool`, `ammLoading` props (from `useAmmPool` hook called in page.tsx)
+2. Accept `focusedWalletAddress` prop (to check LP token holdings)
+3. Add `AmmPoolPanel` to the left column `div`, above `RecentTrades`
+4. Add modal state management (`showCreateAmm`, `showDepositAmm`, `showWithdrawAmm`)
+5. Render modal components conditionally
+6. Pass `onSuccess` callbacks that trigger data refresh via `onRefresh`
 
-**Layout adjustment**: The `TradeGrid` may need a 4th section or a new row. Options:
-- Add AMM panel as a row below the 3-column grid
-- Replace/augment the center column (OrderBook + AMM stacked vertically)
-- Add a toggle: "Order Book" | "AMM Pool" if screen space is tight
+**`page.tsx` changes**:
+1. Add `useAmmPool()` hook call alongside existing `useTradingData()`, passing `sellingCurrency`/`buyingCurrency` as base/quote
+2. Pass AMM data down to `TradeGrid` as props
 
-Recommend: Stack below OrderBook in center column. On mobile, it collapses into the vertical flow naturally.
+**Layout**: No grid structure changes needed. The left column's `space-y-6` stack naturally accommodates the new panel above RecentTrades. On mobile, it collapses into the vertical flow naturally.
 
-**Estimated files changed**: 1 modified (page.tsx) + 4 new components + 1 new hook = 6 files
-**Risk**: Medium — layout changes may require iteration to get right
+**Estimated files changed**: 2 modified (trade-grid.tsx, page.tsx) + 4 new components + 1 new hook = 7 files
+**Risk**: Low-Medium — no grid restructuring needed; left column just gets a new child
 
 ---
 
@@ -499,11 +553,12 @@ Add to Hooks table:
 Phase 1 (Foundation)
 ├── 1.1 Types           ─┐
 ├── 1.2 Constants/LP     │── all independent
-├── 1.3 Fee utilities    ─┘
+├── 1.3 Fee utilities    │
+├── 1.5 Frontend types   │
+└── 1.6 txFailureResponse ext ─┘
 ├── 1.4 AMM Info route   ←── depends on 1.1, 1.2
-└── 1.5 Frontend types   ─── independent
 
-Phase 2 (Transaction Routes)    ←── depends on Phase 1
+Phase 2 (Transaction Routes)    ←── depends on Phase 1 (1.1, 1.6, amm-helpers.ts)
 ├── 2.1 AMMCreate route  ─┐
 ├── 2.2 AMMDeposit route  │── all independent, share amm-helpers.ts
 └── 2.3 AMMWithdraw route ─┘
@@ -513,7 +568,7 @@ Phase 3 (Frontend UI)           ←── depends on Phase 1 + 2
 ├── 3.2 Pool Panel       ←── depends on 3.1
 ├── 3.3 Create Modal     ─┐── depends on 3.1
 ├── 3.4 Deposit/Withdraw ─┘── depends on 3.1
-└── 3.5 Page integration ←── depends on 3.2, 3.3, 3.4
+└── 3.5 TradeGrid+Page   ←── depends on 3.2, 3.3, 3.4
 
 Phase 4 (Polish & Testing)      ←── independent of each other
 ├── 4.1 LP token filtering
@@ -529,11 +584,12 @@ For fastest execution with multiple agents:
 | Step | Agent A | Agent B | Agent C |
 |---|---|---|---|
 | 1 | Task 1.1 (types) | Task 1.2 (constants) | Task 1.3 (fee utils) |
-| 2 | Task 1.4 (info route) | Task 1.5 (frontend types) | — |
+| 1 | Task 1.5 (frontend types) | Task 1.6 (txFailureResponse) | — |
+| 2 | Task 1.4 (info route) | — | — |
 | 3 | Task 2.1 (create route) | Task 2.2 (deposit route) | Task 2.3 (withdraw route) |
 | 4 | Task 3.1 (hook) | — | — |
 | 5 | Task 3.2 (pool panel) | Task 3.3 (create modal) | Task 3.4 (deposit/withdraw) |
-| 6 | Task 3.5 (page integration) | — | — |
+| 6 | Task 3.5 (TradeGrid+page) | — | — |
 | 7 | Task 4.1 (LP filter) | Task 4.2 (OpenAPI) | Task 4.3 (test script) |
 | 8 | Task 4.4 (CLAUDE.md) | — | — |
 
@@ -546,16 +602,16 @@ For fastest execution with multiple agents:
 | Action | Count | Files |
 |---|---|---|
 | **New files** | 13 | 3 API routes, 4 components, 1 hook, 3 lib utilities, 1 test script, 1 helper |
-| **Modified files** | 6 | `lib/xrpl/types.ts`, `lib/xrpl/constants.ts`, `lib/xrpl/decode-currency-client.ts`, `lib/types.ts`, `app/trade/page.tsx`, `openapi.yaml`, `CLAUDE.md` |
-| **Total** | 19–20 | |
+| **Modified files** | 7 | `lib/xrpl/types.ts`, `lib/xrpl/constants.ts`, `lib/xrpl/decode-currency-client.ts`, `lib/types.ts`, `lib/api.ts`, `app/trade/components/trade-grid.tsx`, `app/trade/page.tsx`, `openapi.yaml`, `CLAUDE.md` |
+| **Total** | ~20 | |
 
 ## Estimated Scope per Phase
 
 | Phase | New Files | Modified Files | Complexity |
 |---|---|---|---|
-| Phase 1 | 3 | 3 | Low — types + one GET route |
+| Phase 1 | 3 | 4 | Low — types + one GET route + txFailureResponse extension |
 | Phase 2 | 4 | 0 | Low — follows established POST pattern |
-| Phase 3 | 5 | 1 | Medium — UI layout decisions |
+| Phase 3 | 5 | 2 | Low-Medium — compact panel + modals; no grid restructuring |
 | Phase 4 | 1 | 3 | Low — documentation + test script |
 
 ---
