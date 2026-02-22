@@ -114,7 +114,7 @@ test.describe.serial("Setup page", () => {
   test("expand recipient card — shows balances and trust lines", async () => {
     // Click the recipient card toggle button (button containing the recipient address)
     const recipientToggle = page.getByRole("button", {
-      name: /^r[a-zA-Z0-9]{24,}/,
+      name: /r[a-zA-Z0-9]{24,}/,
     });
     await recipientToggle.click();
     // Balance section should now be visible

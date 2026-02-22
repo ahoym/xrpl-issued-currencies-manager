@@ -36,7 +36,7 @@ setup("bootstrap devnet state", async ({ page }) => {
   await waitForWalletGenerated(page, 1, 45_000);
 
   // Expand recipient card — toggle button contains the address text
-  await page.getByRole("button", { name: /^r[a-zA-Z0-9]{24,}/ }).click();
+  await page.getByRole("button", { name: /r[a-zA-Z0-9]{24,}/ }).click();
 
   // Click "Receive Currency" to open WalletSetupModal
   await page.getByRole("button", { name: "Receive Currency" }).click();
