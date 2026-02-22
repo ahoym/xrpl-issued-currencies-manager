@@ -197,11 +197,19 @@ export function getTransactionResult(meta: unknown): string | undefined {
  * Return a 422 error Response if the transaction failed, or null on success.
  * Replaces the common 5-line result-check pattern in API routes.
  */
-export function txFailureResponse(result: TxResponse): Response | null {
+export function txFailureResponse(
+  result: TxResponse,
+  errorMap?: Record<string, string>,
+): Response | null {
   const txResult = getTransactionResult(result.result.meta);
   if (txResult && txResult !== "tesSUCCESS") {
+    const friendlyMessage = errorMap?.[txResult];
     return Response.json(
-      { error: `Transaction failed: ${txResult}`, result: result.result },
+      {
+        error: friendlyMessage || `Transaction failed: ${txResult}`,
+        ...(friendlyMessage ? { code: txResult } : {}),
+        result: result.result,
+      },
       { status: 422 },
     );
   }

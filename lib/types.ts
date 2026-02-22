@@ -85,3 +85,32 @@ export interface DomainInfo {
   acceptedCredentials: { issuer: string; credentialType: string }[];
   sequence: number;
 }
+
+export interface AmmAuctionSlot {
+  account: string;
+  discountedFee: number;
+  expiration: string;
+  price: { currency: string; issuer: string; value: string };
+  timeInterval: number;
+}
+
+export interface AmmVoteSlot {
+  account: string;
+  tradingFee: number;
+  voteWeight: number;
+}
+
+export interface AmmPoolInfo {
+  exists: boolean;
+  account?: string;
+  asset1?: { currency: string; issuer?: string; value: string };
+  asset2?: { currency: string; issuer?: string; value: string };
+  lpToken?: { currency: string; issuer: string; value: string };
+  tradingFee?: number;
+  tradingFeeDisplay?: string;
+  spotPrice?: string;
+  assetFrozen?: boolean;
+  asset2Frozen?: boolean;
+  auctionSlot?: AmmAuctionSlot | null;
+  voteSlots?: AmmVoteSlot[];
+}
