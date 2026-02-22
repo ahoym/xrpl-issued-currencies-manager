@@ -48,6 +48,10 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) | `test-dex-offers.sh` |
 | `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param | `test-dex-offers.sh` |
 | `/api/dex/trades` | GET | Recent trades for a currency pair | — |
+| `/api/amm/info` | GET | AMM pool info for a currency pair | `test-amm.sh` |
+| `/api/amm/create` | POST | Create AMM pool | `test-amm.sh` |
+| `/api/amm/deposit` | POST | Deposit to AMM pool | `test-amm.sh` |
+| `/api/amm/withdraw` | POST | Withdraw from AMM pool | `test-amm.sh` |
 
 ### `lib/` Module Map
 
@@ -66,6 +70,9 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `credentials.ts` | `encodeCredentialType()`, `decodeCredentialType()` — hex encoding for credential types (Node-only) |
 | `build-dex-amount.ts` | `buildDexAmount()` — construct `DexAmount` objects for XRP or issued currencies |
 | `filled-orders.ts` | `parseFilledOrders()` — extract filled orders from `account_tx` response for a currency pair |
+| `lp-token.ts` | `isLpTokenCurrency()`, `formatLpTokenLabel()` — LP token detection and display |
+| `amm-fee.ts` | `formatAmmFee()`, `parseAmmFeeInput()` — AMM fee formatting |
+| `amm-helpers.ts` | `buildCurrencySpec()` — XRPL Currency spec builder for AMM |
 
 **Shared Types** (`lib/`)
 
@@ -100,6 +107,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `hooks/use-domain-mode.ts` | `useDomainMode()` — domain selector state for permissioned DEX |
 | `hooks/use-wallet-generation.ts` | `useWalletGeneration()` |
 | `hooks/use-make-market-execution.ts` | `useMakeMarketExecution()` — batch offer placement with progress |
+| `hooks/use-amm-pool.ts` | `useAmmPool()` — fetches AMM pool info for selected pair |
 
 ### Frontend Pages
 

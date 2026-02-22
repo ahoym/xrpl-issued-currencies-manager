@@ -729,6 +729,161 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /api/amm/info:
+    get:
+      summary: Query AMM pool state for a currency pair
+      operationId: getAmmInfo
+      parameters:
+        - name: base_currency
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Base currency code (e.g., "XRP" or "USD")
+        - name: base_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Base currency issuer (required for non-XRP)
+        - name: quote_currency
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Quote currency code
+        - name: quote_issuer
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Quote currency issuer (required for non-XRP)
+        - $ref: "#/components/parameters/network"
+      responses:
+        "200":
+          description: AMM pool info (exists=false when no pool exists for the pair)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmmPoolInfo"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/amm/create:
+    post:
+      summary: Create an AMM pool for a currency pair
+      operationId: createAmm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAmmRequest"
+      responses:
+        "201":
+          description: AMM pool created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/amm/deposit:
+    post:
+      summary: Deposit assets into an AMM pool
+      operationId: depositAmm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepositAmmRequest"
+      responses:
+        "200":
+          description: Deposit completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/amm/withdraw:
+    post:
+      summary: Withdraw assets from an AMM pool
+      operationId: withdrawAmm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawAmmRequest"
+      responses:
+        "200":
+          description: Withdrawal completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Raw transaction result from XRPL
+                  poolDeleted:
+                    type: boolean
+                    description: True when a withdraw-all empties and deletes the pool
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /api/credentials/create:
     post:
       summary: Issue a credential (CredentialCreate)
@@ -1292,3 +1447,142 @@ components:
                 type: string
         sequence:
           type: integer
+
+    AmmCurrencySpec:
+      type: object
+      required: [currency]
+      properties:
+        currency:
+          type: string
+          description: Currency code ("XRP" or issued currency code)
+        issuer:
+          type: string
+          description: Issuer address (required for non-XRP)
+
+    AmmPoolInfo:
+      type: object
+      required: [exists]
+      properties:
+        exists:
+          type: boolean
+          description: Whether an AMM pool exists for the requested currency pair
+        account:
+          type: string
+          description: AMM pool account address
+        asset1:
+          $ref: "#/components/schemas/DexAmount"
+        asset2:
+          $ref: "#/components/schemas/DexAmount"
+        lpToken:
+          $ref: "#/components/schemas/DexAmount"
+        tradingFee:
+          type: integer
+          description: Trading fee in units of 1/100000 (e.g. 500 = 0.5%)
+        tradingFeeDisplay:
+          type: string
+          description: Human-readable trading fee (e.g. "0.5%")
+        spotPrice:
+          type: string
+          description: Spot price of 1 base unit in quote terms
+        assetFrozen:
+          type: boolean
+          description: Whether the base asset is frozen
+        asset2Frozen:
+          type: boolean
+          description: Whether the quote asset is frozen
+        auctionSlot:
+          type: object
+          nullable: true
+          properties:
+            account:
+              type: string
+            discountedFee:
+              type: integer
+            expiration:
+              type: string
+            price:
+              $ref: "#/components/schemas/DexAmount"
+            timeInterval:
+              type: integer
+        voteSlots:
+          type: array
+          items:
+            type: object
+            properties:
+              account:
+                type: string
+              tradingFee:
+                type: integer
+              voteWeight:
+                type: integer
+
+    CreateAmmRequest:
+      type: object
+      required: [seed, amount, amount2, tradingFee]
+      properties:
+        seed:
+          type: string
+        amount:
+          $ref: "#/components/schemas/DexAmount"
+        amount2:
+          $ref: "#/components/schemas/DexAmount"
+        tradingFee:
+          type: integer
+          description: Trading fee in units of 1/100000 — must be 0–1000 (0%–1%)
+        network:
+          type: string
+          enum: [testnet, devnet]
+
+    DepositAmmRequest:
+      type: object
+      required: [seed, asset, asset2, mode]
+      properties:
+        seed:
+          type: string
+        asset:
+          $ref: "#/components/schemas/AmmCurrencySpec"
+        asset2:
+          $ref: "#/components/schemas/AmmCurrencySpec"
+        amount:
+          $ref: "#/components/schemas/DexAmount"
+        amount2:
+          $ref: "#/components/schemas/DexAmount"
+        lpTokenOut:
+          $ref: "#/components/schemas/DexAmount"
+        mode:
+          type: string
+          enum: [two-asset, single-asset, two-asset-if-empty]
+          description: >
+            two-asset: deposit both assets proportionally (requires amount + amount2).
+            single-asset: deposit one asset only (requires amount).
+            two-asset-if-empty: used to refund an emptied pool (requires amount + amount2).
+        network:
+          type: string
+          enum: [testnet, devnet]
+
+    WithdrawAmmRequest:
+      type: object
+      required: [seed, asset, asset2, mode]
+      properties:
+        seed:
+          type: string
+        asset:
+          $ref: "#/components/schemas/AmmCurrencySpec"
+        asset2:
+          $ref: "#/components/schemas/AmmCurrencySpec"
+        amount:
+          $ref: "#/components/schemas/DexAmount"
+        amount2:
+          $ref: "#/components/schemas/DexAmount"
+        lpTokenIn:
+          $ref: "#/components/schemas/DexAmount"
+        mode:
+          type: string
+          enum: [withdraw-all, two-asset, single-asset]
+          description: >
+            withdraw-all: redeem all LP tokens and close position.
+            two-asset: withdraw both assets proportionally (requires amount + amount2).
+            single-asset: withdraw one asset only (requires amount).
+        network:
+          type: string
+          enum: [testnet, devnet]

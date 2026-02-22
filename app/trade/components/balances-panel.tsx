@@ -3,6 +3,7 @@
 import BigNumber from "bignumber.js";
 import type { BalanceEntry } from "@/lib/types";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
+import { isLpTokenCurrency } from "@/lib/xrpl/lp-token";
 
 interface BalancesPanelProps {
   balances: BalanceEntry[];
@@ -42,22 +43,24 @@ export function BalancesPanel({ balances, loading, onRefresh }: BalancesPanelPro
         </p>
       ) : (
         <div className="mt-2 space-y-1">
-          {balances.map((b, i) => {
-            const cur = decodeCurrency(b.currency);
-            return (
-              <div
-                key={i}
-                className="flex items-center justify-between text-xs"
-              >
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                  {cur}
-                </span>
-                <span className="font-mono text-zinc-600 dark:text-zinc-400">
-                  {new BigNumber(b.value).toFixed(4)}
-                </span>
-              </div>
-            );
-          })}
+          {balances
+            .filter((b) => !isLpTokenCurrency(b.currency))
+            .map((b, i) => {
+              const cur = decodeCurrency(b.currency);
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {cur}
+                  </span>
+                  <span className="font-mono text-zinc-600 dark:text-zinc-400">
+                    {new BigNumber(b.value).toFixed(4)}
+                  </span>
+                </div>
+              );
+            })}
         </div>
       )}
     </div>
