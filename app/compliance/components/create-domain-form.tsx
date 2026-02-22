@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import type { WalletInfo, DomainInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
-import { labelClass, primaryButtonClass, errorTextClass, successBannerClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
+import {
+  labelClass,
+  primaryButtonClass,
+  errorTextClass,
+  successBannerClass,
+  SUCCESS_MESSAGE_DURATION_MS,
+} from "@/lib/ui/ui";
 
 export interface EditingDomain {
   domainID: string;
@@ -25,7 +31,9 @@ export function CreateDomainForm({
   onSaved,
   onCancelEdit,
 }: CreateDomainFormProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [credentials, setCredentials] = useState<
     { issuer: string; credentialType: string }[]
   >([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);
@@ -60,7 +68,9 @@ export function CreateDomainForm({
   }, [defaultCredentialIssuer, editingDomain]);
 
   function resetForm() {
-    setCredentials([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);
+    setCredentials([
+      { issuer: defaultCredentialIssuer ?? "", credentialType: "" },
+    ]);
     setError(null);
     setSuccess(false);
   }
@@ -122,7 +132,10 @@ export function CreateDomainForm({
         {isEditing && onCancelEdit && (
           <button
             type="button"
-            onClick={() => { resetForm(); onCancelEdit(); }}
+            onClick={() => {
+              resetForm();
+              onCancelEdit();
+            }}
             className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
           >
             Cancel
@@ -135,15 +148,11 @@ export function CreateDomainForm({
         </p>
       )}
       {success ? (
-        <div className={successBannerClass}>
-          {successLabel}
-        </div>
+        <div className={successBannerClass}>{successLabel}</div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3">
           <div>
-            <label className={labelClass}>
-              Accepted Credentials
-            </label>
+            <label className={labelClass}>Accepted Credentials</label>
             {credentials.map((dc, i) => (
               <div key={i} className="mt-1 flex gap-2">
                 <input
@@ -171,7 +180,9 @@ export function CreateDomainForm({
                 {credentials.length > 1 && (
                   <button
                     type="button"
-                    onClick={() => setCredentials((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() =>
+                      setCredentials((prev) => prev.filter((_, j) => j !== i))
+                    }
                     className="text-xs text-red-500 hover:text-red-700"
                   >
                     Remove
@@ -185,7 +196,10 @@ export function CreateDomainForm({
                 onClick={() =>
                   setCredentials((prev) => [
                     ...prev,
-                    { issuer: defaultCredentialIssuer ?? "", credentialType: "" },
+                    {
+                      issuer: defaultCredentialIssuer ?? "",
+                      credentialType: "",
+                    },
                   ])
                 }
                 className="mt-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
@@ -194,12 +208,13 @@ export function CreateDomainForm({
               </button>
             )}
           </div>
-          {error && (
-            <p className={errorTextClass}>{error}</p>
-          )}
+          {error && <p className={errorTextClass}>{error}</p>}
           <button
             type="submit"
-            disabled={submitting || credentials.every((dc) => !dc.issuer || !dc.credentialType)}
+            disabled={
+              submitting ||
+              credentials.every((dc) => !dc.issuer || !dc.credentialType)
+            }
             className={primaryButtonClass}
           >
             {submitting ? submittingLabel : submitLabel}

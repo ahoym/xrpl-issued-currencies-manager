@@ -4,13 +4,20 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { toXrplAmount } from "@/lib/xrpl/currency";
 import { buildCurrencySpec } from "@/lib/xrpl/amm-helpers";
-import { validateRequired, walletFromSeed, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import {
+  validateRequired,
+  walletFromSeed,
+  txFailureResponse,
+  apiErrorResponse,
+} from "@/lib/api";
 import type { WithdrawAmmRequest, ApiError } from "@/lib/xrpl/types";
 
 const AMM_WITHDRAW_ERRORS: Record<string, string> = {
   tecAMM_EMPTY: "This pool has no assets to withdraw.",
-  tecAMM_BALANCE: "Cannot complete withdrawal: would drain one side of the pool entirely.",
-  tecAMM_FAILED: "Withdrawal failed: the effective price is below your specified limit.",
+  tecAMM_BALANCE:
+    "Cannot complete withdrawal: would drain one side of the pool entirely.",
+  tecAMM_FAILED:
+    "Withdrawal failed: the effective price is below your specified limit.",
   tecAMM_INVALID_TOKENS: "Withdrawal amount is too small to process.",
   tecFROZEN: "Cannot withdraw: this currency is frozen by its issuer.",
   tecINSUF_RESERVE_LINE: "Not enough XRP reserve for this withdrawal.",
@@ -29,12 +36,17 @@ export async function POST(request: NextRequest) {
   try {
     const body: WithdrawAmmRequest = await request.json();
 
-    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "asset", "asset2", "mode"]);
+    const invalid = validateRequired(
+      body as unknown as Record<string, unknown>,
+      ["seed", "asset", "asset2", "mode"],
+    );
     if (invalid) return invalid;
 
     if (!flagMap[body.mode]) {
       return Response.json(
-        { error: `Invalid mode. Must be one of: ${Object.keys(flagMap).join(", ")}` } satisfies ApiError,
+        {
+          error: `Invalid mode. Must be one of: ${Object.keys(flagMap).join(", ")}`,
+        } satisfies ApiError,
         { status: 400 },
       );
     }
@@ -48,7 +60,9 @@ export async function POST(request: NextRequest) {
       }
       if (!body.amount2) {
         return Response.json(
-          { error: "amount2 is required for two-asset mode" } satisfies ApiError,
+          {
+            error: "amount2 is required for two-asset mode",
+          } satisfies ApiError,
           { status: 400 },
         );
       }
@@ -57,7 +71,9 @@ export async function POST(request: NextRequest) {
     if (body.mode === "single-asset") {
       if (!body.amount) {
         return Response.json(
-          { error: "amount is required for single-asset mode" } satisfies ApiError,
+          {
+            error: "amount is required for single-asset mode",
+          } satisfies ApiError,
           { status: 400 },
         );
       }
@@ -98,7 +114,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return Response.json({ result: result.result, ...(poolDeleted ? { poolDeleted: true } : {}) });
+    return Response.json({
+      result: result.result,
+      ...(poolDeleted ? { poolDeleted: true } : {}),
+    });
   } catch (err) {
     return apiErrorResponse(err, "Failed to withdraw from AMM pool");
   }

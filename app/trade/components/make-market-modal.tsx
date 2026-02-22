@@ -60,7 +60,7 @@ export function MakeMarketModal({
   // Flow state
   const [step, setStep] = useState<"form" | "preview">("form");
   const [plannedOrders, setPlannedOrders] = useState<MakeMarketOrder[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   // Validation
   const bnMidPrice = midPrice ? new BigNumber(midPrice) : null;
@@ -87,21 +87,20 @@ export function MakeMarketModal({
     );
   }
 
-  function updateLevel(
-    index: number,
-    field: keyof LadderLevel,
-    value: string,
-  ) {
+  function updateLevel(index: number, field: keyof LadderLevel, value: string) {
     const parsed = new BigNumber(value);
     setLevels((prev) =>
       prev.map((l, i) =>
-        i === index ? { ...l, [field]: parsed.isFinite() ? parsed.toNumber() : 0 } : l,
+        i === index
+          ? { ...l, [field]: parsed.isFinite() ? parsed.toNumber() : 0 }
+          : l,
       ),
     );
   }
 
   function handlePreview() {
-    if (!midPriceValid || !bnMidPrice || !baseCurrency || !quoteCurrency) return;
+    if (!midPriceValid || !bnMidPrice || !baseCurrency || !quoteCurrency)
+      return;
 
     const orders: MakeMarketOrder[] = [];
     const bidWallet = recipients[bidWalletIdx];
@@ -144,8 +143,8 @@ export function MakeMarketModal({
     return (
       <ModalShell title="Preview Orders" onClose={onClose}>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          {baseCurrency.currency} / {quoteCurrency.currency} &middot; Mid
-          price: {midPrice}
+          {baseCurrency.currency} / {quoteCurrency.currency} &middot; Mid price:{" "}
+          {midPrice}
         </p>
 
         <div className="mt-4 max-h-80 overflow-y-auto">
@@ -320,4 +319,3 @@ export function MakeMarketModal({
     </ModalShell>
   );
 }
-

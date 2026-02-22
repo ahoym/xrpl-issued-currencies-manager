@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MIN_CURRENCY_CODE_LENGTH, MAX_CURRENCY_CODE_LENGTH } from "@/lib/xrpl/constants";
+import {
+  MIN_CURRENCY_CODE_LENGTH,
+  MAX_CURRENCY_CODE_LENGTH,
+} from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/ui";
 
 interface CurrencyManagerProps {
@@ -33,8 +36,13 @@ export function CurrencyManager({
     const code = input.toUpperCase().trim();
     setError(null);
 
-    if (code.length < MIN_CURRENCY_CODE_LENGTH || code.length > MAX_CURRENCY_CODE_LENGTH) {
-      setError(`Currency code must be ${MIN_CURRENCY_CODE_LENGTH}\u2013${MAX_CURRENCY_CODE_LENGTH} uppercase characters (e.g. USD)`);
+    if (
+      code.length < MIN_CURRENCY_CODE_LENGTH ||
+      code.length > MAX_CURRENCY_CODE_LENGTH
+    ) {
+      setError(
+        `Currency code must be ${MIN_CURRENCY_CODE_LENGTH}\u2013${MAX_CURRENCY_CODE_LENGTH} uppercase characters (e.g. USD)`,
+      );
       return;
     }
     if (!/^[A-Z0-9]+$/.test(code)) {
@@ -58,8 +66,10 @@ export function CurrencyManager({
       <h2 className="text-lg font-semibold">2. Define Currencies</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         Add currency codes for your issuer.{" "}
-        <span className="text-green-700 dark:text-green-400">Green</span> = on-ledger (has trust lines),{" "}
-        <span className="text-blue-700 dark:text-blue-400">blue</span> = local-only (not yet issued).
+        <span className="text-green-700 dark:text-green-400">Green</span> =
+        on-ledger (has trust lines),{" "}
+        <span className="text-blue-700 dark:text-blue-400">blue</span> =
+        local-only (not yet issued).
         {disabled && " Generate an issuer wallet first."}
       </p>
 
@@ -67,7 +77,11 @@ export function CurrencyManager({
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value.toUpperCase().slice(0, MAX_CURRENCY_CODE_LENGTH))}
+          onChange={(e) =>
+            setInput(
+              e.target.value.toUpperCase().slice(0, MAX_CURRENCY_CODE_LENGTH),
+            )
+          }
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="e.g. USD"
           maxLength={MAX_CURRENCY_CODE_LENGTH}

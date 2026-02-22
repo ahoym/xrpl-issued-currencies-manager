@@ -37,7 +37,10 @@ export function encodeXrplCurrency(code: string): string {
   }
 
   // Non-standard ASCII codes that fit in 20 bytes (4–20 chars)
-  if (code.length > MIN_CURRENCY_CODE_LENGTH && code.length <= MAX_CURRENCY_CODE_LENGTH / 2) {
+  if (
+    code.length > MIN_CURRENCY_CODE_LENGTH &&
+    code.length <= MAX_CURRENCY_CODE_LENGTH / 2
+  ) {
     const hex = Buffer.from(code, "ascii").toString("hex").toUpperCase();
     return hex.padEnd(HEX_CURRENCY_CODE_LENGTH, "0");
   }
@@ -56,7 +59,9 @@ export function toXrplAmount(amount: DexAmount): Amount {
     return xrpToDrops(amount.value);
   }
   if (!amount.issuer) {
-    throw new Error(`issuer is required for non-XRP currency "${amount.currency}"`);
+    throw new Error(
+      `issuer is required for non-XRP currency "${amount.currency}"`,
+    );
   }
   return {
     currency: encodeXrplCurrency(amount.currency),

@@ -25,7 +25,8 @@ export function TrustLineList({ badges }: TrustLineListProps) {
               : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
           }`}
         >
-          {badge.currency}{!badge.isLocal && " (ext)"}
+          {badge.currency}
+          {!badge.isLocal && " (ext)"}
         </span>
       ))}
     </div>

@@ -60,14 +60,20 @@ export function parseFilledOrders(
 
         if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
           // Transaction fee is only paid in XRP by the submitting account — subtract it
-          if (baseCurrency === Assets.XRP && acctChanges.account === tx_json.Account) {
+          if (
+            baseCurrency === Assets.XRP &&
+            acctChanges.account === tx_json.Account
+          ) {
             const fee = parseFloat(String(tx_json.Fee ?? "0")) / 1_000_000;
             baseTotal += val - fee;
           } else {
             baseTotal += val;
           }
         } else if (matchesCurrency(bal, quoteCurrency, quoteIssuer)) {
-          if (quoteCurrency === Assets.XRP && acctChanges.account === tx_json.Account) {
+          if (
+            quoteCurrency === Assets.XRP &&
+            acctChanges.account === tx_json.Account
+          ) {
             const fee = parseFloat(String(tx_json.Fee ?? "0")) / 1_000_000;
             quoteTotal += val - fee;
           } else {
@@ -87,8 +93,10 @@ export function parseFilledOrders(
       (baseCurrency === Assets.XRP || takerPays.issuer === baseIssuer);
 
     // Extract time and hash from entry fields
-    const time = (entry.close_time_iso as string) ?? (entry.date as string) ?? "";
-    const hash = (entry.hash as string) ?? (tx_json.hash as string | undefined) ?? "";
+    const time =
+      (entry.close_time_iso as string) ?? (entry.date as string) ?? "";
+    const hash =
+      (entry.hash as string) ?? (tx_json.hash as string | undefined) ?? "";
 
     const price = quoteTotal / baseTotal;
 

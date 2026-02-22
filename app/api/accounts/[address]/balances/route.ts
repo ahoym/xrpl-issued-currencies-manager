@@ -50,6 +50,8 @@ export async function GET(
       balances: [xrpBalance, ...issuedBalances],
     });
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch balances", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch balances", {
+      checkNotFound: true,
+    });
   }
 }

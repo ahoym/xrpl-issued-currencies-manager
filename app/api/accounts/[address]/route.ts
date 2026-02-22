@@ -23,6 +23,8 @@ export async function GET(
 
     return Response.json(response.result);
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch account info", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch account info", {
+      checkNotFound: true,
+    });
   }
 }

@@ -25,8 +25,15 @@ export function useMakeMarketExecution({
   onRefresh,
 }: UseMakeMarketExecutionOptions) {
   const [showMakeMarket, setShowMakeMarket] = useState(false);
-  const [marketExec, setMarketExec] = useState<{ current: number; total: number } | null>(null);
-  const [marketResult, setMarketResult] = useState<{ ok: number; failed: number; firstError?: string } | null>(null);
+  const [marketExec, setMarketExec] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const [marketResult, setMarketResult] = useState<{
+    ok: number;
+    failed: number;
+    firstError?: string;
+  } | null>(null);
   const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMakeMarketExecute = useCallback(
@@ -114,7 +121,8 @@ export function useMakeMarketExecution({
   // Button label / disabled / class
   let makeMarketLabel = "Make Market";
   let makeMarketDisabled = false;
-  let makeMarketExtraClass = "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600";
+  let makeMarketExtraClass =
+    "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600";
 
   if (marketExec) {
     makeMarketLabel = `Placing ${marketExec.current}/${marketExec.total}...`;
@@ -122,10 +130,12 @@ export function useMakeMarketExecution({
     makeMarketExtraClass = "bg-blue-500 dark:bg-blue-600 cursor-wait";
   } else if (marketResult) {
     const { ok, failed } = marketResult;
-    makeMarketLabel = failed > 0 ? `${ok}/${ok + failed} placed` : `${ok}/${ok} placed`;
-    makeMarketExtraClass = failed > 0
-      ? "bg-amber-600 dark:bg-amber-700"
-      : "bg-green-600 dark:bg-green-700";
+    makeMarketLabel =
+      failed > 0 ? `${ok}/${ok + failed} placed` : `${ok}/${ok} placed`;
+    makeMarketExtraClass =
+      failed > 0
+        ? "bg-amber-600 dark:bg-amber-700"
+        : "bg-green-600 dark:bg-green-700";
   }
 
   const marketError = marketResult?.firstError ?? null;

@@ -8,7 +8,11 @@ interface WalletSelectorProps {
   onSelect: (wallet: WalletInfo) => void;
 }
 
-export function WalletSelector({ wallets, focusedAddress, onSelect }: WalletSelectorProps) {
+export function WalletSelector({
+  wallets,
+  focusedAddress,
+  onSelect,
+}: WalletSelectorProps) {
   return (
     <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
       {wallets.map((wallet) => (

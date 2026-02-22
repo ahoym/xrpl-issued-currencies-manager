@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
       const setTxResult = getTransactionResult(setResult.result.meta);
       if (setTxResult && setTxResult !== "tesSUCCESS") {
         return Response.json(
-          { error: `Failed to enable DefaultRipple: ${setTxResult}` } satisfies ApiError,
+          {
+            error: `Failed to enable DefaultRipple: ${setTxResult}`,
+          } satisfies ApiError,
           { status: 422 },
         );
       }

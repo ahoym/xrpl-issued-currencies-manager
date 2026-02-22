@@ -6,7 +6,12 @@ import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
-import { inputClass, labelClass, errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
+import {
+  inputClass,
+  labelClass,
+  errorTextClass,
+  SUCCESS_MESSAGE_DURATION_MS,
+} from "@/lib/ui/ui";
 import { buildDexAmount } from "@/lib/xrpl/build-dex-amount";
 
 interface CurrencyOption {
@@ -48,7 +53,9 @@ export function TradeForm({
   domainID,
   onSubmitted,
 }: TradeFormProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState("");
@@ -271,25 +278,44 @@ export function TradeForm({
           {amount && price && total && (
             <div className="rounded-md bg-zinc-100 px-3 py-2 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
               {tab === "buy" ? (
-                <>Pay <span className="font-semibold">{total} {buyingCurrency.currency}</span> to receive <span className="font-semibold">{amount} {sellingCurrency.currency}</span></>
+                <>
+                  Pay{" "}
+                  <span className="font-semibold">
+                    {total} {buyingCurrency.currency}
+                  </span>{" "}
+                  to receive{" "}
+                  <span className="font-semibold">
+                    {amount} {sellingCurrency.currency}
+                  </span>
+                </>
               ) : (
-                <>Sell <span className="font-semibold">{amount} {sellingCurrency.currency}</span> to receive <span className="font-semibold">{total} {buyingCurrency.currency}</span></>
+                <>
+                  Sell{" "}
+                  <span className="font-semibold">
+                    {amount} {sellingCurrency.currency}
+                  </span>{" "}
+                  to receive{" "}
+                  <span className="font-semibold">
+                    {total} {buyingCurrency.currency}
+                  </span>
+                </>
               )}
             </div>
           )}
 
-
           <div>
-            <label className={labelClass}>
-              Execution Type
-            </label>
+            <label className={labelClass}>Execution Type</label>
             <select
               value={executionType}
-              onChange={(e) => setExecutionType(e.target.value as ExecutionType)}
+              onChange={(e) =>
+                setExecutionType(e.target.value as ExecutionType)
+              }
               className={inputClass}
             >
               {EXECUTION_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </select>
           </div>
@@ -318,9 +344,7 @@ export function TradeForm({
           </div>
 
           <div>
-            <label className={labelClass}>
-              Expiration (optional)
-            </label>
+            <label className={labelClass}>Expiration (optional)</label>
             <input
               type="datetime-local"
               value={expiration}
@@ -329,9 +353,7 @@ export function TradeForm({
             />
           </div>
 
-          {error && (
-            <p className={errorTextClass}>{error}</p>
-          )}
+          {error && <p className={errorTextClass}>{error}</p>}
 
           <button
             type="submit"

@@ -19,7 +19,9 @@ export function DomainsList({
   onDeleted,
   onEdit,
 }: DomainsListProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [deletingID, setDeletingID] = useState<string | null>(null);
 
   async function handleDelete(domainID: string) {
@@ -77,19 +79,29 @@ export function DomainsList({
                 </span>
               </div>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Owner: <span className="font-mono text-zinc-700 dark:text-zinc-300">{d.owner}</span>
+                Owner:{" "}
+                <span className="font-mono text-zinc-700 dark:text-zinc-300">
+                  {d.owner}
+                </span>
               </p>
               <div className="mt-2 overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-zinc-200 dark:border-zinc-700">
-                      <th className="py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">Credential Type</th>
-                      <th className="py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">Issuer</th>
+                      <th className="py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                        Credential Type
+                      </th>
+                      <th className="py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                        Issuer
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {d.acceptedCredentials.map((ac) => (
-                      <tr key={`${ac.issuer}:${ac.credentialType}`} className="border-b border-zinc-100 dark:border-zinc-800">
+                      <tr
+                        key={`${ac.issuer}:${ac.credentialType}`}
+                        className="border-b border-zinc-100 dark:border-zinc-800"
+                      >
                         <td className="py-1">{ac.credentialType}</td>
                         <td className="py-1 font-mono">{ac.issuer}</td>
                       </tr>

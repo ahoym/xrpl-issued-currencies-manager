@@ -61,6 +61,8 @@ export async function GET(
 
     return Response.json({ address, credentials });
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch credentials", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch credentials", {
+      checkNotFound: true,
+    });
   }
 }

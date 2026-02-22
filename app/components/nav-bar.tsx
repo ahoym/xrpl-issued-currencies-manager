@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAppState } from '@/lib/hooks/use-app-state';
-import { NetworkSelector } from './network-selector';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAppState } from "@/lib/hooks/use-app-state";
+import { NetworkSelector } from "./network-selector";
 
 const links = [
-  { href: '/setup', label: 'Setup' },
-  { href: '/compliance', label: 'Compliance' },
-  { href: '/transact', label: 'Transact' },
-  { href: '/trade', label: 'Trade' },
+  { href: "/setup", label: "Setup" },
+  { href: "/compliance", label: "Compliance" },
+  { href: "/transact", label: "Transact" },
+  { href: "/trade", label: "Trade" },
 ];
 
 export function NavBar() {
@@ -23,7 +23,8 @@ export function NavBar() {
           XRPL Manager
         </span>
         {links.map((link) => {
-          const active = pathname === link.href || pathname.startsWith(link.href + '/');
+          const active =
+            pathname === link.href || pathname.startsWith(link.href + "/");
           return (
             <Link
               key={link.href}
@@ -31,8 +32,8 @@ export function NavBar() {
               aria-current={active ? "page" : undefined}
               className={`text-sm font-medium ${
                 active
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
               {link.label}

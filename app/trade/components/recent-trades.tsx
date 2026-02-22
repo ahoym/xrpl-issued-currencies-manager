@@ -26,7 +26,11 @@ function formatTime(iso: string): string {
   if (!iso) return "—";
   try {
     const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   } catch {
     return "—";
   }
@@ -79,7 +83,13 @@ export function RecentTrades({
                 <tr
                   key={trade.hash}
                   className="cursor-pointer border-b border-zinc-50 dark:border-zinc-900"
-                  onClick={() => window.open(`${explorerBase}/transactions/${trade.hash}`, "_blank", "noopener,noreferrer")}
+                  onClick={() =>
+                    window.open(
+                      `${explorerBase}/transactions/${trade.hash}`,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
                 >
                   <td className="py-1.5 pr-2">
                     <span

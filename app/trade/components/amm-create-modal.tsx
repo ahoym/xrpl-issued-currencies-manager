@@ -49,9 +49,13 @@ export function AmmCreateModal({
   const feeDisplay = (feeUnits / 1000).toFixed(2) + "%";
 
   const baseAmountValid =
-    baseAmount !== "" && Number.isFinite(parseFloat(baseAmount)) && parseFloat(baseAmount) > 0;
+    baseAmount !== "" &&
+    Number.isFinite(parseFloat(baseAmount)) &&
+    parseFloat(baseAmount) > 0;
   const quoteAmountValid =
-    quoteAmount !== "" && Number.isFinite(parseFloat(quoteAmount)) && parseFloat(quoteAmount) > 0;
+    quoteAmount !== "" &&
+    Number.isFinite(parseFloat(quoteAmount)) &&
+    parseFloat(quoteAmount) > 0;
   const formValid = baseAmountValid && quoteAmountValid;
 
   function handlePreview() {
@@ -76,7 +80,11 @@ export function AmmCreateModal({
       network,
     };
 
-    const result = await mutate("/api/amm/create", body as Record<string, unknown>, "Failed to create AMM pool");
+    const result = await mutate(
+      "/api/amm/create",
+      body as Record<string, unknown>,
+      "Failed to create AMM pool",
+    );
 
     if (result !== null) {
       setSuccess(true);
@@ -102,7 +110,8 @@ export function AmmCreateModal({
               Pool Amounts
             </span>
             <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
-              {baseAmount} {baseCurrency.label} + {quoteAmount} {quoteCurrency.label}
+              {baseAmount} {baseCurrency.label} + {quoteAmount}{" "}
+              {quoteCurrency.label}
             </p>
           </div>
           <div>
@@ -147,7 +156,8 @@ export function AmmCreateModal({
   return (
     <ModalShell title="Create AMM Pool" onClose={onClose}>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        Provide initial liquidity for {baseCurrency.label} / {quoteCurrency.label}
+        Provide initial liquidity for {baseCurrency.label} /{" "}
+        {quoteCurrency.label}
       </p>
 
       <div className="mt-4 space-y-4">
@@ -215,8 +225,8 @@ export function AmmCreateModal({
 
         {/* Cost warning */}
         <div className="rounded-md bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-          Creating an AMM pool costs approximately 0.2 XRP (owner reserve).
-          This is destroyed, not held in reserve.
+          Creating an AMM pool costs approximately 0.2 XRP (owner reserve). This
+          is destroyed, not held in reserve.
         </div>
 
         <button

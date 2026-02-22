@@ -1261,7 +1261,8 @@ components:
 
     TransferRequest:
       type: object
-      required: [senderSeed, recipientAddress, issuerAddress, currencyCode, amount]
+      required:
+        [senderSeed, recipientAddress, issuerAddress, currencyCode, amount]
       properties:
         senderSeed:
           type: string

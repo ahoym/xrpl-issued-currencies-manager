@@ -2,9 +2,14 @@ import { NextRequest } from "next/server";
 import { AccountSet, AccountSetAsfFlags, TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { validateRequired, walletFromSeed, validateSeedMatchesAddress, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import {
+  validateRequired,
+  walletFromSeed,
+  validateSeedMatchesAddress,
+  txFailureResponse,
+  apiErrorResponse,
+} from "@/lib/api";
 import { TF_CLEAR_NO_RIPPLE } from "@/lib/xrpl/constants";
-
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +19,10 @@ export async function POST(
     const { address } = await params;
     const body = await request.json();
 
-    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed"]);
+    const invalid = validateRequired(
+      body as unknown as Record<string, unknown>,
+      ["seed"],
+    );
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
@@ -65,9 +73,15 @@ export async function POST(
       if (trustFailure) return trustFailure;
     }
 
-    return Response.json({
-      result: { message: "Rippling enabled", trustLinesUpdated: noRippleLines.length },
-    }, { status: 200 });
+    return Response.json(
+      {
+        result: {
+          message: "Rippling enabled",
+          trustLinesUpdated: noRippleLines.length,
+        },
+      },
+      { status: 200 },
+    );
   } catch (err) {
     return apiErrorResponse(err, "Failed to enable rippling");
   }

@@ -34,13 +34,17 @@ function computeOfferFields(
     // Buy: taker_gets = quote (what creator gives), taker_pays = base (what creator receives)
     const baseAmount = new BigNumber(offer.taker_pays.value);
     const quoteAmount = new BigNumber(offer.taker_gets.value);
-    const price = baseAmount.gt(0) ? quoteAmount.div(baseAmount) : new BigNumber(0);
+    const price = baseAmount.gt(0)
+      ? quoteAmount.div(baseAmount)
+      : new BigNumber(0);
     return { side: "buy" as const, price, baseAmount, quoteAmount };
   } else {
     // Sell: taker_gets = base (what creator gives), taker_pays = quote (what creator receives)
     const baseAmount = new BigNumber(offer.taker_gets.value);
     const quoteAmount = new BigNumber(offer.taker_pays.value);
-    const price = baseAmount.gt(0) ? quoteAmount.div(baseAmount) : new BigNumber(0);
+    const price = baseAmount.gt(0)
+      ? quoteAmount.div(baseAmount)
+      : new BigNumber(0);
     return { side: "sell" as const, price, baseAmount, quoteAmount };
   }
 }
@@ -60,7 +64,11 @@ function formatTime(iso: string): string {
   if (!iso) return "\u2014";
   try {
     const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   } catch {
     return "\u2014";
   }
@@ -74,8 +82,6 @@ function OrdersContent({
   pairSelected,
   baseCurrency,
   baseIssuer,
-  quoteCurrency,
-  quoteIssuer,
   cancellingSeq,
   onCancel,
   network,
@@ -117,7 +123,9 @@ function OrdersContent({
               Select a pair to see your orders
             </p>
           ) : loadingOffers && offers.length === 0 ? (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading orders...</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Loading orders...
+            </p>
           ) : offers.length === 0 ? (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               No open orders for this pair
@@ -128,20 +136,25 @@ function OrdersContent({
                 <thead>
                   <tr className="border-b border-zinc-100 text-left text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                     <th className="pb-1.5 pr-2 font-medium">Side</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Price</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Amount</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Total</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Expires</th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Price
+                    </th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Amount
+                    </th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Total
+                    </th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Expires
+                    </th>
                     <th className="pb-1.5 font-medium text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {offers.map((offer) => {
-                    const { side, price, baseAmount, quoteAmount } = computeOfferFields(
-                      offer,
-                      baseCurrency!,
-                      baseIssuer,
-                    );
+                    const { side, price, baseAmount, quoteAmount } =
+                      computeOfferFields(offer, baseCurrency!, baseIssuer);
                     return (
                       <tr
                         key={offer.seq}
@@ -170,7 +183,9 @@ function OrdersContent({
                         <td className="py-1.5 pr-2 text-right text-zinc-500 dark:text-zinc-400">
                           {offer.expiration ? (
                             <span
-                              title={fromRippleEpoch(offer.expiration).toLocaleString()}
+                              title={fromRippleEpoch(
+                                offer.expiration,
+                              ).toLocaleString()}
                             >
                               {formatExpiration(offer.expiration)}
                             </span>
@@ -184,7 +199,9 @@ function OrdersContent({
                             disabled={cancellingSeq === offer.seq}
                             className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
                           >
-                            {cancellingSeq === offer.seq ? "Cancelling..." : "Cancel"}
+                            {cancellingSeq === offer.seq
+                              ? "Cancelling..."
+                              : "Cancel"}
                           </button>
                         </td>
                       </tr>
@@ -205,7 +222,9 @@ function OrdersContent({
               Select a pair to see filled orders
             </p>
           ) : loadingFilled && filledOrders.length === 0 ? (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading filled orders...</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Loading filled orders...
+            </p>
           ) : filledOrders.length === 0 ? (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               No filled orders for this pair
@@ -216,9 +235,15 @@ function OrdersContent({
                 <thead>
                   <tr className="border-b border-zinc-100 text-left text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                     <th className="pb-1.5 pr-2 font-medium">Side</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Price</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Amount</th>
-                    <th className="pb-1.5 pr-2 font-medium text-right">Total</th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Price
+                    </th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Amount
+                    </th>
+                    <th className="pb-1.5 pr-2 font-medium text-right">
+                      Total
+                    </th>
                     <th className="pb-1.5 font-medium text-right">Time</th>
                   </tr>
                 </thead>
@@ -295,19 +320,25 @@ export function OrdersSheet(props: OrdersProps) {
                 {props.offers.length}
               </span>
             )}
-            {props.pairSelected && props.baseCurrency && props.quoteCurrency && (
-              <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">
-                {props.baseCurrency}/{props.quoteCurrency}
-              </span>
-            )}
+            {props.pairSelected &&
+              props.baseCurrency &&
+              props.quoteCurrency && (
+                <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">
+                  {props.baseCurrency}/{props.quoteCurrency}
+                </span>
+              )}
           </span>
           <span className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
-            {collapsed ? "Show Orders" : "Hide Orders"} {collapsed ? "\u25B2" : "\u25BC"}
+            {collapsed ? "Show Orders" : "Hide Orders"}{" "}
+            {collapsed ? "\u25B2" : "\u25BC"}
           </span>
         </button>
 
         {/* Content */}
-        <div className="overflow-y-auto px-4 pb-3" style={{ maxHeight: "calc(33vh - 2.5rem)" }}>
+        <div
+          className="overflow-y-auto px-4 pb-3"
+          style={{ maxHeight: "calc(33vh - 2.5rem)" }}
+        >
           <OrdersContent {...props} />
         </div>
       </div>

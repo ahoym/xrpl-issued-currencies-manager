@@ -22,17 +22,18 @@ export function RecipientWallets({
   onGenerate,
   onRefresh,
 }: RecipientWalletsProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const { loading, error, generate } = useWalletGeneration();
 
   return (
-    <section
-      className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800"
-    >
+    <section className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
       <h2 className="text-lg font-semibold">3. Recipient Wallets</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         Generate recipient wallets and issue currencies to them on the XRPL.
-        {!issuer && " Set up an issuer wallet above to issue your own currencies, or use the custom trust line form to connect to any external issuer."}
+        {!issuer &&
+          " Set up an issuer wallet above to issue your own currencies, or use the custom trust line form to connect to any external issuer."}
       </p>
 
       <div className="mt-4">
@@ -43,7 +44,9 @@ export function RecipientWallets({
         >
           {loading ? "Generating..." : "Generate Recipient Wallet"}
         </button>
-        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
       </div>
 
       {recipients.length > 0 && (

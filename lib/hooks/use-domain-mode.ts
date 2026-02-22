@@ -8,10 +8,15 @@ export function useDomainMode(
   domainOwnerAddress: string | null | undefined,
   network: PersistedState["network"],
 ) {
-  const [domainMode, setDomainMode] = useState<"open" | "select" | "custom">("open");
+  const [domainMode, setDomainMode] = useState<"open" | "select" | "custom">(
+    "open",
+  );
   const [selectedDomainID, setSelectedDomainID] = useState("");
   const [customDomainID, setCustomDomainID] = useState("");
-  const { domains: availableDomains } = useAccountDomains(domainOwnerAddress, network);
+  const { domains: availableDomains } = useAccountDomains(
+    domainOwnerAddress,
+    network,
+  );
 
   const activeDomainID =
     domainMode === "select"

@@ -98,11 +98,7 @@ export function AmmWithdrawModal({
       };
     }
 
-    const result = await mutate(
-      "/api/amm/withdraw",
-      body,
-      "Withdrawal failed",
-    );
+    const result = await mutate("/api/amm/withdraw", body, "Withdrawal failed");
 
     if (result !== null) {
       const message =

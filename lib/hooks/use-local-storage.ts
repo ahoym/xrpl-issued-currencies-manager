@@ -27,7 +27,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       // localStorage unavailable or corrupt — keep initial value
     }
     setHydrated(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on initial mount for hydration
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on initial mount for hydration
   }, []);
 
   const set = useCallback(

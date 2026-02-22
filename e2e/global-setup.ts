@@ -1,6 +1,9 @@
 import { test as setup, expect } from "@playwright/test";
 import fs from "fs";
-import { waitForWalletGenerated, waitForXrpBalance } from "./helpers/wait-for-xrpl";
+import {
+  waitForWalletGenerated,
+  waitForXrpBalance,
+} from "./helpers/wait-for-xrpl";
 
 setup("bootstrap devnet state", async ({ page }) => {
   setup.setTimeout(300_000);

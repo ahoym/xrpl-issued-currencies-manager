@@ -26,22 +26,37 @@ export function useAmmPool({
   const [internalKey, setInternalKey] = useState(0);
 
   // Build URL — return null to skip fetch when pair is incomplete
-  const url = baseCurrency && quoteCurrency
-    ? `/api/amm/info?base_currency=${encodeURIComponent(baseCurrency)}` +
-      (baseIssuer ? `&base_issuer=${encodeURIComponent(baseIssuer)}` : "") +
-      `&quote_currency=${encodeURIComponent(quoteCurrency)}` +
-      (quoteIssuer ? `&quote_issuer=${encodeURIComponent(quoteIssuer)}` : "") +
-      `&network=${encodeURIComponent(network)}`
-    : null;
+  const url =
+    baseCurrency && quoteCurrency
+      ? `/api/amm/info?base_currency=${encodeURIComponent(baseCurrency)}` +
+        (baseIssuer ? `&base_issuer=${encodeURIComponent(baseIssuer)}` : "") +
+        `&quote_currency=${encodeURIComponent(quoteCurrency)}` +
+        (quoteIssuer
+          ? `&quote_issuer=${encodeURIComponent(quoteIssuer)}`
+          : "") +
+        `&network=${encodeURIComponent(network)}`
+      : null;
+
+  // Derive a fetch key that changes when we need a new fetch
+  const fetchKey = url ? `${url}::${refreshKey}::${internalKey}` : null;
+
+  // Synchronously adjust state during render when fetch key changes
+  const [prevFetchKey, setPrevFetchKey] = useState(fetchKey);
+  if (prevFetchKey !== fetchKey) {
+    setPrevFetchKey(fetchKey);
+    if (!fetchKey) {
+      setPool(null);
+      setError(null);
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setError(null);
+    }
+  }
 
   useEffect(() => {
-    if (!url) {
-      setPool(null);
-      return;
-    }
+    if (!url) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
@@ -59,7 +74,9 @@ export function useAmmPool({
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [url, refreshKey, internalKey]);
 
   const refresh = useCallback(() => setInternalKey((k) => k + 1), []);

@@ -13,9 +13,10 @@ import { encodeXrplCurrency } from "./currency";
  * XRP → { currency: "XRP" }
  * Issued → { currency: "<encoded>", issuer: "rXXX" }
  */
-export function buildCurrencySpec(
-  asset: { currency: string; issuer?: string },
-): Currency {
+export function buildCurrencySpec(asset: {
+  currency: string;
+  issuer?: string;
+}): Currency {
   if (asset.currency === Assets.XRP) {
     return { currency: "XRP" };
   }

@@ -46,6 +46,8 @@ export async function GET(
 
     return Response.json({ address, domains });
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch domains", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch domains", {
+      checkNotFound: true,
+    });
   }
 }

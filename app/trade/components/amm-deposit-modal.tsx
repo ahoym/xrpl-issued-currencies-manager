@@ -35,8 +35,7 @@ export function AmmDepositModal({
   onClose,
   onSuccess,
 }: AmmDepositModalProps) {
-  const isPoolEmpty =
-    pool.asset1?.value === "0" && pool.asset2?.value === "0";
+  const isPoolEmpty = pool.asset1?.value === "0" && pool.asset2?.value === "0";
 
   const [mode, setMode] = useState<DepositMode>(
     isPoolEmpty ? "two-asset-if-empty" : "two-asset",
@@ -101,11 +100,7 @@ export function AmmDepositModal({
       };
     }
 
-    const result = await mutate(
-      "/api/amm/deposit",
-      body,
-      "Deposit failed",
-    );
+    const result = await mutate("/api/amm/deposit", body, "Deposit failed");
 
     if (result !== null) {
       setSuccessMessage("Deposit successful!");
@@ -161,8 +156,8 @@ export function AmmDepositModal({
             {/* Both Assets mode */}
             {poolRatio !== null && (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Current pool ratio: {poolRatio}{" "}
-                {baseCurrency.currency}/{quoteCurrency.currency}
+                Current pool ratio: {poolRatio} {baseCurrency.currency}/
+                {quoteCurrency.currency}
               </p>
             )}
 

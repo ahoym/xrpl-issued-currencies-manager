@@ -12,7 +12,13 @@ export function useBalances(
   network: PersistedState["network"],
   refreshKey?: number,
 ) {
-  const { data: balances, loading, error, refresh, refetch } = useApiFetch<BalanceEntry>(
+  const {
+    data: balances,
+    loading,
+    error,
+    refresh,
+    refetch,
+  } = useApiFetch<BalanceEntry>(
     () =>
       address
         ? `/api/accounts/${encodeURIComponent(address)}/balances?network=${network}`

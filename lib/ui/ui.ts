@@ -11,8 +11,7 @@ export const primaryButtonClass =
   "rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50";
 
 /** Red error text for form errors. */
-export const errorTextClass =
-  "text-sm text-red-600 dark:text-red-400";
+export const errorTextClass = "text-sm text-red-600 dark:text-red-400";
 
 /** Green success banner (mt-3 variant). */
 export const successBannerClass =

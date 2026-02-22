@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import type { ReactNode } from "react";
 import { useLocalStorage } from "./use-local-storage";
 import type { PersistedState, NetworkData, WalletInfo } from "../types";
@@ -47,14 +53,18 @@ interface AppStateValue {
 const AppStateContext = createContext<AppStateValue | null>(null);
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [network, setNetworkRaw] = useState<PersistedState["network"]>(readNetwork);
+  const [network, setNetworkRaw] =
+    useState<PersistedState["network"]>(readNetwork);
 
   const {
     value: networkData,
     set: setNetworkData,
     remove: removeNetworkData,
     hydrated,
-  } = useLocalStorage<NetworkData>(networkDataKey(network), DEFAULT_NETWORK_DATA);
+  } = useLocalStorage<NetworkData>(
+    networkDataKey(network),
+    DEFAULT_NETWORK_DATA,
+  );
 
   // One-time migration from old single-key storage
   useEffect(() => {
@@ -79,21 +89,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     issuer: networkData.issuer ?? null,
     credentialIssuer: networkData.credentialIssuer ?? null,
     domainOwner: networkData.domainOwner ?? null,
-    currencies: Array.isArray(networkData.currencies) ? networkData.currencies : [],
-    recipients: Array.isArray(networkData.recipients) ? networkData.recipients : [],
+    currencies: Array.isArray(networkData.currencies)
+      ? networkData.currencies
+      : [],
+    recipients: Array.isArray(networkData.recipients)
+      ? networkData.recipients
+      : [],
   };
 
-  const setNetwork = useCallback(
-    (next: PersistedState["network"]) => {
-      setNetworkRaw(next);
-      try {
-        localStorage.setItem(NETWORK_KEY, next);
-      } catch {
-        // ignore
-      }
-    },
-    [],
-  );
+  const setNetwork = useCallback((next: PersistedState["network"]) => {
+    setNetworkRaw(next);
+    try {
+      localStorage.setItem(NETWORK_KEY, next);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const setIssuer = useCallback(
     (issuer: WalletInfo) => {
@@ -124,7 +135,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const addRecipient = useCallback(
     (wallet: WalletInfo) => {
-      setNetworkData((prev) => ({ ...prev, recipients: [...prev.recipients, wallet] }));
+      setNetworkData((prev) => ({
+        ...prev,
+        recipients: [...prev.recipients, wallet],
+      }));
     },
     [setNetworkData],
   );
@@ -147,7 +161,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     (imported: PersistedState) => {
       const { network: importedNetwork, ...data } = imported;
       try {
-        localStorage.setItem(networkDataKey(importedNetwork), JSON.stringify(data));
+        localStorage.setItem(
+          networkDataKey(importedNetwork),
+          JSON.stringify(data),
+        );
       } catch {
         // ignore
       }

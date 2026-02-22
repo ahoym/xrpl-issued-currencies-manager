@@ -5,7 +5,7 @@ import { useAppState } from "./use-app-state";
 import { useBalances } from "./use-balances";
 import { usePollInterval } from "./use-poll-interval";
 import { useOfferExpirationTimers } from "./use-offer-expiration-timers";
-import type { OrderBookAmount, OrderBookEntry, AccountOffer, FilledOrder } from "@/lib/types";
+import type { OrderBookEntry, AccountOffer, FilledOrder } from "@/lib/types";
 import type { RecentTrade } from "@/app/trade/components/recent-trades";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { decodeCurrency } from "@/lib/xrpl/decode-currency-client";
@@ -41,8 +41,14 @@ export function useTradingData({
   refreshKey,
   customCurrencies,
 }: UseTradingDataOptions) {
-  const { state: { network } } = useAppState();
-  const { balances, loading: loadingBalances } = useBalances(address, network, refreshKey);
+  const {
+    state: { network },
+  } = useAppState();
+  const { balances, loading: loadingBalances } = useBalances(
+    address,
+    network,
+    refreshKey,
+  );
 
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [loadingOrderBook, setLoadingOrderBook] = useState(false);
@@ -62,11 +68,18 @@ export function useTradingData({
     opts.push({ currency: Assets.XRP, label: Assets.XRP, value: xrpKey });
     seen.add(xrpKey);
 
-    for (const [currency, issuer] of Object.entries(WELL_KNOWN_CURRENCIES[network] ?? {})) {
+    for (const [currency, issuer] of Object.entries(
+      WELL_KNOWN_CURRENCIES[network] ?? {},
+    )) {
       const key = `${currency}|${issuer}`;
       if (!seen.has(key)) {
         seen.add(key);
-        opts.push({ currency, issuer, label: `${currency} (${issuer})`, value: key });
+        opts.push({
+          currency,
+          issuer,
+          label: `${currency} (${issuer})`,
+          value: key,
+        });
       }
     }
 
@@ -88,7 +101,12 @@ export function useTradingData({
       const key = `${c.currency}|${c.issuer}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      opts.push({ currency: c.currency, issuer: c.issuer, label: `${c.currency} (${c.issuer})`, value: key });
+      opts.push({
+        currency: c.currency,
+        issuer: c.issuer,
+        label: `${c.currency} (${c.issuer})`,
+        value: key,
+      });
     }
 
     return opts;
@@ -106,10 +124,21 @@ export function useTradingData({
 
   // Fetch order book
   const fetchOrderBook = useCallback(
-    async (selling: CurrencyOption, buying: CurrencyOption, net: string, domain?: string, silent = false) => {
+    async (
+      selling: CurrencyOption,
+      buying: CurrencyOption,
+      net: string,
+      domain?: string,
+      silent = false,
+    ) => {
       if (!silent) setLoadingOrderBook(true);
       try {
-        const params = new URLSearchParams({ base_currency: selling.currency, quote_currency: buying.currency, network: net, limit: "200" });
+        const params = new URLSearchParams({
+          base_currency: selling.currency,
+          quote_currency: buying.currency,
+          network: net,
+          limit: "200",
+        });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
         if (buying.issuer) params.set("quote_issuer", buying.issuer);
         if (domain) params.set("domain", domain);
@@ -132,9 +161,21 @@ export function useTradingData({
 
   useEffect(() => {
     if (sellingCurrency && buyingCurrency) {
-      fetchOrderBook(sellingCurrency, buyingCurrency, network, activeDomainID || undefined);
+      fetchOrderBook(
+        sellingCurrency,
+        buyingCurrency,
+        network,
+        activeDomainID || undefined,
+      );
     }
-  }, [sellingCurrency, buyingCurrency, network, refreshKey, fetchOrderBook, activeDomainID]);
+  }, [
+    sellingCurrency,
+    buyingCurrency,
+    network,
+    refreshKey,
+    fetchOrderBook,
+    activeDomainID,
+  ]);
 
   // Fetch account offers
   const fetchAccountOffers = useCallback(
@@ -165,10 +206,20 @@ export function useTradingData({
 
   // Fetch recent trades
   const fetchRecentTrades = useCallback(
-    async (selling: CurrencyOption, buying: CurrencyOption, net: string, domain?: string, silent = false) => {
+    async (
+      selling: CurrencyOption,
+      buying: CurrencyOption,
+      net: string,
+      domain?: string,
+      silent = false,
+    ) => {
       if (!silent) setLoadingTrades(true);
       try {
-        const params = new URLSearchParams({ base_currency: selling.currency, quote_currency: buying.currency, network: net });
+        const params = new URLSearchParams({
+          base_currency: selling.currency,
+          quote_currency: buying.currency,
+          network: net,
+        });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
         if (buying.issuer) params.set("quote_issuer", buying.issuer);
         if (domain) params.set("domain", domain);
@@ -191,20 +242,44 @@ export function useTradingData({
 
   useEffect(() => {
     if (sellingCurrency && buyingCurrency) {
-      fetchRecentTrades(sellingCurrency, buyingCurrency, network, activeDomainID || undefined);
+      fetchRecentTrades(
+        sellingCurrency,
+        buyingCurrency,
+        network,
+        activeDomainID || undefined,
+      );
     }
-  }, [sellingCurrency, buyingCurrency, network, refreshKey, fetchRecentTrades, activeDomainID]);
+  }, [
+    sellingCurrency,
+    buyingCurrency,
+    network,
+    refreshKey,
+    fetchRecentTrades,
+    activeDomainID,
+  ]);
 
   // Fetch filled orders (user's own trade history for this pair)
   const fetchFilledOrders = useCallback(
-    async (addr: string, selling: CurrencyOption, buying: CurrencyOption, net: string, silent = false) => {
+    async (
+      addr: string,
+      selling: CurrencyOption,
+      buying: CurrencyOption,
+      net: string,
+      silent = false,
+    ) => {
       if (!silent) setLoadingFilled(true);
       try {
-        const params = new URLSearchParams({ base_currency: selling.currency, quote_currency: buying.currency, network: net });
+        const params = new URLSearchParams({
+          base_currency: selling.currency,
+          quote_currency: buying.currency,
+          network: net,
+        });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
         if (buying.issuer) params.set("quote_issuer", buying.issuer);
 
-        const res = await fetch(`/api/accounts/${addr}/filled-orders?${params}`);
+        const res = await fetch(
+          `/api/accounts/${addr}/filled-orders?${params}`,
+        );
         const data = await res.json();
         if (res.ok) {
           setFilledOrders(data.filledOrders ?? []);
@@ -224,18 +299,55 @@ export function useTradingData({
     if (address && sellingCurrency && buyingCurrency) {
       fetchFilledOrders(address, sellingCurrency, buyingCurrency, network);
     }
-  }, [address, sellingCurrency, buyingCurrency, network, refreshKey, fetchFilledOrders]);
+  }, [
+    address,
+    sellingCurrency,
+    buyingCurrency,
+    network,
+    refreshKey,
+    fetchFilledOrders,
+  ]);
 
   // Silent refresh — fires all fetches in parallel without loading spinners
   const silentRefresh = useCallback(async () => {
     if (!sellingCurrency || !buyingCurrency) return;
     await Promise.all([
-      fetchOrderBook(sellingCurrency, buyingCurrency, network, activeDomainID || undefined, true),
+      fetchOrderBook(
+        sellingCurrency,
+        buyingCurrency,
+        network,
+        activeDomainID || undefined,
+        true,
+      ),
       address ? fetchAccountOffers(address, network, true) : Promise.resolve(),
-      fetchRecentTrades(sellingCurrency, buyingCurrency, network, activeDomainID || undefined, true),
-      address ? fetchFilledOrders(address, sellingCurrency, buyingCurrency, network, true) : Promise.resolve(),
+      fetchRecentTrades(
+        sellingCurrency,
+        buyingCurrency,
+        network,
+        activeDomainID || undefined,
+        true,
+      ),
+      address
+        ? fetchFilledOrders(
+            address,
+            sellingCurrency,
+            buyingCurrency,
+            network,
+            true,
+          )
+        : Promise.resolve(),
     ]);
-  }, [sellingCurrency, buyingCurrency, network, activeDomainID, address, fetchOrderBook, fetchAccountOffers, fetchRecentTrades, fetchFilledOrders]);
+  }, [
+    sellingCurrency,
+    buyingCurrency,
+    network,
+    activeDomainID,
+    address,
+    fetchOrderBook,
+    fetchAccountOffers,
+    fetchRecentTrades,
+    fetchFilledOrders,
+  ]);
 
   // Poll every 3 seconds when a currency pair is selected
   const pollingEnabled = sellingCurrency !== null && buyingCurrency !== null;

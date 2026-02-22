@@ -98,8 +98,7 @@ export function useTrustLineValidation({
             if (issuerRes.ok && !cancelled) {
               const issuerData = await issuerRes.json();
               const flags: number = issuerData.account_data?.Flags ?? 0;
-              if (!cancelled)
-                setRipplingOk((flags & LSF_DEFAULT_RIPPLE) !== 0);
+              if (!cancelled) setRipplingOk((flags & LSF_DEFAULT_RIPPLE) !== 0);
             }
           } catch {
             // non-fatal — leave as null

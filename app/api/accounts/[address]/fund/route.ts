@@ -18,7 +18,9 @@ export async function POST(
     const faucet = NETWORKS[networkId].faucet;
     if (!faucet) {
       return Response.json(
-        { error: "Faucet is only available on testnet and devnet" } satisfies ApiError,
+        {
+          error: "Faucet is only available on testnet and devnet",
+        } satisfies ApiError,
         { status: 400 },
       );
     }
@@ -32,7 +34,9 @@ export async function POST(
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       return Response.json(
-        { error: `Faucet request failed: ${text || res.statusText}` } satisfies ApiError,
+        {
+          error: `Faucet request failed: ${text || res.statusText}`,
+        } satisfies ApiError,
         { status: 502 },
       );
     }

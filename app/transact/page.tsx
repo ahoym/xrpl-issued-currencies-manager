@@ -16,7 +16,10 @@ export default function TransactPage() {
 
   const allWallets = useMemo(() => {
     const wallets = [...state.recipients];
-    if (state.issuer && !wallets.some((w) => w.address === state.issuer!.address)) {
+    if (
+      state.issuer &&
+      !wallets.some((w) => w.address === state.issuer!.address)
+    ) {
       wallets.unshift(state.issuer);
     }
     return wallets;
@@ -89,10 +92,7 @@ function WalletCard({
 
       {!collapsed && (
         <div className="px-4 pb-4">
-          <BalanceDisplay
-            address={wallet.address}
-            refreshKey={refreshKey}
-          />
+          <BalanceDisplay address={wallet.address} refreshKey={refreshKey} />
           <button
             onClick={onSend}
             className="mt-3 shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
