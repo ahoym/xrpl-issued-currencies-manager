@@ -6,6 +6,8 @@
  */
 export function decodeCurrency(code: string): string {
   if (code.length !== 40) return code;
+  // LP token codes start with 0x03 — return human-readable label
+  if (code.startsWith("03")) return "LP Token";
   // Strip trailing zero-padding from the hex representation
   const stripped = code.replace(/0+$/, "");
   // Must have at least one byte and be even-length (each byte = 2 hex chars)
