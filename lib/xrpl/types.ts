@@ -101,3 +101,41 @@ export interface DeleteDomainRequest {
   domainID: string;
   network?: string;
 }
+
+export interface AmmInfoQuery {
+  baseCurrency: string;
+  baseIssuer?: string;
+  quoteCurrency: string;
+  quoteIssuer?: string;
+  network?: string;
+}
+
+export interface CreateAmmRequest {
+  seed: string;
+  amount: DexAmount;
+  amount2: DexAmount;
+  tradingFee: number; // 0–1000 (0%–1%)
+  network?: string;
+}
+
+export interface DepositAmmRequest {
+  seed: string;
+  asset: { currency: string; issuer?: string };
+  asset2: { currency: string; issuer?: string };
+  amount?: DexAmount;
+  amount2?: DexAmount;
+  lpTokenOut?: DexAmount;
+  mode: "two-asset" | "single-asset" | "two-asset-if-empty";
+  network?: string;
+}
+
+export interface WithdrawAmmRequest {
+  seed: string;
+  asset: { currency: string; issuer?: string };
+  asset2: { currency: string; issuer?: string };
+  amount?: DexAmount;
+  amount2?: DexAmount;
+  lpTokenIn?: DexAmount;
+  mode: "withdraw-all" | "two-asset" | "single-asset";
+  network?: string;
+}

@@ -58,6 +58,12 @@ export const MAX_CURRENCY_CODE_LENGTH = 40;
 /** Length of a hex-encoded XRPL currency code. */
 export const HEX_CURRENCY_CODE_LENGTH = 40;
 
+/** AMM maximum trading fee (1% = 1000 in fee units of 1/100,000). */
+export const AMM_MAX_TRADING_FEE = 1000;
+
+/** AMM default trading fee (0.3% — reasonable default for non-stable pairs). */
+export const AMM_DEFAULT_TRADING_FEE = 300;
+
 // ---------------------------------------------------------------------------
 // Epoch conversion helpers
 // ---------------------------------------------------------------------------
