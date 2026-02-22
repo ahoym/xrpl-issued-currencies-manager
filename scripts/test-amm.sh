@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+USER_NETWORK="${NETWORK:-}"
 source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
 # AMM lifecycle test: create → query → deposit (two-asset) → deposit (single-asset)
@@ -45,8 +46,11 @@ echo "Currency:  ${CURRENCY}"
 echo "Network:   ${STATE_NETWORK}"
 echo ""
 
-# Use the network from the state file unless overridden
-NETWORK="${NETWORK:-$STATE_NETWORK}"
+# Use the network from the state file (lib.sh defaults NETWORK=testnet,
+# so we must override it here unless the user explicitly set NETWORK)
+if [ "${USER_NETWORK:-}" = "" ]; then
+  NETWORK="$STATE_NETWORK"
+fi
 
 # Step 1: Query AMM info — should not exist yet
 echo "--- Step 1: Query AMM info (expect exists=false) ---"

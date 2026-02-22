@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
   } catch (err: unknown) {
     // amm_info returns error when no AMM exists for the pair
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("actNotFound") || msg.includes("ammNotFound")) {
+    if (msg.includes("actNotFound") || msg.includes("ammNotFound") || msg.includes("Account not found")) {
       return Response.json({ exists: false });
     }
     return apiErrorResponse(err, "Failed to fetch AMM info");
