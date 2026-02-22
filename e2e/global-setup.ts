@@ -22,8 +22,7 @@ setup("bootstrap devnet state", async ({ page }) => {
   await waitForWalletGenerated(page, 0, 45_000);
   await waitForXrpBalance(page);
 
-  // Enable Rippling
-  await page.getByRole("button", { name: "Enable Rippling" }).click();
+  // Rippling is already enabled by the generate API (isIssuer: true)
   await expect(
     page.getByRole("button", { name: "Rippling Enabled" }),
   ).toBeVisible({ timeout: 30_000 });
