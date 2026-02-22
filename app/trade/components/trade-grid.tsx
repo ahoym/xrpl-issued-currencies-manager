@@ -5,8 +5,9 @@ import { OrderBook, type DepthLevel } from "./order-book";
 import { TradeForm } from "./trade-form";
 import { RecentTrades } from "./recent-trades";
 import { BalancesPanel } from "./balances-panel";
+import { AmmPoolPanel } from "./amm-pool-panel";
 import type { TradeFormPrefill } from "./trade-form";
-import type { WalletInfo, BalanceEntry } from "@/lib/types";
+import type { WalletInfo, BalanceEntry, AmmPoolInfo } from "@/lib/types";
 import type { CurrencyOption, OrderBookData } from "@/lib/hooks/use-trading-data";
 import type { RecentTrade } from "./recent-trades";
 
@@ -25,6 +26,11 @@ interface TradeGridProps {
   onRefresh: () => void;
   depth: DepthLevel;
   onDepthChange: (d: DepthLevel) => void;
+  ammPool: AmmPoolInfo | null;
+  ammLoading: boolean;
+  onCreateAmm: () => void;
+  onDepositAmm: () => void;
+  onWithdrawAmm: () => void;
 }
 
 export function TradeGrid({
@@ -42,6 +48,11 @@ export function TradeGrid({
   onRefresh,
   depth,
   onDepthChange,
+  ammPool,
+  ammLoading,
+  onCreateAmm,
+  onDepositAmm,
+  onWithdrawAmm,
 }: TradeGridProps) {
   const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
   const prefillKeyRef = useRef(0);
@@ -50,8 +61,16 @@ export function TradeGrid({
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-7">
-      {/* Left column: Recent Trades */}
+      {/* Left column: AMM Pool + Recent Trades */}
       <div className="space-y-6 lg:col-span-2">
+        <AmmPoolPanel
+          pool={ammPool}
+          loading={ammLoading}
+          pairSelected={pairSelected}
+          onCreatePool={onCreateAmm}
+          onDeposit={onDepositAmm}
+          onWithdraw={onWithdrawAmm}
+        />
         <RecentTrades
           trades={recentTrades}
           loading={loadingTrades}

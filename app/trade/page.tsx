@@ -18,6 +18,10 @@ import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import type { WalletInfo } from "@/lib/types";
 import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
+import { useAmmPool } from "@/lib/hooks/use-amm-pool";
+import { AmmCreateModal } from "./components/amm-create-modal";
+import { AmmDepositModal } from "./components/amm-deposit-modal";
+import { AmmWithdrawModal } from "./components/amm-withdraw-modal";
 
 export default function TradePage() {
   const { state, hydrated } = useAppState();
@@ -30,6 +34,9 @@ export default function TradePage() {
   >([]);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showCreateAmm, setShowCreateAmm] = useState(false);
+  const [showDepositAmm, setShowDepositAmm] = useState(false);
+  const [showWithdrawAmm, setShowWithdrawAmm] = useState(false);
 
   const onRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
   const [depth, setDepth] = useState<DepthLevel>(DEPTH_OPTIONS[1]);
@@ -81,6 +88,16 @@ export default function TradePage() {
     activeDomainID,
     refreshKey,
     customCurrencies,
+  });
+
+  // AMM pool data
+  const { pool: ammPool, loading: ammLoading } = useAmmPool({
+    baseCurrency: sellingCurrency?.currency,
+    baseIssuer: sellingCurrency?.issuer,
+    quoteCurrency: buyingCurrency?.currency,
+    quoteIssuer: buyingCurrency?.issuer,
+    network: state.network,
+    refreshKey,
   });
 
   // Make-market execution
@@ -250,6 +267,11 @@ export default function TradePage() {
         onRefresh={onRefresh}
         depth={depth}
         onDepthChange={setDepth}
+        ammPool={ammPool}
+        ammLoading={ammLoading}
+        onCreateAmm={() => setShowCreateAmm(true)}
+        onDepositAmm={() => setShowDepositAmm(true)}
+        onWithdrawAmm={() => setShowWithdrawAmm(true)}
       />
 
       <OrdersSection {...ordersProps} />
@@ -262,6 +284,39 @@ export default function TradePage() {
           activeDomainID={activeDomainID}
           onClose={() => setShowMakeMarket(false)}
           onExecute={handleMakeMarketExecute}
+        />
+      )}
+
+      {showCreateAmm && sellingCurrency && buyingCurrency && focusedWallet && (
+        <AmmCreateModal
+          baseCurrency={sellingCurrency}
+          quoteCurrency={buyingCurrency}
+          walletSeed={focusedWallet.seed}
+          network={state.network}
+          onClose={() => setShowCreateAmm(false)}
+          onSuccess={onRefresh}
+        />
+      )}
+      {showDepositAmm && ammPool?.exists && sellingCurrency && buyingCurrency && focusedWallet && (
+        <AmmDepositModal
+          pool={ammPool}
+          baseCurrency={sellingCurrency}
+          quoteCurrency={buyingCurrency}
+          walletSeed={focusedWallet.seed}
+          network={state.network}
+          onClose={() => setShowDepositAmm(false)}
+          onSuccess={onRefresh}
+        />
+      )}
+      {showWithdrawAmm && ammPool?.exists && sellingCurrency && buyingCurrency && focusedWallet && (
+        <AmmWithdrawModal
+          pool={ammPool}
+          baseCurrency={sellingCurrency}
+          quoteCurrency={buyingCurrency}
+          walletSeed={focusedWallet.seed}
+          network={state.network}
+          onClose={() => setShowWithdrawAmm(false)}
+          onSuccess={onRefresh}
         />
       )}
 
