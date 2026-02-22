@@ -30,7 +30,7 @@ setup("bootstrap devnet state", async ({ page }) => {
 
   // Add TCOIN currency
   await page.getByPlaceholder("e.g. USD").fill("TCOIN");
-  await page.getByRole("button", { name: "Add" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
 
   // Generate recipient wallet and wait for 2nd address link
   await page.getByRole("button", { name: "Generate Recipient Wallet" }).click();
