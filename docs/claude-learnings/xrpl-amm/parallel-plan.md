@@ -1489,12 +1489,11 @@ When done, end your output with:
 ## DAG Visualization
 
 ```
-        ┌──→ D ────────────────────────┐
-A ───┬──┤                              │
-     │  ├──→ C ────────────────────────┤
-     │  │    ↑                         │
-B ───┼──┘    │                         │
-     └──────→ E ───────────────────────┤
+A ──→ D ───────────────────────────────┐
+                                       │
+A + B ──→ C ───────────────────────────┤
+                                       │
+A + B ──→ E ───────────────────────────┤
                                        │
 A ··→ F ──┐                            │
 A ··→ G ──┼──→ J ─────────────────────→ K
@@ -1549,6 +1548,26 @@ After all agents complete:
 4. `scripts/test-amm.sh` — full lifecycle test passes against running dev server
 5. Verify `openapi.yaml` has all 4 new AMM endpoints
 6. Verify `CLAUDE.md` has updated API Routes and Module Map tables
+
+## Branch Strategy
+
+Base: main
+
+| Agent | Branch From | Branch Name | PR Target | Merge Order |
+|-------|-------------|-------------|-----------|-------------|
+| A | main | feat/xrpl-amm/foundation | main | 1 |
+| B | main | feat/xrpl-amm/server-utilities | main | 2 |
+| F | main | feat/xrpl-amm/use-amm-pool-hook | main | 3 |
+| G | main | feat/xrpl-amm/amm-pool-panel | main | 4 |
+| H | main | feat/xrpl-amm/amm-create-modal | main | 5 |
+| I | main | feat/xrpl-amm/amm-deposit-withdraw-modals | main | 6 |
+| C | B | feat/xrpl-amm/amm-info-route | main | 7 (after A, B) |
+| D | A | feat/xrpl-amm/amm-create-route | main | 8 (after A) |
+| E | B | feat/xrpl-amm/amm-deposit-withdraw-routes | main | 9 (after A, B) |
+| J | I | feat/xrpl-amm/trade-page-integration | main | 10 (after F, G, H, I) |
+| K | J | feat/xrpl-amm/polish | main | 11 (after C, D, E, J) |
+
+After merge order N completes, rebase order N+1 branches onto main.
 
 ## Review Notes
 
