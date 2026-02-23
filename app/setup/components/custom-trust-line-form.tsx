@@ -27,8 +27,14 @@ export function CustomTrustLineForm({
     if (customTrusting) return;
     const issuerAddr = customIssuer.trim();
     const currency = customCurrency.trim();
-    if (!issuerAddr) { setCustomTrustError("Issuer address is required"); return; }
-    if (!currency) { setCustomTrustError("Currency code is required"); return; }
+    if (!issuerAddr) {
+      setCustomTrustError("Issuer address is required");
+      return;
+    }
+    if (!currency) {
+      setCustomTrustError("Currency code is required");
+      return;
+    }
     setCustomTrusting(true);
     setCustomTrustError(null);
     try {
@@ -99,9 +105,7 @@ export function CustomTrustLineForm({
       >
         {customTrusting ? "Creating..." : "Create Trust Line"}
       </button>
-      {customTrustError && (
-        <p className={errorTextClass}>{customTrustError}</p>
-      )}
+      {customTrustError && <p className={errorTextClass}>{customTrustError}</p>}
     </div>
   );
 }

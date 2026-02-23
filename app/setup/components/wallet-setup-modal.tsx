@@ -25,7 +25,9 @@ export function WalletSetupModal({
   onComplete,
   onClose,
 }: WalletSetupModalProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [amount, setAmount] = useState("1000");
   const [step, setStep] = useState<SetupStep>("idle");
@@ -36,7 +38,7 @@ export function WalletSetupModal({
   // Derive effective selection: use selectedCurrency if still valid, otherwise first currency
   const effectiveCurrency = currencies.includes(selectedCurrency)
     ? selectedCurrency
-    : currencies[0] ?? "";
+    : (currencies[0] ?? "");
 
   const hasTrustLine = trustLineCurrencies.has(effectiveCurrency);
 
@@ -54,17 +56,20 @@ export function WalletSetupModal({
     if (!trustLineCurrencies.has(effectiveCurrency)) {
       setStep("trustline");
       try {
-        const trustRes = await fetch(`/api/accounts/${recipient.address}/trustlines`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            seed: recipient.seed,
-            currency: effectiveCurrency,
-            issuer: issuer.address,
-            limit: DEFAULT_TRUST_LINE_LIMIT,
-            network,
-          }),
-        });
+        const trustRes = await fetch(
+          `/api/accounts/${recipient.address}/trustlines`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              seed: recipient.seed,
+              currency: effectiveCurrency,
+              issuer: issuer.address,
+              limit: DEFAULT_TRUST_LINE_LIMIT,
+              network,
+            }),
+          },
+        );
         const trustData = await trustRes.json();
         if (!trustRes.ok) {
           setError(trustData.error ?? "Failed to create trust line");
@@ -131,7 +136,8 @@ export function WalletSetupModal({
 
       {step === "done" ? (
         <p className="mt-2 text-sm text-green-700 dark:text-green-400">
-          Successfully received {Number(completedAmount).toLocaleString()} {completedCurrency} tokens.
+          Successfully received {Number(completedAmount).toLocaleString()}{" "}
+          {completedCurrency} tokens.
         </p>
       ) : (
         <>
@@ -144,7 +150,8 @@ export function WalletSetupModal({
             >
               {currencies.map((c) => (
                 <option key={c} value={c}>
-                  {c}{trustLineCurrencies.has(c) ? " (issued)" : ""}
+                  {c}
+                  {trustLineCurrencies.has(c) ? " (issued)" : ""}
                 </option>
               ))}
             </select>
@@ -163,14 +170,20 @@ export function WalletSetupModal({
               disabled={isRunning}
               className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
-              {isRunning ? "Working..." : hasTrustLine ? "Issue More" : "Set Up"}
+              {isRunning
+                ? "Working..."
+                : hasTrustLine
+                  ? "Issue More"
+                  : "Set Up"}
             </button>
           </div>
 
           {isRunning && (
             <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-              {step === "trustline" && `Creating trust line for ${effectiveCurrency}...`}
-              {step === "issuing" && `Receiving ${Number(amount).toLocaleString()} ${effectiveCurrency}...`}
+              {step === "trustline" &&
+                `Creating trust line for ${effectiveCurrency}...`}
+              {step === "issuing" &&
+                `Receiving ${Number(amount).toLocaleString()} ${effectiveCurrency}...`}
             </p>
           )}
           {error && <p className={`mt-2 ${errorTextClass}`}>{error}</p>}

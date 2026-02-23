@@ -30,7 +30,9 @@ export function RecipientCard({
   refreshKey,
   onRefresh,
 }: RecipientCardProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [collapsed, setCollapsed] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [showCustomTrust, setShowCustomTrust] = useState(false);
@@ -56,7 +58,11 @@ export function RecipientCard({
   }, [lines, issuer]);
 
   const allTrustLineBadges = useMemo(() => {
-    const badges: { currency: string; issuerAddress: string; isLocal: boolean }[] = [];
+    const badges: {
+      currency: string;
+      issuerAddress: string;
+      isLocal: boolean;
+    }[] = [];
     const seen = new Set<string>();
     for (const line of lines) {
       const key = `${line.currency}:${line.account}`;
@@ -74,7 +80,9 @@ export function RecipientCard({
   const rlusdIssuer = WELL_KNOWN_CURRENCIES[network]?.RLUSD;
   const hasRlusdTrust = rlusdIssuer
     ? lines.some(
-        (l) => l.account === rlusdIssuer && decodeCurrency(l.currency) === Assets.RLUSD,
+        (l) =>
+          l.account === rlusdIssuer &&
+          decodeCurrency(l.currency) === Assets.RLUSD,
       )
     : false;
 
@@ -167,10 +175,7 @@ export function RecipientCard({
 
           <TrustLineList badges={allTrustLineBadges} />
 
-          <BalanceDisplay
-            address={recipient.address}
-            refreshKey={refreshKey}
-          />
+          <BalanceDisplay address={recipient.address} refreshKey={refreshKey} />
 
           <div className="mt-2 flex items-center gap-3">
             <button
@@ -180,8 +185,14 @@ export function RecipientCard({
             >
               {funding ? "Requesting..." : "Fund from Faucet"}
             </button>
-            {fundResult && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{fundResult}</span>}
-            {fundError && <span className={`text-xs ${errorTextClass}`}>{fundError}</span>}
+            {fundResult && (
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                {fundResult}
+              </span>
+            )}
+            {fundError && (
+              <span className={`text-xs ${errorTextClass}`}>{fundError}</span>
+            )}
           </div>
 
           {rlusdIssuer && !hasRlusdTrust && (
@@ -191,10 +202,14 @@ export function RecipientCard({
                 disabled={trustingRlusd}
                 className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30"
               >
-                {trustingRlusd ? "Creating trust line..." : `Trust ${Assets.RLUSD} (${rlusdIssuer})`}
+                {trustingRlusd
+                  ? "Creating trust line..."
+                  : `Trust ${Assets.RLUSD} (${rlusdIssuer})`}
               </button>
               {rlusdError && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{rlusdError}</p>
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  {rlusdError}
+                </p>
               )}
             </div>
           )}

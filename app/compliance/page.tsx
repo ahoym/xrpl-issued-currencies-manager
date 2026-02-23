@@ -10,13 +10,17 @@ import { WalletSetupCard } from "./components/wallet-setup-card";
 import { IssueCredentialForm } from "./components/issue-credential-form";
 import { IssuedCredentialsTable } from "./components/issued-credentials-table";
 import { RecipientCredentials } from "./components/recipient-credentials";
-import { CreateDomainForm, type EditingDomain } from "./components/create-domain-form";
+import {
+  CreateDomainForm,
+  type EditingDomain,
+} from "./components/create-domain-form";
 import { DomainsList } from "./components/domains-list";
 
 type Tab = "credentials" | "domains";
 
 export default function CompliancePage() {
-  const { state, hydrated, setCredentialIssuer, setDomainOwner } = useAppState();
+  const { state, hydrated, setCredentialIssuer, setDomainOwner } =
+    useAppState();
 
   const credIssuerGen = useWalletGeneration();
   const domainOwnerGen = useWalletGeneration();
@@ -38,7 +42,9 @@ export default function CompliancePage() {
   } = useAccountDomains(state.domainOwner?.address, state.network);
 
   const [activeTab, setActiveTab] = useState<Tab>("credentials");
-  const [editingDomain, setEditingDomain] = useState<EditingDomain | null>(null);
+  const [editingDomain, setEditingDomain] = useState<EditingDomain | null>(
+    null,
+  );
 
   function handleCredentialChange() {
     refreshIssued();
@@ -83,15 +89,23 @@ export default function CompliancePage() {
       </div>
 
       {genError && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{genError}</p>
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {genError}
+        </p>
       )}
 
       {/* Tabs */}
       <div className="mt-8 flex border-b border-zinc-200 dark:border-zinc-800">
-        <button className={tabClass("credentials")} onClick={() => setActiveTab("credentials")}>
+        <button
+          className={tabClass("credentials")}
+          onClick={() => setActiveTab("credentials")}
+        >
           Credentials
         </button>
-        <button className={tabClass("domains")} onClick={() => setActiveTab("domains")}>
+        <button
+          className={tabClass("domains")}
+          onClick={() => setActiveTab("domains")}
+        >
           Domains
         </button>
       </div>
@@ -136,7 +150,12 @@ export default function CompliancePage() {
                 loading={loadingDomains}
                 domainOwner={state.domainOwner}
                 onDeleted={refreshDomains}
-                onEdit={(d) => setEditingDomain({ domainID: d.domainID, acceptedCredentials: d.acceptedCredentials })}
+                onEdit={(d) =>
+                  setEditingDomain({
+                    domainID: d.domainID,
+                    acceptedCredentials: d.acceptedCredentials,
+                  })
+                }
               />
               <CreateDomainForm
                 domainOwner={state.domainOwner}

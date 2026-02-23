@@ -10,7 +10,11 @@ export function useIssuerCurrencies(
   network: PersistedState["network"],
   refreshKey: number,
 ) {
-  const { lines, loading, refetch } = useFetchTrustLines(issuerAddress, network, refreshKey);
+  const { lines, loading, refetch } = useFetchTrustLines(
+    issuerAddress,
+    network,
+    refreshKey,
+  );
 
   const onLedgerCurrencies = useMemo(() => {
     return new Set(lines.map((l) => decodeCurrency(l.currency)));

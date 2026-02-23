@@ -15,7 +15,9 @@ export function RecipientCredentials({
   issuedCredentials,
   onChanged,
 }: RecipientCredentialsProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [acceptingKey, setAcceptingKey] = useState<string | null>(null);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
@@ -32,14 +34,23 @@ export function RecipientCredentials({
     return result;
   }, [recipients, issuedCredentials]);
 
-  async function handleAccept(recipientSeed: string, issuer: string, credentialType: string) {
+  async function handleAccept(
+    recipientSeed: string,
+    issuer: string,
+    credentialType: string,
+  ) {
     const key = `${issuer}:${credentialType}`;
     setAcceptingKey(key);
     try {
       const res = await fetch("/api/credentials/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seed: recipientSeed, issuer, credentialType, network }),
+        body: JSON.stringify({
+          seed: recipientSeed,
+          issuer,
+          credentialType,
+          network,
+        }),
       });
       if (res.ok) onChanged();
     } catch {
@@ -49,14 +60,23 @@ export function RecipientCredentials({
     }
   }
 
-  async function handleDelete(senderSeed: string, issuer: string, credentialType: string) {
+  async function handleDelete(
+    senderSeed: string,
+    issuer: string,
+    credentialType: string,
+  ) {
     const key = `${issuer}:${credentialType}`;
     setDeletingKey(key);
     try {
       const res = await fetch("/api/credentials/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seed: senderSeed, issuer, credentialType, network }),
+        body: JSON.stringify({
+          seed: senderSeed,
+          issuer,
+          credentialType,
+          network,
+        }),
       });
       if (res.ok) onChanged();
     } catch {
@@ -74,7 +94,8 @@ export function RecipientCredentials({
         Recipient Credentials
       </h3>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        Credentials issued to your recipient wallets. Accept or delete from here.
+        Credentials issued to your recipient wallets. Accept or delete from
+        here.
       </p>
       {recipients.map((r) => {
         const creds = credentialsByAddress[r.address] ?? [];
@@ -99,14 +120,22 @@ export function RecipientCredentials({
                         {" from "}
                         <span className="font-mono">{c.issuer}</span>
                         {" \u2014 "}
-                        <span className={c.accepted ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}>
+                        <span
+                          className={
+                            c.accepted
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-amber-600 dark:text-amber-400"
+                          }
+                        >
                           {c.accepted ? "Accepted" : "Pending"}
                         </span>
                       </span>
                       <span className="flex gap-2">
                         {!c.accepted && (
                           <button
-                            onClick={() => handleAccept(r.seed, c.issuer, c.credentialType)}
+                            onClick={() =>
+                              handleAccept(r.seed, c.issuer, c.credentialType)
+                            }
                             disabled={acceptingKey === key}
                             className="text-blue-500 hover:text-blue-700 disabled:opacity-50"
                           >
@@ -114,7 +143,9 @@ export function RecipientCredentials({
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(r.seed, c.issuer, c.credentialType)}
+                          onClick={() =>
+                            handleDelete(r.seed, c.issuer, c.credentialType)
+                          }
                           disabled={deletingKey === key}
                           className="text-red-500 hover:text-red-700 disabled:opacity-50"
                         >

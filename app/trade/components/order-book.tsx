@@ -28,7 +28,6 @@ interface OrderBookProps {
 
 export function OrderBook({
   orderBook,
-  loading,
   baseCurrency,
   baseIssuer,
   quoteCurrency,
@@ -37,10 +36,7 @@ export function OrderBook({
   depth,
   onDepthChange,
 }: OrderBookProps) {
-  const allOffers = [
-    ...(orderBook?.buy ?? []),
-    ...(orderBook?.sell ?? []),
-  ];
+  const allOffers = [...(orderBook?.buy ?? []), ...(orderBook?.sell ?? [])];
 
   // Asks: creator sells base (taker_gets = base)
   // Use funded amounts when available to reflect actual fillable size; drop unfunded offers
@@ -101,10 +97,13 @@ export function OrderBook({
     0,
   );
 
-  const bestAsk = visibleAsks.length > 0 ? visibleAsks[visibleAsks.length - 1].price : null;
+  const bestAsk =
+    visibleAsks.length > 0 ? visibleAsks[visibleAsks.length - 1].price : null;
   const bestBid = visibleBids.length > 0 ? visibleBids[0].price : null;
-  const spread = bestAsk !== null && bestBid !== null ? bestAsk.minus(bestBid) : null;
-  const mid = bestAsk !== null && bestBid !== null ? bestAsk.plus(bestBid).div(2) : null;
+  const spread =
+    bestAsk !== null && bestBid !== null ? bestAsk.minus(bestBid) : null;
+  const mid =
+    bestAsk !== null && bestBid !== null ? bestAsk.plus(bestBid).div(2) : null;
 
   return (
     <div>
@@ -118,16 +117,20 @@ export function OrderBook({
           className="rounded border border-zinc-200 bg-white px-2 py-0.5 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
         >
           {DEPTH_OPTIONS.map((d) => (
-            <option key={d} value={d}>{d}</option>
+            <option key={d} value={d}>
+              {d}
+            </option>
           ))}
         </select>
       </div>
 
       {depthSummary.bidLevels + depthSummary.askLevels > 0 && (
         <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
-          {depthSummary.bidLevels} bids · {formatCompact(depthSummary.bidVolume)} {quoteCurrency} depth
+          {depthSummary.bidLevels} bids ·{" "}
+          {formatCompact(depthSummary.bidVolume)} {quoteCurrency} depth
           <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">|</span>
-          {depthSummary.askLevels} asks · {formatCompact(depthSummary.askVolume)} {baseCurrency} depth
+          {depthSummary.askLevels} asks ·{" "}
+          {formatCompact(depthSummary.askVolume)} {baseCurrency} depth
         </p>
       )}
 
@@ -150,16 +153,39 @@ export function OrderBook({
           </p>
         ) : (
           visibleAsks.map((a, i) => {
-            const isOwn = accountAddress !== undefined && a.account === accountAddress;
+            const isOwn =
+              accountAddress !== undefined && a.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
-            const barPct = maxAmount.gt(0) ? a.amount.div(maxAmount).times(100).toNumber() : 0;
+            const barPct = maxAmount.gt(0)
+              ? a.amount.div(maxAmount).times(100).toNumber()
+              : 0;
             return (
               <div
                 key={`ask-${i}`}
-                onClick={clickable ? () => onSelectOrder(a.price.toFixed(6), a.amount.toFixed(6), "buy") : undefined}
+                onClick={
+                  clickable
+                    ? () =>
+                        onSelectOrder(
+                          a.price.toFixed(6),
+                          a.amount.toFixed(6),
+                          "buy",
+                        )
+                    : undefined
+                }
                 role={clickable ? "button" : undefined}
                 tabIndex={clickable ? 0 : undefined}
-                onKeyDown={clickable ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") onSelectOrder(a.price.toFixed(6), a.amount.toFixed(6), "buy"); } : undefined}
+                onKeyDown={
+                  clickable
+                    ? (e: React.KeyboardEvent) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          onSelectOrder(
+                            a.price.toFixed(6),
+                            a.amount.toFixed(6),
+                            "buy",
+                          );
+                      }
+                    : undefined
+                }
                 className={`relative grid grid-cols-[0.65fr_1fr_1fr_1fr_7rem] py-0.5 text-xs font-mono ${
                   clickable
                     ? "cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -199,16 +225,22 @@ export function OrderBook({
         <div className="my-2 border border-dashed border-zinc-200 bg-zinc-50/50 py-2 text-center text-xs dark:border-zinc-700 dark:bg-zinc-800/30">
           {spread !== null && mid !== null ? (
             <span className="text-zinc-600 dark:text-zinc-300">
-              <span className="font-bold text-zinc-900 dark:text-zinc-100">{mid.toFixed(6)}</span>
+              <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                {mid.toFixed(6)}
+              </span>
               <span className="mx-2 text-zinc-300 dark:text-zinc-600">|</span>
               <span className="text-zinc-400 dark:text-zinc-500">
-                Spread: {spread.toFixed(6)}{" "}
-                ({spread.div(mid).times(10_000).toFixed(1)} bps)
+                Spread: {spread.toFixed(6)} (
+                {spread.div(mid).times(10_000).toFixed(1)} bps)
               </span>
             </span>
           ) : (
             <span className="text-zinc-400 dark:text-zinc-500">
-              {bestAsk !== null ? `Best ask: ${bestAsk.toFixed(6)}` : bestBid !== null ? `Best bid: ${bestBid.toFixed(6)}` : "No orders"}
+              {bestAsk !== null
+                ? `Best ask: ${bestAsk.toFixed(6)}`
+                : bestBid !== null
+                  ? `Best bid: ${bestBid.toFixed(6)}`
+                  : "No orders"}
             </span>
           )}
         </div>
@@ -223,16 +255,39 @@ export function OrderBook({
           </p>
         ) : (
           visibleBids.map((b, i) => {
-            const isOwn = accountAddress !== undefined && b.account === accountAddress;
+            const isOwn =
+              accountAddress !== undefined && b.account === accountAddress;
             const clickable = !isOwn && onSelectOrder;
-            const barPct = maxAmount.gt(0) ? b.amount.div(maxAmount).times(100).toNumber() : 0;
+            const barPct = maxAmount.gt(0)
+              ? b.amount.div(maxAmount).times(100).toNumber()
+              : 0;
             return (
               <div
                 key={`bid-${i}`}
-                onClick={clickable ? () => onSelectOrder(b.price.toFixed(6), b.amount.toFixed(6), "sell") : undefined}
+                onClick={
+                  clickable
+                    ? () =>
+                        onSelectOrder(
+                          b.price.toFixed(6),
+                          b.amount.toFixed(6),
+                          "sell",
+                        )
+                    : undefined
+                }
                 role={clickable ? "button" : undefined}
                 tabIndex={clickable ? 0 : undefined}
-                onKeyDown={clickable ? (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") onSelectOrder(b.price.toFixed(6), b.amount.toFixed(6), "sell"); } : undefined}
+                onKeyDown={
+                  clickable
+                    ? (e: React.KeyboardEvent) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          onSelectOrder(
+                            b.price.toFixed(6),
+                            b.amount.toFixed(6),
+                            "sell",
+                          );
+                      }
+                    : undefined
+                }
                 className={`relative grid grid-cols-[0.65fr_1fr_1fr_1fr_7rem] py-0.5 text-xs font-mono ${
                   clickable
                     ? "cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20"

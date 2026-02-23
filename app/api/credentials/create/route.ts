@@ -3,14 +3,24 @@ import { CredentialCreate } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
-import { validateRequired, walletFromSeed, validateAddress, validateCredentialType, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import {
+  validateRequired,
+  walletFromSeed,
+  validateAddress,
+  validateCredentialType,
+  txFailureResponse,
+  apiErrorResponse,
+} from "@/lib/api";
 import type { CreateCredentialRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
     const body: CreateCredentialRequest = await request.json();
 
-    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "subject", "credentialType"]);
+    const invalid = validateRequired(
+      body as unknown as Record<string, unknown>,
+      ["seed", "subject", "credentialType"],
+    );
     if (invalid) return invalid;
 
     const result = walletFromSeed(body.seed);
@@ -24,7 +34,10 @@ export async function POST(request: NextRequest) {
     if (badType) return badType;
 
     if (body.uri && Buffer.byteLength(body.uri, "utf-8") > 256) {
-      return Response.json({ error: "URI must not exceed 256 bytes" } satisfies ApiError, { status: 400 });
+      return Response.json(
+        { error: "URI must not exceed 256 bytes" } satisfies ApiError,
+        { status: 400 },
+      );
     }
 
     const client = await getClient(resolveNetwork(body.network));

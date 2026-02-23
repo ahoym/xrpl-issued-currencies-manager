@@ -141,11 +141,30 @@ export default function TradePage() {
       } else {
         if (o.domainID) return false;
       }
-      const getsMatchesSelling = matchesCurrency(o.taker_gets, sellingCurrency.currency, sellingCurrency.issuer);
-      const paysMatchesBuying = matchesCurrency(o.taker_pays, buyingCurrency.currency, buyingCurrency.issuer);
-      const getsMatchesBuying = matchesCurrency(o.taker_gets, buyingCurrency.currency, buyingCurrency.issuer);
-      const paysMatchesSelling = matchesCurrency(o.taker_pays, sellingCurrency.currency, sellingCurrency.issuer);
-      return (getsMatchesSelling && paysMatchesBuying) || (getsMatchesBuying && paysMatchesSelling);
+      const getsMatchesSelling = matchesCurrency(
+        o.taker_gets,
+        sellingCurrency.currency,
+        sellingCurrency.issuer,
+      );
+      const paysMatchesBuying = matchesCurrency(
+        o.taker_pays,
+        buyingCurrency.currency,
+        buyingCurrency.issuer,
+      );
+      const getsMatchesBuying = matchesCurrency(
+        o.taker_gets,
+        buyingCurrency.currency,
+        buyingCurrency.issuer,
+      );
+      const paysMatchesSelling = matchesCurrency(
+        o.taker_pays,
+        sellingCurrency.currency,
+        sellingCurrency.issuer,
+      );
+      return (
+        (getsMatchesSelling && paysMatchesBuying) ||
+        (getsMatchesBuying && paysMatchesSelling)
+      );
     });
   }, [accountOffers, sellingCurrency, buyingCurrency, activeDomainID]);
 
@@ -159,7 +178,11 @@ export default function TradePage() {
         const res = await fetch("/api/dex/offers/cancel", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ seed: focusedWallet.seed, offerSequence: seq, network: state.network }),
+          body: JSON.stringify({
+            seed: focusedWallet.seed,
+            offerSequence: seq,
+            network: state.network,
+          }),
         });
         if (res.ok) onRefresh();
       } catch {
@@ -297,28 +320,36 @@ export default function TradePage() {
           onSuccess={onRefresh}
         />
       )}
-      {showDepositAmm && ammPool?.exists && sellingCurrency && buyingCurrency && focusedWallet && (
-        <AmmDepositModal
-          pool={ammPool}
-          baseCurrency={sellingCurrency}
-          quoteCurrency={buyingCurrency}
-          walletSeed={focusedWallet.seed}
-          network={state.network}
-          onClose={() => setShowDepositAmm(false)}
-          onSuccess={onRefresh}
-        />
-      )}
-      {showWithdrawAmm && ammPool?.exists && sellingCurrency && buyingCurrency && focusedWallet && (
-        <AmmWithdrawModal
-          pool={ammPool}
-          baseCurrency={sellingCurrency}
-          quoteCurrency={buyingCurrency}
-          walletSeed={focusedWallet.seed}
-          network={state.network}
-          onClose={() => setShowWithdrawAmm(false)}
-          onSuccess={onRefresh}
-        />
-      )}
+      {showDepositAmm &&
+        ammPool?.exists &&
+        sellingCurrency &&
+        buyingCurrency &&
+        focusedWallet && (
+          <AmmDepositModal
+            pool={ammPool}
+            baseCurrency={sellingCurrency}
+            quoteCurrency={buyingCurrency}
+            walletSeed={focusedWallet.seed}
+            network={state.network}
+            onClose={() => setShowDepositAmm(false)}
+            onSuccess={onRefresh}
+          />
+        )}
+      {showWithdrawAmm &&
+        ammPool?.exists &&
+        sellingCurrency &&
+        buyingCurrency &&
+        focusedWallet && (
+          <AmmWithdrawModal
+            pool={ammPool}
+            baseCurrency={sellingCurrency}
+            quoteCurrency={buyingCurrency}
+            walletSeed={focusedWallet.seed}
+            network={state.network}
+            onClose={() => setShowWithdrawAmm(false)}
+            onSuccess={onRefresh}
+          />
+        )}
 
       <OrdersSheet {...ordersProps} />
     </div>

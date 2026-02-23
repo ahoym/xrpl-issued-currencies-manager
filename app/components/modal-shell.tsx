@@ -13,6 +13,9 @@ interface ModalShellProps {
 export function ModalShell({ title, onClose, children }: ModalShellProps) {
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();

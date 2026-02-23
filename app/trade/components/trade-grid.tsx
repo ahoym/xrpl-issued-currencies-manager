@@ -8,7 +8,10 @@ import { BalancesPanel } from "./balances-panel";
 import { AmmPoolPanel } from "./amm-pool-panel";
 import type { TradeFormPrefill } from "./trade-form";
 import type { WalletInfo, BalanceEntry, AmmPoolInfo } from "@/lib/types";
-import type { CurrencyOption, OrderBookData } from "@/lib/hooks/use-trading-data";
+import type {
+  CurrencyOption,
+  OrderBookData,
+} from "@/lib/hooks/use-trading-data";
 import type { RecentTrade } from "./recent-trades";
 
 interface TradeGridProps {
@@ -54,7 +57,9 @@ export function TradeGrid({
   onDepositAmm,
   onWithdrawAmm,
 }: TradeGridProps) {
-  const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(undefined);
+  const [prefill, setPrefill] = useState<TradeFormPrefill | undefined>(
+    undefined,
+  );
   const prefillKeyRef = useRef(0);
 
   const pairSelected = sellingCurrency !== null && buyingCurrency !== null;
@@ -118,7 +123,11 @@ export function TradeGrid({
 
       {/* Right column: Balances + Trade Form */}
       <div className="space-y-6 lg:col-span-2">
-        <BalancesPanel balances={balances} loading={loadingBalances} onRefresh={onRefresh} />
+        <BalancesPanel
+          balances={balances}
+          loading={loadingBalances}
+          onRefresh={onRefresh}
+        />
 
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           {pairSelected && focusedWallet ? (

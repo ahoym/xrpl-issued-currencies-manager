@@ -5,14 +5,20 @@ import { useApiMutation } from "./use-api-mutation";
 interface UseWalletGenerationResult {
   loading: boolean;
   error: string | null;
-  generate: (network: PersistedState["network"], onSuccess: (wallet: WalletInfo) => void) => Promise<void>;
+  generate: (
+    network: PersistedState["network"],
+    onSuccess: (wallet: WalletInfo) => void,
+  ) => Promise<void>;
 }
 
 export function useWalletGeneration(): UseWalletGenerationResult {
   const { loading, error, mutate } = useApiMutation<WalletInfo>();
 
   const generate = useCallback(
-    async (network: PersistedState["network"], onSuccess: (wallet: WalletInfo) => void) => {
+    async (
+      network: PersistedState["network"],
+      onSuccess: (wallet: WalletInfo) => void,
+    ) => {
       const data = await mutate(
         "/api/accounts/generate",
         { network },

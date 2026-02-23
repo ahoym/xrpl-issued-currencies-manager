@@ -12,7 +12,10 @@ export async function waitForWalletGenerated(
 }
 
 /** Wait for XRP balance text to appear (confirms faucet funded the wallet). */
-export async function waitForXrpBalance(page: Page, timeout = 20_000): Promise<void> {
+export async function waitForXrpBalance(
+  page: Page,
+  timeout = 20_000,
+): Promise<void> {
   await expect(page.getByText(/\d[\d,.]*\s*XRP/)).toBeVisible({ timeout });
 }
 

@@ -11,7 +11,9 @@ interface UseApiMutationResult<T> {
   ) => Promise<T | null>;
 }
 
-export function useApiMutation<T = Record<string, unknown>>(): UseApiMutationResult<T> {
+export function useApiMutation<
+  T = Record<string, unknown>,
+>(): UseApiMutationResult<T> {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

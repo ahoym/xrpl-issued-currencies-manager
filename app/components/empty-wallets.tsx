@@ -5,7 +5,10 @@ interface EmptyWalletsProps {
   maxWidth?: string;
 }
 
-export function EmptyWallets({ title, maxWidth = "max-w-6xl" }: EmptyWalletsProps) {
+export function EmptyWallets({
+  title,
+  maxWidth = "max-w-6xl",
+}: EmptyWalletsProps) {
   return (
     <div className={`mx-auto ${maxWidth} px-4 py-8`}>
       <h1 className="text-2xl font-bold">{title}</h1>

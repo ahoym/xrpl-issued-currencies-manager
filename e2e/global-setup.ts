@@ -1,6 +1,9 @@
 import { test as setup, expect } from "@playwright/test";
 import fs from "fs";
-import { waitForWalletGenerated, waitForXrpBalance } from "./helpers/wait-for-xrpl";
+import {
+  waitForWalletGenerated,
+  waitForXrpBalance,
+} from "./helpers/wait-for-xrpl";
 
 setup("bootstrap devnet state", async ({ page }) => {
   setup.setTimeout(300_000);
@@ -19,22 +22,21 @@ setup("bootstrap devnet state", async ({ page }) => {
   await waitForWalletGenerated(page, 0, 45_000);
   await waitForXrpBalance(page);
 
-  // Enable Rippling
-  await page.getByRole("button", { name: "Enable Rippling" }).click();
+  // Rippling is already enabled by the generate API (isIssuer: true)
   await expect(
     page.getByRole("button", { name: "Rippling Enabled" }),
   ).toBeVisible({ timeout: 30_000 });
 
   // Add TCOIN currency
   await page.getByPlaceholder("e.g. USD").fill("TCOIN");
-  await page.getByRole("button", { name: "Add" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
 
   // Generate recipient wallet and wait for 2nd address link
   await page.getByRole("button", { name: "Generate Recipient Wallet" }).click();
   await waitForWalletGenerated(page, 1, 45_000);
 
   // Expand recipient card — toggle button contains the address text
-  await page.getByRole("button", { name: /^r[a-zA-Z0-9]{24,}/ }).click();
+  await page.getByRole("button", { name: /r[a-zA-Z0-9]{24,}/ }).click();
 
   // Click "Receive Currency" to open WalletSetupModal
   await page.getByRole("button", { name: "Receive Currency" }).click();

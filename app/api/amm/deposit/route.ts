@@ -4,13 +4,20 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { toXrplAmount } from "@/lib/xrpl/currency";
 import { buildCurrencySpec } from "@/lib/xrpl/amm-helpers";
-import { validateRequired, walletFromSeed, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import {
+  validateRequired,
+  walletFromSeed,
+  txFailureResponse,
+  apiErrorResponse,
+} from "@/lib/api";
 import type { DepositAmmRequest, ApiError } from "@/lib/xrpl/types";
 
 const AMM_DEPOSIT_ERRORS: Record<string, string> = {
   tecAMM_EMPTY: "This pool is empty. Use two-asset-if-empty mode to refund it.",
-  tecAMM_NOT_EMPTY: "This pool already has assets. Use a standard deposit instead.",
-  tecAMM_FAILED: "Deposit failed: the effective price exceeds your specified limit.",
+  tecAMM_NOT_EMPTY:
+    "This pool already has assets. Use a standard deposit instead.",
+  tecAMM_FAILED:
+    "Deposit failed: the effective price exceeds your specified limit.",
   tecUNFUNDED_AMM: "Insufficient balance to make this deposit.",
   tecFROZEN: "Cannot deposit: this currency is frozen by its issuer.",
   tecINSUF_RESERVE_LINE: "Not enough XRP reserve to hold LP tokens.",
@@ -29,12 +36,17 @@ export async function POST(request: NextRequest) {
   try {
     const body: DepositAmmRequest = await request.json();
 
-    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "asset", "asset2", "mode"]);
+    const invalid = validateRequired(
+      body as unknown as Record<string, unknown>,
+      ["seed", "asset", "asset2", "mode"],
+    );
     if (invalid) return invalid;
 
     if (!flagMap[body.mode]) {
       return Response.json(
-        { error: `Invalid mode. Must be one of: ${Object.keys(flagMap).join(", ")}` } satisfies ApiError,
+        {
+          error: `Invalid mode. Must be one of: ${Object.keys(flagMap).join(", ")}`,
+        } satisfies ApiError,
         { status: 400 },
       );
     }
@@ -42,13 +54,17 @@ export async function POST(request: NextRequest) {
     if (body.mode === "two-asset" || body.mode === "two-asset-if-empty") {
       if (!body.amount) {
         return Response.json(
-          { error: `amount is required for ${body.mode} mode` } satisfies ApiError,
+          {
+            error: `amount is required for ${body.mode} mode`,
+          } satisfies ApiError,
           { status: 400 },
         );
       }
       if (!body.amount2) {
         return Response.json(
-          { error: `amount2 is required for ${body.mode} mode` } satisfies ApiError,
+          {
+            error: `amount2 is required for ${body.mode} mode`,
+          } satisfies ApiError,
           { status: 400 },
         );
       }
@@ -57,7 +73,9 @@ export async function POST(request: NextRequest) {
     if (body.mode === "single-asset") {
       if (!body.amount) {
         return Response.json(
-          { error: "amount is required for single-asset mode" } satisfies ApiError,
+          {
+            error: "amount is required for single-asset mode",
+          } satisfies ApiError,
           { status: 400 },
         );
       }

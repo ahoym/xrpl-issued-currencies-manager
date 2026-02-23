@@ -46,7 +46,12 @@ export interface DexAmount {
   value: string;
 }
 
-export type OfferFlag = "passive" | "immediateOrCancel" | "fillOrKill" | "sell" | "hybrid";
+export type OfferFlag =
+  | "passive"
+  | "immediateOrCancel"
+  | "fillOrKill"
+  | "sell"
+  | "hybrid";
 
 export interface CreateOfferRequest {
   seed: string;

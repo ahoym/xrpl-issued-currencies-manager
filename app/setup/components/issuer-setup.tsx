@@ -29,10 +29,14 @@ export function IssuerSetup({
   onAddCurrency,
   onRemoveCurrency,
 }: IssuerSetupProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [ripplingStatus, setRipplingStatus] = useState<"idle" | "loading" | "done" | "needs_repair">("idle");
+  const [ripplingStatus, setRipplingStatus] = useState<
+    "idle" | "loading" | "done" | "needs_repair"
+  >("idle");
   const [funding, setFunding] = useState(false);
   const [fundResult, setFundResult] = useState<string | null>(null);
   const [fundError, setFundError] = useState<string | null>(null);
@@ -40,13 +44,17 @@ export function IssuerSetup({
   const checkRippling = useCallback(async () => {
     if (!issuer) return;
     try {
-      const res = await fetch(`/api/accounts/${issuer.address}?network=${network}`);
+      const res = await fetch(
+        `/api/accounts/${issuer.address}?network=${network}`,
+      );
       if (!res.ok) return;
       const data = await res.json();
       const flags: number = data.account_data?.Flags ?? 0;
       if (flags & LSF_DEFAULT_RIPPLE) {
         // DefaultRipple is set, but check if existing trust lines still have NoRipple
-        const tlRes = await fetch(`/api/accounts/${issuer.address}/trustlines?network=${network}`);
+        const tlRes = await fetch(
+          `/api/accounts/${issuer.address}/trustlines?network=${network}`,
+        );
         if (tlRes.ok) {
           const tlData = await tlRes.json();
           const hasNoRipple = (tlData.trustLines ?? []).some(
@@ -177,11 +185,15 @@ export function IssuerSetup({
             <div className="space-y-4">
               <div className="rounded-md bg-zinc-50 p-3 font-mono text-sm dark:bg-zinc-900">
                 <div>
-                  <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    Address:{" "}
+                  </span>
                   <ExplorerLink address={issuer.address} />
                 </div>
                 <div>
-                  <span className="text-zinc-500 dark:text-zinc-400">Public Key: </span>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    Public Key:{" "}
+                  </span>
                   <span className="break-all">{issuer.publicKey}</span>
                 </div>
                 <SecretField label="Seed" value={issuer.seed} />
@@ -189,7 +201,9 @@ export function IssuerSetup({
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleEnableRippling}
-                  disabled={ripplingStatus === "done" || ripplingStatus === "loading"}
+                  disabled={
+                    ripplingStatus === "done" || ripplingStatus === "loading"
+                  }
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   {ripplingStatus === "loading"
@@ -218,8 +232,16 @@ export function IssuerSetup({
                 >
                   {funding ? "Requesting..." : "Fund from Faucet"}
                 </button>
-                {fundResult && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{fundResult}</span>}
-                {fundError && <span className={`text-xs ${errorTextClass}`}>{fundError}</span>}
+                {fundResult && (
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    {fundResult}
+                  </span>
+                )}
+                {fundError && (
+                  <span className={`text-xs ${errorTextClass}`}>
+                    {fundError}
+                  </span>
+                )}
               </div>
               <CurrencyManager
                 currencies={currencies}

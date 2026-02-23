@@ -3,7 +3,15 @@ import { TrustSet } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
-import { getNetworkParam, validateRequired, walletFromSeed, validateAddress, validateSeedMatchesAddress, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import {
+  getNetworkParam,
+  validateRequired,
+  walletFromSeed,
+  validateAddress,
+  validateSeedMatchesAddress,
+  txFailureResponse,
+  apiErrorResponse,
+} from "@/lib/api";
 import type { TrustLineRequest } from "@/lib/xrpl/types";
 
 export async function GET(
@@ -30,7 +38,9 @@ export async function GET(
       trustLines: response.result.lines,
     });
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch trust lines", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch trust lines", {
+      checkNotFound: true,
+    });
   }
 }
 
@@ -46,7 +56,10 @@ export async function POST(
 
     const body: TrustLineRequest = await request.json();
 
-    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["seed", "currency", "issuer", "limit"]);
+    const invalid = validateRequired(
+      body as unknown as Record<string, unknown>,
+      ["seed", "currency", "issuer", "limit"],
+    );
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
@@ -73,9 +86,12 @@ export async function POST(
     const failure = txFailureResponse(result);
     if (failure) return failure;
 
-    return Response.json({
-      result: result.result,
-    }, { status: 201 });
+    return Response.json(
+      {
+        result: result.result,
+      },
+      { status: 201 },
+    );
   } catch (err) {
     return apiErrorResponse(err, "Failed to set trust line");
   }

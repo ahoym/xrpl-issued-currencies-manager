@@ -11,7 +11,11 @@ interface BalancesPanelProps {
   onRefresh?: () => void;
 }
 
-export function BalancesPanel({ balances, loading, onRefresh }: BalancesPanelProps) {
+export function BalancesPanel({
+  balances,
+  loading,
+  onRefresh,
+}: BalancesPanelProps) {
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center justify-between">

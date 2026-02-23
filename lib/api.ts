@@ -25,7 +25,9 @@ export function validateRequired(
   const missing = fields.filter((f) => !data[f]);
   if (missing.length > 0) {
     return Response.json(
-      { error: `Missing required fields: ${missing.join(", ")}` } satisfies ApiError,
+      {
+        error: `Missing required fields: ${missing.join(", ")}`,
+      } satisfies ApiError,
       { status: 400 },
     );
   }
@@ -40,7 +42,9 @@ export function validateRequired(
  * Try to derive a Wallet from a seed string.
  * Returns `{ wallet }` on success or `{ error: Response }` on failure.
  */
-export function walletFromSeed(seed: string): { wallet: Wallet } | { error: Response } {
+export function walletFromSeed(
+  seed: string,
+): { wallet: Wallet } | { error: Response } {
   try {
     return { wallet: Wallet.fromSeed(seed) };
   } catch {
@@ -61,12 +65,14 @@ export function walletFromSeed(seed: string): { wallet: Wallet } | { error: Resp
  * Return a 400 Response if `address` is not a valid XRPL classic address.
  * `fieldName` is used in the error message (e.g. "recipientAddress").
  */
-export function validateAddress(address: string, fieldName: string): Response | null {
+export function validateAddress(
+  address: string,
+  fieldName: string,
+): Response | null {
   if (!isValidClassicAddress(address)) {
-    return Response.json(
-      { error: `Invalid ${fieldName}` } satisfies ApiError,
-      { status: 400 },
-    );
+    return Response.json({ error: `Invalid ${fieldName}` } satisfies ApiError, {
+      status: 400,
+    });
   }
   return null;
 }
@@ -74,10 +80,15 @@ export function validateAddress(address: string, fieldName: string): Response | 
 /**
  * Return a 400 Response if the wallet's address doesn't match the expected address.
  */
-export function validateSeedMatchesAddress(wallet: Wallet, address: string): Response | null {
+export function validateSeedMatchesAddress(
+  wallet: Wallet,
+  address: string,
+): Response | null {
   if (wallet.address !== address) {
     return Response.json(
-      { error: "Seed does not match the account address in the URL" } satisfies ApiError,
+      {
+        error: "Seed does not match the account address in the URL",
+      } satisfies ApiError,
       { status: 400 },
     );
   }
@@ -94,7 +105,9 @@ export function validateSeedMatchesAddress(wallet: Wallet, address: string): Res
 export function validateCredentialType(type: string): Response | null {
   if (type.length > MAX_CREDENTIAL_TYPE_LENGTH) {
     return Response.json(
-      { error: `credentialType must not exceed ${MAX_CREDENTIAL_TYPE_LENGTH} characters` } satisfies ApiError,
+      {
+        error: `credentialType must not exceed ${MAX_CREDENTIAL_TYPE_LENGTH} characters`,
+      } satisfies ApiError,
       { status: 400 },
     );
   }
@@ -105,7 +118,10 @@ export function validateCredentialType(type: string): Response | null {
  * Return a 400 Response if `amount` is not a finite positive number.
  * `fieldName` is used in the error message (e.g. "amount", "takerGets.value").
  */
-export function validatePositiveAmount(amount: string, fieldName: string): Response | null {
+export function validatePositiveAmount(
+  amount: string,
+  fieldName: string,
+): Response | null {
   const parsed = Number(amount);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return Response.json(
@@ -132,7 +148,9 @@ export interface CurrencyPair {
  * Validate base/quote currency pair query params from a NextRequest.
  * Returns either a 400 Response (error) or a validated CurrencyPair object.
  */
-export function validateCurrencyPair(request: NextRequest): Response | CurrencyPair {
+export function validateCurrencyPair(
+  request: NextRequest,
+): Response | CurrencyPair {
   const sp = request.nextUrl.searchParams;
   const baseCurrency = sp.get("base_currency");
   const baseIssuer = sp.get("base_issuer") ?? undefined;
@@ -141,21 +159,27 @@ export function validateCurrencyPair(request: NextRequest): Response | CurrencyP
 
   if (!baseCurrency || !quoteCurrency) {
     return Response.json(
-      { error: "Missing required query params: base_currency, quote_currency" } satisfies ApiError,
+      {
+        error: "Missing required query params: base_currency, quote_currency",
+      } satisfies ApiError,
       { status: 400 },
     );
   }
 
   if (baseCurrency !== Assets.XRP && !baseIssuer) {
     return Response.json(
-      { error: "base_issuer is required for non-XRP base currency" } satisfies ApiError,
+      {
+        error: "base_issuer is required for non-XRP base currency",
+      } satisfies ApiError,
       { status: 400 },
     );
   }
 
   if (quoteCurrency !== Assets.XRP && !quoteIssuer) {
     return Response.json(
-      { error: "quote_issuer is required for non-XRP quote currency" } satisfies ApiError,
+      {
+        error: "quote_issuer is required for non-XRP quote currency",
+      } satisfies ApiError,
       { status: 400 },
     );
   }
@@ -186,7 +210,11 @@ export function validateCurrencyPair(request: NextRequest): Response | CurrencyP
  * Returns undefined if meta is missing or not in the expected shape.
  */
 export function getTransactionResult(meta: unknown): string | undefined {
-  if (typeof meta === "object" && meta !== null && "TransactionResult" in meta) {
+  if (
+    typeof meta === "object" &&
+    meta !== null &&
+    "TransactionResult" in meta
+  ) {
     const value = (meta as Record<string, unknown>).TransactionResult;
     return typeof value === "string" ? value : undefined;
   }

@@ -5,8 +5,16 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { decodeCurrency } from "@/lib/xrpl/currency";
 import { matchesCurrency } from "@/lib/xrpl/match-currency";
-import { getNetworkParam, validateCurrencyPair, apiErrorResponse } from "@/lib/api";
-import { DEFAULT_ORDERBOOK_LIMIT, MAX_API_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
+import {
+  getNetworkParam,
+  validateCurrencyPair,
+  apiErrorResponse,
+} from "@/lib/api";
+import {
+  DEFAULT_ORDERBOOK_LIMIT,
+  MAX_API_LIMIT,
+  TRADES_FETCH_MULTIPLIER,
+} from "@/lib/xrpl/constants";
 import { Assets } from "@/lib/assets";
 
 /** Convert an XRPL Amount to {currency, issuer} for comparison */
@@ -19,18 +27,23 @@ export async function GET(request: NextRequest) {
   try {
     const sp = request.nextUrl.searchParams;
     const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit, MAX_API_LIMIT);
+    const limit = Math.min(
+      Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit,
+      MAX_API_LIMIT,
+    );
     const network = getNetworkParam(request);
     const domain = sp.get("domain") ?? undefined;
 
     const pairOrError = validateCurrencyPair(request);
     if (pairOrError instanceof Response) return pairOrError;
-    const { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer } = pairOrError;
+    const { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer } =
+      pairOrError;
 
     // Determine the issuer account to query — since all issued currency movements
     // touch the issuer's RippleState entries, querying the issuer's account_tx
     // captures ALL trades for that currency regardless of who submitted them.
-    const issuerAccount = baseCurrency !== Assets.XRP ? baseIssuer! : quoteIssuer!;
+    const issuerAccount =
+      baseCurrency !== Assets.XRP ? baseIssuer! : quoteIssuer!;
 
     const client = await getClient(resolveNetwork(network));
 
@@ -64,7 +77,9 @@ export async function GET(request: NextRequest) {
       if (meta.TransactionResult !== "tesSUCCESS") continue;
 
       // Filter by domain: if a domain is specified, only include matching trades; otherwise exclude permissioned-domain trades from the open DEX results
-      const txDomainID = (tx as Record<string, unknown>).DomainID as string | undefined;
+      const txDomainID = (tx as Record<string, unknown>).DomainID as
+        | string
+        | undefined;
       if (domain) {
         if (txDomainID !== domain) continue;
       } else {
@@ -88,14 +103,20 @@ export async function GET(request: NextRequest) {
 
           if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
             // Transaction fee is only paid in XRP by the submitting account — subtract it to get the net traded amount
-            if (baseCurrency === Assets.XRP && acctChanges.account === tx.Account) {
+            if (
+              baseCurrency === Assets.XRP &&
+              acctChanges.account === tx.Account
+            ) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
               baseTotal += val - fee;
             } else {
               baseTotal += val;
             }
           } else if (matchesCurrency(bal, quoteCurrency, quoteIssuer)) {
-            if (quoteCurrency === Assets.XRP && acctChanges.account === tx.Account) {
+            if (
+              quoteCurrency === Assets.XRP &&
+              acctChanges.account === tx.Account
+            ) {
               const fee = parseFloat(String(tx.Fee ?? "0")) / 1_000_000;
               quoteTotal += val - fee;
             } else {
@@ -116,8 +137,10 @@ export async function GET(request: NextRequest) {
 
       // Extract time and hash from entry fields
       const entryAny = entry as unknown as Record<string, unknown>;
-      const time = (entryAny.close_time_iso as string) ?? (entryAny.date as string) ?? "";
-      const hash = (entryAny.hash as string) ?? (tx.hash as string | undefined) ?? "";
+      const time =
+        (entryAny.close_time_iso as string) ?? (entryAny.date as string) ?? "";
+      const hash =
+        (entryAny.hash as string) ?? (tx.hash as string | undefined) ?? "";
 
       const price = quoteTotal / baseTotal;
 

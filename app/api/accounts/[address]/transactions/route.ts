@@ -16,7 +16,10 @@ export async function GET(
 
     const sp = request.nextUrl.searchParams;
     const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_TRANSACTION_LIMIT : rawLimit, MAX_API_LIMIT);
+    const limit = Math.min(
+      Number.isNaN(rawLimit) ? DEFAULT_TRANSACTION_LIMIT : rawLimit,
+      MAX_API_LIMIT,
+    );
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({
@@ -30,6 +33,8 @@ export async function GET(
       transactions: response.result.transactions,
     });
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch transactions", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch transactions", {
+      checkNotFound: true,
+    });
   }
 }

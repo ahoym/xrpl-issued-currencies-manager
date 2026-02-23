@@ -27,7 +27,9 @@ export function IssuedCredentialsTable({
   issuerSeed,
   onDeleted,
 }: IssuedCredentialsTableProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   async function handleDelete(subject: string, credentialType: string) {
@@ -68,11 +70,21 @@ export function IssuedCredentialsTable({
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-700">
-                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Subject</th>
-                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Type</th>
-                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Accepted</th>
-                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">URI</th>
-                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">Expiration</th>
+                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                  Subject
+                </th>
+                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                  Type
+                </th>
+                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                  Accepted
+                </th>
+                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                  URI
+                </th>
+                <th className="py-1.5 text-left font-medium text-zinc-600 dark:text-zinc-400">
+                  Expiration
+                </th>
                 <th className="py-1.5 text-right font-medium text-zinc-600 dark:text-zinc-400"></th>
               </tr>
             </thead>
@@ -80,22 +92,40 @@ export function IssuedCredentialsTable({
               {credentials.map((c) => {
                 const key = `${c.subject}:${c.credentialType}`;
                 return (
-                  <tr key={key} className="border-b border-zinc-100 dark:border-zinc-800">
+                  <tr
+                    key={key}
+                    className="border-b border-zinc-100 dark:border-zinc-800"
+                  >
                     <td className="py-1.5 font-mono">{c.subject}</td>
                     <td className="py-1.5">{c.credentialType}</td>
                     <td className="py-1.5">
-                      <span className={c.accepted ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}>
+                      <span
+                        className={
+                          c.accepted
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-amber-600 dark:text-amber-400"
+                        }
+                      >
                         {c.accepted ? "Yes" : "Pending"}
                       </span>
                     </td>
                     <td className="py-1.5 font-mono">
                       {c.uri ? (
                         isSafeHttpUrl(c.uri) ? (
-                          <a href={c.uri} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{c.uri}</a>
+                          <a
+                            href={c.uri}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                          >
+                            {c.uri}
+                          </a>
                         ) : (
                           <span className="text-zinc-500">{c.uri}</span>
                         )
-                      ) : "\u2014"}
+                      ) : (
+                        "\u2014"
+                      )}
                     </td>
                     <td className="py-1.5">
                       {c.expiration
@@ -104,7 +134,9 @@ export function IssuedCredentialsTable({
                     </td>
                     <td className="py-1.5 text-right">
                       <button
-                        onClick={() => handleDelete(c.subject, c.credentialType)}
+                        onClick={() =>
+                          handleDelete(c.subject, c.credentialType)
+                        }
                         disabled={deletingKey === key}
                         className="text-red-500 hover:text-red-700 disabled:opacity-50"
                       >

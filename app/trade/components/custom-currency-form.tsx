@@ -8,7 +8,10 @@ interface CustomCurrencyFormProps {
   onClose: () => void;
 }
 
-export function CustomCurrencyForm({ onAdd, onClose }: CustomCurrencyFormProps) {
+export function CustomCurrencyForm({
+  onAdd,
+  onClose,
+}: CustomCurrencyFormProps) {
   const [currency, setCurrency] = useState("");
   const [issuer, setIssuer] = useState("");
 

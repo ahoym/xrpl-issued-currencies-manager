@@ -95,8 +95,8 @@ export function AmmPoolPanel({
                 Spot Price
               </span>
               <p className="font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                1 {asset1Currency} ={" "}
-                {new BigNumber(pool.spotPrice).toFixed(4)} {asset2Currency}
+                1 {asset1Currency} = {new BigNumber(pool.spotPrice).toFixed(4)}{" "}
+                {asset2Currency}
               </p>
             </div>
           )}

@@ -1,8 +1,17 @@
 import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { DEFAULT_ORDERBOOK_LIMIT, MAX_API_LIMIT, TRADES_FETCH_MULTIPLIER } from "@/lib/xrpl/constants";
-import { getNetworkParam, validateAddress, validateCurrencyPair, apiErrorResponse } from "@/lib/api";
+import {
+  DEFAULT_ORDERBOOK_LIMIT,
+  MAX_API_LIMIT,
+  TRADES_FETCH_MULTIPLIER,
+} from "@/lib/xrpl/constants";
+import {
+  getNetworkParam,
+  validateAddress,
+  validateCurrencyPair,
+  apiErrorResponse,
+} from "@/lib/api";
 import { parseFilledOrders } from "@/lib/xrpl/filled-orders";
 
 export async function GET(
@@ -17,12 +26,16 @@ export async function GET(
 
     const sp = request.nextUrl.searchParams;
     const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit, MAX_API_LIMIT);
+    const limit = Math.min(
+      Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit,
+      MAX_API_LIMIT,
+    );
 
     // Validate currency pair from query params
     const pairOrError = validateCurrencyPair(request);
     if (pairOrError instanceof Response) return pairOrError;
-    const { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer } = pairOrError;
+    const { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer } =
+      pairOrError;
 
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
@@ -45,6 +58,8 @@ export async function GET(
 
     return Response.json({ address, filledOrders });
   } catch (err) {
-    return apiErrorResponse(err, "Failed to fetch filled orders", { checkNotFound: true });
+    return apiErrorResponse(err, "Failed to fetch filled orders", {
+      checkNotFound: true,
+    });
   }
 }

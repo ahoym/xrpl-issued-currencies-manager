@@ -3,21 +3,34 @@ import { Payment } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import { encodeXrplCurrency } from "@/lib/xrpl/currency";
-import { validateRequired, walletFromSeed, validateAddress, validatePositiveAmount, txFailureResponse, apiErrorResponse } from "@/lib/api";
+import {
+  validateRequired,
+  walletFromSeed,
+  validateAddress,
+  validatePositiveAmount,
+  txFailureResponse,
+  apiErrorResponse,
+} from "@/lib/api";
 import type { IssueCurrencyRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
   try {
     const body: IssueCurrencyRequest = await request.json();
 
-    const invalid = validateRequired(body as unknown as Record<string, unknown>, ["issuerSeed", "recipientAddress", "currencyCode", "amount"]);
+    const invalid = validateRequired(
+      body as unknown as Record<string, unknown>,
+      ["issuerSeed", "recipientAddress", "currencyCode", "amount"],
+    );
     if (invalid) return invalid;
 
     const seedResult = walletFromSeed(body.issuerSeed);
     if ("error" in seedResult) return seedResult.error;
     const issuerWallet = seedResult.wallet;
 
-    const badRecipient = validateAddress(body.recipientAddress, "recipientAddress");
+    const badRecipient = validateAddress(
+      body.recipientAddress,
+      "recipientAddress",
+    );
     if (badRecipient) return badRecipient;
 
     const badAmount = validatePositiveAmount(body.amount, "amount");
@@ -58,14 +71,19 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const result = await client.submitAndWait(payment, { wallet: issuerWallet });
+    const result = await client.submitAndWait(payment, {
+      wallet: issuerWallet,
+    });
 
     const failure = txFailureResponse(result);
     if (failure) return failure;
 
-    return Response.json({
-      result: result.result,
-    }, { status: 201 });
+    return Response.json(
+      {
+        result: result.result,
+      },
+      { status: 201 },
+    );
   } catch (err) {
     return apiErrorResponse(err, "Failed to issue currency");
   }

@@ -4,7 +4,14 @@ import { useState } from "react";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
-import { inputClass, labelClass, primaryButtonClass, errorTextClass, successBannerClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
+import {
+  inputClass,
+  labelClass,
+  primaryButtonClass,
+  errorTextClass,
+  successBannerClass,
+  SUCCESS_MESSAGE_DURATION_MS,
+} from "@/lib/ui/ui";
 
 interface IssueCredentialFormProps {
   credentialIssuer: WalletInfo;
@@ -17,7 +24,9 @@ export function IssueCredentialForm({
   recipients,
   onIssued,
 }: IssueCredentialFormProps) {
-  const { state: { network } } = useAppState();
+  const {
+    state: { network },
+  } = useAppState();
   const [subject, setSubject] = useState("");
   const [credType, setCredType] = useState("");
   const [expiration, setExpiration] = useState("");
@@ -92,83 +101,74 @@ export function IssueCredentialForm({
           {collapsed ? "▸" : "▾"}
         </span>
       </button>
-      {!collapsed && (success ? (
-        <div className={`mx-4 mb-4 ${successBannerClass}`}>
-          Credential issued!
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-3 px-4 pb-4">
-          <div>
-            <label className={labelClass}>
-              Subject
-            </label>
-            <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className={inputClass}
+      {!collapsed &&
+        (success ? (
+          <div className={`mx-4 mb-4 ${successBannerClass}`}>
+            Credential issued!
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3 px-4 pb-4">
+            <div>
+              <label className={labelClass}>Subject</label>
+              <select
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Select recipient...</option>
+                {recipients.map((r) => (
+                  <option key={r.address} value={r.address}>
+                    {r.address}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Or enter address manually"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Credential Type</label>
+              <input
+                type="text"
+                value={credType}
+                onChange={(e) => setCredType(e.target.value)}
+                placeholder="e.g. KYC"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Expiration (optional)</label>
+              <input
+                type="datetime-local"
+                value={expiration}
+                onChange={(e) => setExpiration(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>URI (optional)</label>
+              <input
+                type="text"
+                value={uri}
+                onChange={(e) => setUri(e.target.value)}
+                placeholder="https://..."
+                className={inputClass}
+              />
+            </div>
+            {error && <p className={errorTextClass}>{error}</p>}
+            <button
+              type="submit"
+              disabled={submitting || !subject || !credType}
+              className={primaryButtonClass}
             >
-              <option value="">Select recipient...</option>
-              {recipients.map((r) => (
-                <option key={r.address} value={r.address}>
-                  {r.address}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Or enter address manually"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>
-              Credential Type
-            </label>
-            <input
-              type="text"
-              value={credType}
-              onChange={(e) => setCredType(e.target.value)}
-              placeholder="e.g. KYC"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>
-              Expiration (optional)
-            </label>
-            <input
-              type="datetime-local"
-              value={expiration}
-              onChange={(e) => setExpiration(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>
-              URI (optional)
-            </label>
-            <input
-              type="text"
-              value={uri}
-              onChange={(e) => setUri(e.target.value)}
-              placeholder="https://..."
-              className={inputClass}
-            />
-          </div>
-          {error && (
-            <p className={errorTextClass}>{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={submitting || !subject || !credType}
-            className={primaryButtonClass}
-          >
-            {submitting ? "Issuing..." : "Issue Credential"}
-          </button>
-        </form>
-      ))}
+              {submitting ? "Issuing..." : "Issue Credential"}
+            </button>
+          </form>
+        ))}
     </div>
   );
 }

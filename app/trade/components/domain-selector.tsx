@@ -39,7 +39,9 @@ export function DomainSelector({
           className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
         >
           <option value="open">Open DEX</option>
-          {availableDomains.length > 0 && <option value="select">Permissioned Domain</option>}
+          {availableDomains.length > 0 && (
+            <option value="select">Permissioned Domain</option>
+          )}
           <option value="custom">Custom Domain ID</option>
         </select>
         {domainMode === "select" && (
@@ -51,7 +53,11 @@ export function DomainSelector({
             <option value="">Select domain...</option>
             {availableDomains.map((d) => (
               <option key={d.domainID} value={d.domainID}>
-                {d.domainID.slice(0, 16)}... ({d.acceptedCredentials.map((ac) => ac.credentialType).join(", ")})
+                {d.domainID.slice(0, 16)}... (
+                {d.acceptedCredentials
+                  .map((ac) => ac.credentialType)
+                  .join(", ")}
+                )
               </option>
             ))}
           </select>
