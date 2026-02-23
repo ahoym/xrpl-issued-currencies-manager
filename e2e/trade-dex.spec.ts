@@ -10,12 +10,11 @@ function tradeFormLocator(page: Page) {
 /** Select the TCOIN/XRP pair and wait for the Place Order heading to confirm the pair loaded. */
 async function selectTcoinXrpPair(page: Page) {
   await page.goto("/trade");
-  // Find the option value for TCOIN in the Base select (value encoded as "TCOIN|<issuer>")
+  // Wait for Base select and TCOIN option to be available (needs hydration + balance API)
   const baseSelect = page.getByLabel("Base");
-  const tcoinValue = await baseSelect
-    .locator("option")
-    .filter({ hasText: /^TCOIN/ })
-    .getAttribute("value");
+  const tcoinOption = baseSelect.locator("option").filter({ hasText: "TCOIN" });
+  await tcoinOption.waitFor({ state: "attached", timeout: 30_000 });
+  const tcoinValue = await tcoinOption.getAttribute("value");
   if (tcoinValue) {
     await baseSelect.selectOption(tcoinValue);
   }
@@ -45,8 +44,8 @@ test.describe.serial("Trade DEX", () => {
       page.getByRole("heading", { name: "Trade", level: 1 }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /^r[a-zA-Z0-9]{24,}/ }),
-    ).toBeVisible({ timeout: 10_000 });
+      page.getByRole("button", { name: /r[a-zA-Z0-9]{24,}/ }).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("select TCOIN/XRP pair — form renders", async () => {
@@ -79,7 +78,7 @@ test.describe.serial("Trade DEX", () => {
     await page
       .getByPlaceholder("rXXXXXXXX...")
       .fill("rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh");
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.getByRole("button", { name: "Add", exact: true }).click();
     // FAKECOIN should appear as an option in Base or Quote select
     await expect(
       page.getByLabel("Base").locator("option", { hasText: /FAKECOIN/ }),
@@ -151,12 +150,15 @@ test.describe.serial("Trade DEX", () => {
     } catch {
       // Panel may already be expanded or not present on mobile view — continue
     }
-    // Find the first Cancel button
-    const cancelBtn = page.getByRole("button", { name: "Cancel" }).first();
-    await expect(cancelBtn).toBeVisible({ timeout: 15_000 });
-    await cancelBtn.click();
-    // Wait for the cancel button to disappear (order removed from table)
-    await expect(cancelBtn).not.toBeVisible({ timeout: 30_000 });
+    // Count initial Cancel buttons, then cancel the first order
+    const cancelButtons = page.getByRole("button", { name: "Cancel" });
+    await expect(cancelButtons.first()).toBeVisible({ timeout: 15_000 });
+    const initialCount = await cancelButtons.count();
+    await cancelButtons.first().click();
+    // Wait for one fewer Cancel button (order removed from table)
+    await expect(cancelButtons).toHaveCount(initialCount - 1, {
+      timeout: 30_000,
+    });
   });
 
   test("order book row click prefills form", async () => {
@@ -195,23 +197,28 @@ test.describe.serial("Trade DEX", () => {
   test("Make Market preview flow", async () => {
     await selectTcoinXrpPair(page);
     await page.getByRole("button", { name: /Make Market/ }).click();
+    const dialog = page.getByRole("dialog");
     await expect(
-      page.getByRole("heading", { name: "Make Market", level: 2 }),
+      dialog.getByRole("heading", { name: "Make Market", level: 2 }),
     ).toBeVisible();
     // Fill mid price
-    await page.getByPlaceholder("0.00").fill("0.001");
-    await page.getByRole("button", { name: "Preview Orders" }).click();
+    await dialog.getByPlaceholder("0.00").fill("0.001");
+    await dialog.getByRole("button", { name: "Preview Orders" }).click();
     // Preview step
     await expect(
-      page.getByRole("heading", { name: "Preview Orders", level: 2 }),
+      dialog.getByRole("heading", { name: "Preview Orders", level: 2 }),
     ).toBeVisible();
     // At least one Bid and one Ask cell in the preview table
-    await expect(page.getByRole("cell", { name: "Bid" }).first()).toBeVisible();
-    await expect(page.getByRole("cell", { name: "Ask" }).first()).toBeVisible();
-    // Click Back
-    await page.getByRole("button", { name: "Back" }).click();
     await expect(
-      page.getByRole("heading", { name: "Make Market", level: 2 }),
+      dialog.getByRole("cell", { name: "Bid" }).first(),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole("cell", { name: "Ask" }).first(),
+    ).toBeVisible();
+    // Click Back
+    await dialog.getByRole("button", { name: "Back" }).click();
+    await expect(
+      dialog.getByRole("heading", { name: "Make Market", level: 2 }),
     ).toBeVisible();
   });
 
@@ -219,17 +226,18 @@ test.describe.serial("Trade DEX", () => {
     test.setTimeout(180_000);
     await selectTcoinXrpPair(page);
     await page.getByRole("button", { name: /Make Market/ }).click();
+    const dialog = page.getByRole("dialog");
     await expect(
-      page.getByRole("heading", { name: "Make Market", level: 2 }),
+      dialog.getByRole("heading", { name: "Make Market", level: 2 }),
     ).toBeVisible();
     // Fill mid price
-    await page.getByPlaceholder("0.00").fill("0.001");
-    await page.getByRole("button", { name: "Preview Orders" }).click();
+    await dialog.getByPlaceholder("0.00").fill("0.001");
+    await dialog.getByRole("button", { name: "Preview Orders" }).click();
     await expect(
-      page.getByRole("heading", { name: "Preview Orders", level: 2 }),
+      dialog.getByRole("heading", { name: "Preview Orders", level: 2 }),
     ).toBeVisible();
     // Place orders
-    await page.getByRole("button", { name: "Place Orders" }).click();
+    await dialog.getByRole("button", { name: "Place Orders" }).click();
     // Wait for modal to close — the Make Market heading should disappear
     await expect(
       page.getByRole("heading", { name: "Make Market", level: 2 }),

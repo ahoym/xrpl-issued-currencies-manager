@@ -28,8 +28,12 @@ test.describe.serial("Compliance page", () => {
 
   test("wallet setup cards visible", async () => {
     await page.goto("/compliance");
-    await expect(page.getByText("Credential Issuer")).toBeVisible();
-    await expect(page.getByText("Domain Owner")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Credential Issuer" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Domain Owner" }),
+    ).toBeVisible();
     const generateButtons = page.getByRole("button", {
       name: "Generate Wallet",
     });
@@ -72,7 +76,9 @@ test.describe.serial("Compliance page", () => {
     await page.getByPlaceholder("e.g. KYC").fill("KYC");
 
     // Click Issue Credential
-    await page.getByRole("button", { name: "Issue Credential" }).click();
+    await page
+      .getByRole("button", { name: "Issue Credential", exact: true })
+      .click();
 
     // Assert success — auto-clears after 2s, assert immediately
     await assertSuccessMessage(page, "Credential issued!", 45_000);
@@ -85,8 +91,10 @@ test.describe.serial("Compliance page", () => {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByText("KYC")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Pending")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "KYC" })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("cell", { name: "Pending" })).toBeVisible();
   });
 
   test("accept credential", async () => {
@@ -111,7 +119,9 @@ test.describe.serial("Compliance page", () => {
 
     await page.goto("/compliance");
     // Wait for KYC credential to appear in the issued credentials table
-    await expect(page.getByText("KYC")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("cell", { name: "KYC" })).toBeVisible({
+      timeout: 15_000,
+    });
 
     // Click first "Delete" button in the issued credentials area
     await page.getByRole("button", { name: "Delete" }).first().click();
@@ -125,7 +135,9 @@ test.describe.serial("Compliance page", () => {
   test("switch to Domains tab", async () => {
     await page.goto("/compliance");
     await page.getByRole("button", { name: "Domains" }).click();
-    await expect(page.getByText("Domain Owner")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Domain Owner" }),
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test("generate Domain Owner wallet", async () => {
@@ -140,10 +152,10 @@ test.describe.serial("Compliance page", () => {
     });
     await generateButton.click();
 
+    // Use the heading's parent element (the card div) to scope the address link search
     const domainOwnerCard = page
-      .locator("div")
-      .filter({ has: page.getByText("Domain Owner") })
-      .first();
+      .getByRole("heading", { name: "Domain Owner" })
+      .locator("..");
     const addressLink = domainOwnerCard.getByRole("link", {
       name: /^r[a-zA-Z0-9]{24,}/,
     });
@@ -173,15 +185,25 @@ test.describe.serial("Compliance page", () => {
     await page.goto("/compliance");
     await page.getByRole("button", { name: "Domains" }).click();
 
+    // Wait for the form to render (depends on domainOwner hydrating from localStorage)
+    await expect(
+      page.getByRole("heading", { name: "Create Domain", level: 3 }),
+    ).toBeVisible({ timeout: 10_000 });
+
     await page
       .getByPlaceholder("Credential issuer address")
       .fill(credIssuerAddress);
     await page.getByPlaceholder("Credential type").fill("KYC");
 
-    await page.getByRole("button", { name: "Create Domain" }).click();
+    // Wait for button to be enabled (form validation) before clicking
+    const createBtn = page.getByRole("button", { name: "Create Domain" });
+    await expect(createBtn).toBeEnabled({ timeout: 5_000 });
+    await createBtn.click();
 
-    // Assert success — auto-clears after 2s, assert immediately
-    await assertSuccessMessage(page, "Domain created!", 45_000);
+    // Assert domain created — wait for it to appear in "My Domains" list
+    await expect(page.getByRole("button", { name: "Edit" })).toBeVisible({
+      timeout: 45_000,
+    });
   });
 
   test("domain list shows domain with Edit and Delete", async () => {

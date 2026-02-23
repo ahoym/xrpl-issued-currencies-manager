@@ -1,4 +1,16 @@
-import { test, expect, type BrowserContext } from "@playwright/test";
+import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+
+/** Select TCOIN/XRP pair — waits for options to load from balances. */
+async function selectTcoinXrpPair(page: Page) {
+  const baseSelect = page.getByLabel("Base");
+  const tcoinOption = baseSelect.locator("option").filter({ hasText: "TCOIN" });
+  await tcoinOption.waitFor({ state: "attached", timeout: 30_000 });
+  const tcoinValue = await tcoinOption.getAttribute("value");
+  if (tcoinValue) {
+    await baseSelect.selectOption(tcoinValue);
+  }
+  await page.getByLabel("Quote").selectOption("XRP|");
+}
 
 test.describe.serial("Trade AMM", () => {
   let context: BrowserContext;
@@ -14,14 +26,15 @@ test.describe.serial("Trade AMM", () => {
   test("AMM Pool panel visible", async () => {
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
 
     await expect(
-      page.getByText("No AMM Pool").or(page.getByText("Spot Price")),
+      page
+        .getByText("No AMM Pool", { exact: true })
+        .or(page.getByText("Spot Price")),
     ).toBeVisible({ timeout: 15_000 });
 
     await page.close();
@@ -30,8 +43,7 @@ test.describe.serial("Trade AMM", () => {
   test("AMM Create modal UI", async () => {
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
@@ -73,8 +85,7 @@ test.describe.serial("Trade AMM", () => {
 
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
@@ -93,13 +104,14 @@ test.describe.serial("Trade AMM", () => {
     }
 
     await createButton.click();
-    await page.getByRole("button", { name: "0.30%" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "0.30%" }).click();
 
-    const spinbuttons = page.getByRole("spinbutton");
+    const spinbuttons = dialog.getByRole("spinbutton");
     await spinbuttons.nth(0).fill("10");
     await spinbuttons.nth(1).fill("0.01");
 
-    await page.getByRole("button", { name: "Preview" }).click();
+    await dialog.getByRole("button", { name: "Preview" }).click();
     await expect(
       page.getByRole("heading", { name: "Preview AMM Pool", level: 2 }),
     ).toBeVisible();
@@ -115,8 +127,7 @@ test.describe.serial("Trade AMM", () => {
   test("AMM Deposit modal tabs", async () => {
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
@@ -156,8 +167,7 @@ test.describe.serial("Trade AMM", () => {
 
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
@@ -176,13 +186,14 @@ test.describe.serial("Trade AMM", () => {
     }
 
     await depositButton.click();
+    const dialog = page.getByRole("dialog");
 
     // "Both Assets" mode should be default
-    const spinbuttons = page.getByRole("spinbutton");
+    const spinbuttons = dialog.getByRole("spinbutton");
     await spinbuttons.nth(0).fill("5");
     await spinbuttons.nth(1).fill("0.005");
 
-    await page.getByRole("button", { name: "Confirm" }).click();
+    await dialog.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Deposit successful!")).toBeVisible({
       timeout: 45_000,
     });
@@ -193,8 +204,7 @@ test.describe.serial("Trade AMM", () => {
   test("AMM Withdraw modal tabs", async () => {
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
@@ -237,8 +247,7 @@ test.describe.serial("Trade AMM", () => {
 
     const page = await context.newPage();
     await page.goto("/trade");
-    await page.getByLabel("Base").selectOption({ label: "TCOIN" });
-    await page.getByLabel("Quote").selectOption({ label: "XRP" });
+    await selectTcoinXrpPair(page);
     await expect(page.getByRole("heading", { name: "AMM Pool" })).toBeVisible({
       timeout: 15_000,
     });
@@ -257,8 +266,9 @@ test.describe.serial("Trade AMM", () => {
     }
 
     await withdrawButton.click();
-    await page.getByRole("button", { name: "Withdraw All" }).click();
-    await page.getByRole("button", { name: "Confirm" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Withdraw All" }).click();
+    await dialog.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Pool has been deleted.")).toBeVisible({
       timeout: 45_000,
     });

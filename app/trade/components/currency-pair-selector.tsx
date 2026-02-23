@@ -22,10 +22,14 @@ export function CurrencyPairSelector({
   return (
     <div className="mt-4 flex flex-wrap items-end gap-3">
       <div className="min-w-[180px] flex-1">
-        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+        <label
+          htmlFor="base-currency"
+          className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+        >
           Base
         </label>
         <select
+          id="base-currency"
           value={sellingValue}
           onChange={(e) => onSellingChange(e.target.value)}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
@@ -41,10 +45,14 @@ export function CurrencyPairSelector({
         </select>
       </div>
       <div className="min-w-[180px] flex-1">
-        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+        <label
+          htmlFor="quote-currency"
+          className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+        >
           Quote
         </label>
         <select
+          id="quote-currency"
           value={buyingValue}
           onChange={(e) => onBuyingChange(e.target.value)}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"

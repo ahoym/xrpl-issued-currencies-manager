@@ -76,25 +76,25 @@ test.describe.serial("Setup page", () => {
 
   test("add currency FOO", async () => {
     await page.getByPlaceholder("e.g. USD").fill("FOO");
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText("FOO")).toBeVisible();
   });
 
   test("duplicate currency shows error", async () => {
     await page.getByPlaceholder("e.g. USD").fill("FOO");
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText(/FOO already added/)).toBeVisible();
   });
 
   test("invalid currency shows error", async () => {
     await page.getByPlaceholder("e.g. USD").fill("A");
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText(/must be.*uppercase/i)).toBeVisible();
   });
 
   test("remove local currency", async () => {
     await page.getByPlaceholder("e.g. USD").fill("TEMP");
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText("TEMP")).toBeVisible();
     await page.getByRole("button", { name: "Remove TEMP" }).click();
     await expect(page.getByText("TEMP")).not.toBeVisible();
@@ -105,10 +105,11 @@ test.describe.serial("Setup page", () => {
       .getByRole("link", { name: /^r[a-zA-Z0-9]{24,}/ })
       .nth(1);
     await expect(secondAddressLink).toBeVisible({ timeout: 15_000 });
-    // Card starts collapsed — "Fund from Faucet" should not be visible
-    await expect(
-      page.getByRole("button", { name: "Fund from Faucet" }).last(),
-    ).not.toBeVisible();
+    // Card starts collapsed — toggle button should have aria-expanded="false"
+    const recipientToggle = page.getByRole("button", {
+      name: /r[a-zA-Z0-9]{24,}/,
+    });
+    await expect(recipientToggle).toHaveAttribute("aria-expanded", "false");
   });
 
   test("expand recipient card — shows balances and trust lines", async () => {
@@ -150,9 +151,12 @@ test.describe.serial("Setup page", () => {
       page.getByRole("button", { name: "Generate Issuer Wallet" }),
     ).toBeVisible({ timeout: 10_000 });
 
-    // Import the downloaded file back using the hidden file input
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles(downloadPath!);
+    // Import the downloaded file — handleImport creates a dynamic file input
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent("filechooser"),
+      page.getByRole("button", { name: "Import JSON" }).click(),
+    ]);
+    await fileChooser.setFiles(downloadPath!);
 
     // Issuer address link should reappear after import
     await expect(
