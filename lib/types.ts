@@ -40,7 +40,7 @@ export interface OrderBookEntry {
   taker_pays: OrderBookAmount;
   taker_gets_funded?: OrderBookAmount;
   taker_pays_funded?: OrderBookAmount;
-  quality: string;
+  quality?: string;
   sequence: number;
 }
 
@@ -84,6 +84,14 @@ export interface DomainInfo {
   owner: string;
   acceptedCredentials: { issuer: string; credentialType: string }[];
   sequence: number;
+}
+
+export interface MidpriceMetrics {
+  mid: string | null;
+  microPrice: string | null;
+  weightedMid: string | null;
+  spread: string | null;
+  spreadBps: string | null;
 }
 
 export interface AmmAuctionSlot {

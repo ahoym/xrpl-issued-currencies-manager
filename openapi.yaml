@@ -1382,6 +1382,30 @@ components:
         domain:
           type: string
           description: Permissioned domain ID, echoed back when provided
+        midprice:
+          type: object
+          description: Midprice metrics computed from the order book
+          properties:
+            mid:
+              type: string
+              nullable: true
+              description: Simple midprice (bestAsk + bestBid) / 2
+            microPrice:
+              type: string
+              nullable: true
+              description: Volume-weighted micro-price at top of book
+            weightedMid:
+              type: string
+              nullable: true
+              description: VWAP across all order book levels
+            spread:
+              type: string
+              nullable: true
+              description: Best ask minus best bid
+            spreadBps:
+              type: string
+              nullable: true
+              description: Spread in basis points (spread / mid * 10000)
 
     AccountOffersResponse:
       type: object

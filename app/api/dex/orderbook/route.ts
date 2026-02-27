@@ -10,6 +10,8 @@ import {
 } from "@/lib/api";
 import { DEFAULT_ORDERBOOK_LIMIT, MAX_API_LIMIT } from "@/lib/xrpl/constants";
 import { Assets } from "@/lib/assets";
+import { buildAsks, buildBids } from "@/lib/xrpl/order-book-levels";
+import { computeMidpriceMetrics } from "@/lib/xrpl/midprice";
 
 function normalizeOffer(offer: BookOffer) {
   return {
@@ -79,12 +81,19 @@ export async function GET(request: NextRequest) {
         client.request(bidReq),
       ]);
 
+      const sell = askRes.result.offers.map(normalizeOffer);
+      const buy = bidRes.result.offers.map(normalizeOffer);
+      const allOffers = [...buy, ...sell];
+      const asks = buildAsks(allOffers, baseCurrency, baseIssuer);
+      const bids = buildBids(allOffers, baseCurrency, baseIssuer);
+
       return Response.json({
         base: { currency: baseCurrency, issuer: baseIssuer },
         quote: { currency: quoteCurrency, issuer: quoteIssuer },
         domain,
-        sell: askRes.result.offers.map(normalizeOffer),
-        buy: bidRes.result.offers.map(normalizeOffer),
+        sell,
+        buy,
+        midprice: computeMidpriceMetrics(asks, bids),
       });
     }
 
@@ -96,11 +105,18 @@ export async function GET(request: NextRequest) {
     const normalizeMany = (offers: typeof orderbook.buy) =>
       offers.map(normalizeOffer);
 
+    const buy = normalizeMany(orderbook.buy);
+    const sell = normalizeMany(orderbook.sell);
+    const allOffers = [...buy, ...sell];
+    const asks = buildAsks(allOffers, baseCurrency, baseIssuer);
+    const bids = buildBids(allOffers, baseCurrency, baseIssuer);
+
     return Response.json({
       base: { currency: baseCurrency, issuer: baseIssuer },
       quote: { currency: quoteCurrency, issuer: quoteIssuer },
-      buy: normalizeMany(orderbook.buy),
-      sell: normalizeMany(orderbook.sell),
+      buy,
+      sell,
+      midprice: computeMidpriceMetrics(asks, bids),
     });
   } catch (err) {
     return apiErrorResponse(err, "Failed to fetch order book");
