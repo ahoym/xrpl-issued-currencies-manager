@@ -2,7 +2,7 @@
 
 import BigNumber from "bignumber.js";
 import type { OrderBookEntry, DepthSummary } from "@/lib/types";
-import { matchesCurrency } from "@/lib/xrpl/match-currency";
+import { buildAsks, buildBids } from "@/lib/xrpl/order-book-levels";
 
 export const DEPTH_OPTIONS = [10, 25, 50, 100] as const;
 export type DepthLevel = (typeof DEPTH_OPTIONS)[number];
@@ -38,33 +38,8 @@ export function OrderBook({
 }: OrderBookProps) {
   const allOffers = [...(orderBook?.buy ?? []), ...(orderBook?.sell ?? [])];
 
-  // Asks: creator sells base (taker_gets = base)
-  // Use funded amounts when available to reflect actual fillable size; drop unfunded offers
-  const asks = allOffers
-    .filter((o) => matchesCurrency(o.taker_gets, baseCurrency, baseIssuer))
-    .map((o) => {
-      const amount = new BigNumber((o.taker_gets_funded ?? o.taker_gets).value);
-      const total = new BigNumber((o.taker_pays_funded ?? o.taker_pays).value);
-      const price = amount.gt(0) ? total.div(amount) : new BigNumber(0);
-      return { price, amount, total, account: o.account };
-    })
-    .filter((o) => o.amount.gt(0) && o.price.gt(0));
-  // Sort asks highest-first so the best (lowest) ask appears at the bottom, adjacent to the spread
-  asks.sort((a, b) => b.price.comparedTo(a.price) ?? 0);
-
-  // Bids: creator buys base (taker_pays = base, taker_gets = quote)
-  // Use funded amounts when available to reflect actual fillable size; drop unfunded offers
-  const bids = allOffers
-    .filter((o) => matchesCurrency(o.taker_pays, baseCurrency, baseIssuer))
-    .map((o) => {
-      const amount = new BigNumber((o.taker_pays_funded ?? o.taker_pays).value);
-      const total = new BigNumber((o.taker_gets_funded ?? o.taker_gets).value);
-      const price = amount.gt(0) ? total.div(amount) : new BigNumber(0);
-      return { price, amount, total, account: o.account };
-    })
-    .filter((o) => o.amount.gt(0) && o.price.gt(0));
-  // Sort bids highest-first so the best (highest) bid appears at the top, adjacent to the spread
-  bids.sort((a, b) => b.price.comparedTo(a.price) ?? 0);
+  const asks = buildAsks(allOffers, baseCurrency, baseIssuer);
+  const bids = buildBids(allOffers, baseCurrency, baseIssuer);
 
   // Depth summary computed from FULL unsliced arrays
   const depthSummary: DepthSummary = {

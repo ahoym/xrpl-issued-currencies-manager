@@ -109,6 +109,10 @@ export interface AmmPoolInfo {
   tradingFee?: number;
   tradingFeeDisplay?: string;
   spotPrice?: string;
+  invertedSpotPrice?: string;
+  effectivePrice?: string;
+  marginalBuyPrice?: string;
+  marginalSellPrice?: string;
   assetFrozen?: boolean;
   asset2Frozen?: boolean;
   auctionSlot?: AmmAuctionSlot | null;

@@ -1485,6 +1485,18 @@ components:
         spotPrice:
           type: string
           description: Spot price of 1 base unit in quote terms
+        invertedSpotPrice:
+          type: string
+          description: Inverted spot price (1 / spotPrice) — base units per 1 quote
+        effectivePrice:
+          type: string
+          description: Fee-adjusted inverted spot price (invertedSpotPrice / (1 - fee))
+        marginalBuyPrice:
+          type: string
+          description: Initial marginal cost to buy base from the AMM (quote per base)
+        marginalSellPrice:
+          type: string
+          description: Initial marginal proceeds from selling base to the AMM (quote per base)
         assetFrozen:
           type: boolean
           description: Whether the base asset is frozen

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import BigNumber from "bignumber.js";
 import {
   validateCurrencyPair,
   getNetworkParam,
@@ -9,6 +10,7 @@ import { resolveNetwork } from "@/lib/xrpl/networks";
 import { buildCurrencySpec } from "@/lib/xrpl/amm-helpers";
 import { formatAmmFee } from "@/lib/xrpl/amm-fee";
 import { fromXrplAmount } from "@/lib/xrpl/currency";
+import { buildAmmPoolParams, ammMarginalBuyPrice, ammMarginalSellPrice } from "@/lib/xrpl/amm-math";
 import { Assets } from "@/lib/assets";
 import type { Amount } from "xrpl";
 
@@ -72,12 +74,9 @@ export async function GET(request: NextRequest) {
       : [amount2Val, amount1];
 
     // 5. Calculate spot price (price of 1 base in quote terms)
-    const spotPrice =
-      parseFloat(baseAmount.value) > 0
-        ? (
-            parseFloat(quoteAmount.value) / parseFloat(baseAmount.value)
-          ).toString()
-        : "0";
+    const baseVal = new BigNumber(baseAmount.value);
+    const quoteVal = new BigNumber(quoteAmount.value);
+    const spotPrice = baseVal.gt(0) ? quoteVal.div(baseVal).toFixed() : "0";
 
     // 6. Normalize frozen flags to match user's base/quote orientation
     const rawAssetFrozen = !!amm.asset_frozen;
@@ -86,7 +85,37 @@ export async function GET(request: NextRequest) {
       ? [rawAssetFrozen, rawAsset2Frozen]
       : [rawAsset2Frozen, rawAssetFrozen];
 
-    // 7. Build response
+    // 7. Compute enriched price fields
+    let invertedSpotPrice: string | undefined;
+    let effectivePrice: string | undefined;
+    let marginalBuyPrice: string | undefined;
+    let marginalSellPrice: string | undefined;
+
+    if (baseVal.gt(0) && quoteVal.gt(0)) {
+      const spot = quoteVal.div(baseVal);
+      invertedSpotPrice = new BigNumber(1).div(spot).toFixed();
+
+      const feeRate = new BigNumber(amm.trading_fee).div(100_000);
+      const oneMinusFee = new BigNumber(1).minus(feeRate);
+      if (oneMinusFee.gt(0)) {
+        effectivePrice = new BigNumber(1).div(spot).div(oneMinusFee).toFixed();
+      }
+
+      const poolParams = buildAmmPoolParams({
+        exists: true,
+        asset1: baseAmount,
+        asset2: quoteAmount,
+        tradingFee: amm.trading_fee,
+        assetFrozen,
+        asset2Frozen,
+      });
+      if (poolParams) {
+        marginalBuyPrice = ammMarginalBuyPrice(poolParams, new BigNumber(0)).toFixed();
+        marginalSellPrice = ammMarginalSellPrice(poolParams, new BigNumber(0)).toFixed();
+      }
+    }
+
+    // 8. Build response
     return Response.json({
       exists: true,
       account: amm.account,
@@ -96,6 +125,10 @@ export async function GET(request: NextRequest) {
       tradingFee: amm.trading_fee,
       tradingFeeDisplay: formatAmmFee(amm.trading_fee),
       spotPrice,
+      invertedSpotPrice,
+      effectivePrice,
+      marginalBuyPrice,
+      marginalSellPrice,
       assetFrozen,
       asset2Frozen,
       auctionSlot: amm.auction_slot
