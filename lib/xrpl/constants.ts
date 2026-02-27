@@ -49,6 +49,9 @@ export const MAX_DOMAIN_CREDENTIALS = 10;
 /** Maximum length of a credential type string. */
 export const MAX_CREDENTIAL_TYPE_LENGTH = 128;
 
+/** Regex for validating XRPL domain IDs (64-char uppercase hex). */
+export const DOMAIN_ID_REGEX = /^[0-9A-F]{64}$/;
+
 /** XRPL currency code minimum length (standard 3-char codes). */
 export const MIN_CURRENCY_CODE_LENGTH = 3;
 

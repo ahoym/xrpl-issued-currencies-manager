@@ -45,9 +45,9 @@ export interface OrderBookEntry {
 }
 
 export interface DepthSummary {
-  bidVolume: number;
+  bidVolume: string;
   bidLevels: number;
-  askVolume: number;
+  askVolume: string;
   askLevels: number;
 }
 
