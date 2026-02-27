@@ -159,7 +159,9 @@ describe("ammBuyCost", () => {
     const marginal = ammMarginalBuyPrice(pool, new BigNumber(0));
     const impliedPrice = cost.div(delta);
     // Should be very close to marginal price for a tiny trade
-    expect(impliedPrice.minus(marginal).abs().div(marginal).lt(0.001)).toBe(true);
+    expect(impliedPrice.minus(marginal).abs().div(marginal).lt(0.001)).toBe(
+      true,
+    );
   });
 
   it("larger amounts show slippage (higher effective price)", () => {
@@ -172,7 +174,11 @@ describe("ammBuyCost", () => {
 
   it("accounts for already-consumed base", () => {
     const costFresh = ammBuyCost(pool, new BigNumber(10), new BigNumber(0));
-    const costAfter100 = ammBuyCost(pool, new BigNumber(10), new BigNumber(100));
+    const costAfter100 = ammBuyCost(
+      pool,
+      new BigNumber(10),
+      new BigNumber(100),
+    );
     // After consuming 100, pool is thinner so buying 10 more costs more
     expect(costAfter100.gt(costFresh)).toBe(true);
   });
@@ -186,7 +192,9 @@ describe("ammSellProceeds", () => {
     const proceeds = ammSellProceeds(pool, delta, new BigNumber(0));
     const marginal = ammMarginalSellPrice(pool, new BigNumber(0));
     const impliedPrice = proceeds.div(delta);
-    expect(impliedPrice.minus(marginal).abs().div(marginal).lt(0.001)).toBe(true);
+    expect(impliedPrice.minus(marginal).abs().div(marginal).lt(0.001)).toBe(
+      true,
+    );
   });
 
   it("larger amounts show slippage (lower effective price)", () => {
@@ -198,8 +206,16 @@ describe("ammSellProceeds", () => {
   });
 
   it("accounts for already-consumed base", () => {
-    const proceedsFresh = ammSellProceeds(pool, new BigNumber(10), new BigNumber(0));
-    const proceedsAfter100 = ammSellProceeds(pool, new BigNumber(10), new BigNumber(100));
+    const proceedsFresh = ammSellProceeds(
+      pool,
+      new BigNumber(10),
+      new BigNumber(0),
+    );
+    const proceedsAfter100 = ammSellProceeds(
+      pool,
+      new BigNumber(10),
+      new BigNumber(100),
+    );
     // After selling 100, pool has more base so selling 10 more yields less
     expect(proceedsAfter100.lt(proceedsFresh)).toBe(true);
   });

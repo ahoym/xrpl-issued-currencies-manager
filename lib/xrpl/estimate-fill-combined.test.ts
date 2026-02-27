@@ -54,7 +54,13 @@ describe("estimateFillCombined", () => {
     });
 
     it("returns null when no CLOB levels and no AMM", () => {
-      const result = estimateFillCombined([], new BigNumber(10), new BigNumber(10), null, "buy");
+      const result = estimateFillCombined(
+        [],
+        new BigNumber(10),
+        new BigNumber(10),
+        null,
+        "buy",
+      );
       expect(result).toBeNull();
     });
   });
@@ -112,7 +118,13 @@ describe("estimateFillCombined", () => {
   describe("AMM-only (no CLOB levels)", () => {
     it("fills entirely from AMM on buy side", () => {
       const amm = makeAmm(1000, 10000, 1);
-      const result = estimateFillCombined([], new BigNumber(10), new BigNumber(10), amm, "buy");
+      const result = estimateFillCombined(
+        [],
+        new BigNumber(10),
+        new BigNumber(10),
+        amm,
+        "buy",
+      );
       expect(result).not.toBeNull();
       expect(result!.ammFilled.toFixed(6)).toBe("10.000000");
       expect(result!.clobFilled.isZero()).toBe(true);
@@ -124,7 +136,13 @@ describe("estimateFillCombined", () => {
 
     it("fills entirely from AMM on sell side", () => {
       const amm = makeAmm(1000, 10000, 1);
-      const result = estimateFillCombined([], new BigNumber(10), new BigNumber(10), amm, "sell");
+      const result = estimateFillCombined(
+        [],
+        new BigNumber(10),
+        new BigNumber(10),
+        amm,
+        "sell",
+      );
       expect(result).not.toBeNull();
       expect(result!.ammFilled.toFixed(6)).toBe("10.000000");
       expect(result!.clobFilled.isZero()).toBe(true);
@@ -168,19 +186,29 @@ describe("estimateFillCombined", () => {
       expect(result!.ammFilled.gt(0)).toBe(true);
       // CLOB should have filled the remainder
       expect(result!.clobFilled.gt(0)).toBe(true);
-      expect(result!.ammFilled.plus(result!.clobFilled).toFixed(6)).toBe("120.000000");
+      expect(result!.ammFilled.plus(result!.clobFilled).toFixed(6)).toBe(
+        "120.000000",
+      );
     });
 
     it("fills from CLOB first when CLOB is cheaper than AMM", () => {
       // AMM marginal buy ~ 10.10; CLOB has a level at 9
       const amm = makeAmm(1000, 10000, 1);
       const levels = [level(9, 20), level(12, 100)];
-      const result = estimateFillCombined(levels, new BigNumber(50), new BigNumber(10), amm, "buy");
+      const result = estimateFillCombined(
+        levels,
+        new BigNumber(50),
+        new BigNumber(10),
+        amm,
+        "buy",
+      );
       expect(result).not.toBeNull();
       expect(result!.fullFill).toBe(true);
       // The 9-priced CLOB level should be consumed first (cheaper than AMM)
       expect(result!.clobFilled.gte(20)).toBe(true);
-      expect(result!.ammFilled.plus(result!.clobFilled).toFixed(6)).toBe("50.000000");
+      expect(result!.ammFilled.plus(result!.clobFilled).toFixed(6)).toBe(
+        "50.000000",
+      );
     });
 
     it("alternates between AMM and CLOB across multiple levels", () => {
@@ -189,7 +217,13 @@ describe("estimateFillCombined", () => {
       // Expected: CLOB@10.05 -> AMM fills up to ~10.50 -> CLOB@10.50 -> AMM fills up to 15 -> CLOB@15
       const amm = makeAmm(1000, 10000, 1);
       const levels = [level(10.05, 5), level(10.5, 10), level(15, 100)];
-      const result = estimateFillCombined(levels, new BigNumber(30), new BigNumber(10), amm, "buy");
+      const result = estimateFillCombined(
+        levels,
+        new BigNumber(30),
+        new BigNumber(10),
+        amm,
+        "buy",
+      );
       expect(result).not.toBeNull();
       expect(result!.fullFill).toBe(true);
       expect(result!.ammFilled.gt(0)).toBe(true);
@@ -260,14 +294,26 @@ describe("estimateFillCombined", () => {
       const amm = makeAmm(1000, 10000, 1);
       const levels = [level(12, 50)];
       const midPrice = new BigNumber(10);
-      const result = estimateFillCombined(levels, new BigNumber(50), midPrice, amm, "buy");
+      const result = estimateFillCombined(
+        levels,
+        new BigNumber(50),
+        midPrice,
+        amm,
+        "buy",
+      );
       expect(result).not.toBeNull();
       expect(result!.slippage).not.toBeNull();
       expect(result!.slippage!.gt(0)).toBe(true);
     });
 
     it("returns null slippage when midPrice is null", () => {
-      const result = estimateFillCombined([level(10, 100)], new BigNumber(50), null, null, "buy");
+      const result = estimateFillCombined(
+        [level(10, 100)],
+        new BigNumber(50),
+        null,
+        null,
+        "buy",
+      );
       expect(result).not.toBeNull();
       expect(result!.slippage).toBeNull();
     });

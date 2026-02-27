@@ -136,15 +136,13 @@ export function AmmPoolPanel({
               </span>
               {pool.marginalBuyPrice && (
                 <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
-                  Buy:{" "}
-                  {new BigNumber(pool.marginalBuyPrice).toFixed(4)}{" "}
+                  Buy: {new BigNumber(pool.marginalBuyPrice).toFixed(4)}{" "}
                   {asset2Currency}/{asset1Currency}
                 </p>
               )}
               {pool.marginalSellPrice && (
                 <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
-                  Sell:{" "}
-                  {new BigNumber(pool.marginalSellPrice).toFixed(4)}{" "}
+                  Sell: {new BigNumber(pool.marginalSellPrice).toFixed(4)}{" "}
                   {asset2Currency}/{asset1Currency}
                 </p>
               )}

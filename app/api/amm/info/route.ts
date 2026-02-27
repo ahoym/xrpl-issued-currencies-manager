@@ -10,7 +10,11 @@ import { resolveNetwork } from "@/lib/xrpl/networks";
 import { buildCurrencySpec } from "@/lib/xrpl/amm-helpers";
 import { formatAmmFee } from "@/lib/xrpl/amm-fee";
 import { fromXrplAmount } from "@/lib/xrpl/currency";
-import { buildAmmPoolParams, ammMarginalBuyPrice, ammMarginalSellPrice } from "@/lib/xrpl/amm-math";
+import {
+  buildAmmPoolParams,
+  ammMarginalBuyPrice,
+  ammMarginalSellPrice,
+} from "@/lib/xrpl/amm-math";
 import { Assets } from "@/lib/assets";
 import type { Amount } from "xrpl";
 
@@ -110,8 +114,14 @@ export async function GET(request: NextRequest) {
         asset2Frozen,
       });
       if (poolParams) {
-        marginalBuyPrice = ammMarginalBuyPrice(poolParams, new BigNumber(0)).toFixed();
-        marginalSellPrice = ammMarginalSellPrice(poolParams, new BigNumber(0)).toFixed();
+        marginalBuyPrice = ammMarginalBuyPrice(
+          poolParams,
+          new BigNumber(0),
+        ).toFixed();
+        marginalSellPrice = ammMarginalSellPrice(
+          poolParams,
+          new BigNumber(0),
+        ).toFixed();
       }
     }
 

@@ -24,7 +24,9 @@ const FEE_DIVISOR = 100_000;
  * Build AmmPoolParams from an AmmPoolInfo.
  * Returns null if pool doesn't exist, reserves are zero, or either asset is frozen.
  */
-export function buildAmmPoolParams(pool: AmmPoolInfo | null | undefined): AmmPoolParams | null {
+export function buildAmmPoolParams(
+  pool: AmmPoolInfo | null | undefined,
+): AmmPoolParams | null {
   if (!pool || !pool.exists) return null;
   if (pool.assetFrozen || pool.asset2Frozen) return null;
 
@@ -48,10 +50,15 @@ export function buildAmmPoolParams(pool: AmmPoolInfo | null | undefined): AmmPoo
  *
  * @see https://xrpl.org/docs/concepts/tokens/decentralized-exchange/automated-market-makers
  */
-export function ammMarginalBuyPrice(pool: AmmPoolParams, consumed: BigNumber): BigNumber {
+export function ammMarginalBuyPrice(
+  pool: AmmPoolParams,
+  consumed: BigNumber,
+): BigNumber {
   const oneMinusF = new BigNumber(1).minus(pool.feeRate);
   const remaining = pool.baseReserves.minus(consumed);
-  return pool.quoteReserves.times(pool.baseReserves).div(remaining.pow(2).times(oneMinusF));
+  return pool.quoteReserves
+    .times(pool.baseReserves)
+    .div(remaining.pow(2).times(oneMinusF));
 }
 
 /**
@@ -62,10 +69,16 @@ export function ammMarginalBuyPrice(pool: AmmPoolParams, consumed: BigNumber): B
  *
  * @see https://xrpl.org/docs/concepts/tokens/decentralized-exchange/automated-market-makers
  */
-export function ammMarginalSellPrice(pool: AmmPoolParams, consumed: BigNumber): BigNumber {
+export function ammMarginalSellPrice(
+  pool: AmmPoolParams,
+  consumed: BigNumber,
+): BigNumber {
   const oneMinusF = new BigNumber(1).minus(pool.feeRate);
   const effective = pool.baseReserves.plus(consumed.times(oneMinusF));
-  return pool.quoteReserves.times(pool.baseReserves).times(oneMinusF).div(effective.pow(2));
+  return pool.quoteReserves
+    .times(pool.baseReserves)
+    .times(oneMinusF)
+    .div(effective.pow(2));
 }
 
 /**
@@ -76,9 +89,14 @@ export function ammMarginalSellPrice(pool: AmmPoolParams, consumed: BigNumber): 
  *
  * @see https://github.com/XRPLF/XRPL-Standards/discussions/78
  */
-export function ammMaxBuyBeforePrice(pool: AmmPoolParams, priceLimit: BigNumber): BigNumber {
+export function ammMaxBuyBeforePrice(
+  pool: AmmPoolParams,
+  priceLimit: BigNumber,
+): BigNumber {
   const oneMinusF = new BigNumber(1).minus(pool.feeRate);
-  const inner = pool.quoteReserves.times(pool.baseReserves).div(priceLimit.times(oneMinusF));
+  const inner = pool.quoteReserves
+    .times(pool.baseReserves)
+    .div(priceLimit.times(oneMinusF));
   const result = pool.baseReserves.minus(inner.sqrt());
   return BigNumber.max(result, 0);
 }
@@ -91,9 +109,15 @@ export function ammMaxBuyBeforePrice(pool: AmmPoolParams, priceLimit: BigNumber)
  *
  * @see https://github.com/XRPLF/XRPL-Standards/discussions/78
  */
-export function ammMaxSellBeforePrice(pool: AmmPoolParams, priceLimit: BigNumber): BigNumber {
+export function ammMaxSellBeforePrice(
+  pool: AmmPoolParams,
+  priceLimit: BigNumber,
+): BigNumber {
   const oneMinusF = new BigNumber(1).minus(pool.feeRate);
-  const inner = pool.quoteReserves.times(pool.baseReserves).times(oneMinusF).div(priceLimit);
+  const inner = pool.quoteReserves
+    .times(pool.baseReserves)
+    .times(oneMinusF)
+    .div(priceLimit);
   const result = inner.sqrt().minus(pool.baseReserves).div(oneMinusF);
   return BigNumber.max(result, 0);
 }
@@ -108,7 +132,11 @@ export function ammMaxSellBeforePrice(pool: AmmPoolParams, priceLimit: BigNumber
  *
  * @see https://xrpl.org/docs/concepts/tokens/decentralized-exchange/automated-market-makers
  */
-export function ammBuyCost(pool: AmmPoolParams, delta: BigNumber, consumed: BigNumber): BigNumber {
+export function ammBuyCost(
+  pool: AmmPoolParams,
+  delta: BigNumber,
+  consumed: BigNumber,
+): BigNumber {
   const oneMinusF = new BigNumber(1).minus(pool.feeRate);
   const before = pool.baseReserves.minus(consumed);
   const after = before.minus(delta);

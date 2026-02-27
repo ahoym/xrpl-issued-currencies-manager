@@ -21,12 +21,16 @@ describe("estimateFill", () => {
 
   it("returns null for NaN amount", () => {
     const levels = [level(1.0, 100)];
-    expect(estimateFill(levels, new BigNumber(NaN), new BigNumber(1))).toBeNull();
+    expect(
+      estimateFill(levels, new BigNumber(NaN), new BigNumber(1)),
+    ).toBeNull();
   });
 
   it("returns null for negative amount", () => {
     const levels = [level(1.0, 100)];
-    expect(estimateFill(levels, new BigNumber(-5), new BigNumber(1))).toBeNull();
+    expect(
+      estimateFill(levels, new BigNumber(-5), new BigNumber(1)),
+    ).toBeNull();
   });
 
   it("fills exactly from a single level", () => {
@@ -88,7 +92,10 @@ describe("estimateFill", () => {
     expect(result).not.toBeNull();
     // avg = (10*1.0 + 10*1.2) / 20 = 22/20 = 1.1
     // slippage = |1.1 - 0.95| / 0.95 * 100 = 15.789...%
-    const expectedSlippage = new BigNumber(1.1).minus(0.95).div(0.95).times(100);
+    const expectedSlippage = new BigNumber(1.1)
+      .minus(0.95)
+      .div(0.95)
+      .times(100);
     expect(result!.slippage!.toFixed(4)).toBe(expectedSlippage.toFixed(4));
   });
 
@@ -110,7 +117,11 @@ describe("estimateFill", () => {
 
   it("maintains BigNumber precision with small fractional values", () => {
     const levels = [level(0.000001, 1000000), level(0.000002, 500000)];
-    const result = estimateFill(levels, new BigNumber(1200000), new BigNumber(0.0000015));
+    const result = estimateFill(
+      levels,
+      new BigNumber(1200000),
+      new BigNumber(0.0000015),
+    );
 
     expect(result).not.toBeNull();
     // 1000000 @ 0.000001 + 200000 @ 0.000002 = 1 + 0.4 = 1.4

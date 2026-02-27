@@ -50,7 +50,9 @@ export function estimateFillCombined(
   if (amount.isNaN() || amount.lte(0)) return null;
   if (levels.length === 0 && !ammPool) return null;
 
-  const maxAmmBase = ammPool ? ammPool.baseReserves.times(AMM_RESERVE_CAP) : new BigNumber(0);
+  const maxAmmBase = ammPool
+    ? ammPool.baseReserves.times(AMM_RESERVE_CAP)
+    : new BigNumber(0);
 
   let remaining = amount;
   let clobFilled = new BigNumber(0);
@@ -157,5 +159,7 @@ function updateWorstPrice(
   side: "buy" | "sell",
 ): BigNumber {
   if (current.isZero()) return candidate;
-  return side === "buy" ? BigNumber.max(current, candidate) : BigNumber.min(current, candidate);
+  return side === "buy"
+    ? BigNumber.max(current, candidate)
+    : BigNumber.min(current, candidate);
 }
