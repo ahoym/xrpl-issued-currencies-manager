@@ -27,13 +27,15 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 
 | Route | Methods | Purpose | Test Script |
 |---|---|---|---|
+| `/api/ping` | GET | Health check | `test-ping.sh` |
 | `/api/accounts/generate` | POST | Generate & fund wallet via faucet | `test-generate-account.sh` |
 | `/api/accounts/[address]` | GET | Account info from ledger | `test-account-info.sh` |
 | `/api/accounts/[address]/balances` | GET | XRP + issued currency balances | `test-balances.sh` |
+| `/api/accounts/[address]/fund` | POST | Re-fund an existing account via faucet | `test-fund-account.sh` |
 | `/api/accounts/[address]/trustlines` | GET, POST | View/create trust lines | `test-trustlines.sh` |
 | `/api/accounts/[address]/transactions` | GET | Transaction history | `test-transactions.sh` |
 | `/api/accounts/[address]/offers` | GET | List account's open DEX offers | `test-dex-offers.sh` |
-| `/api/accounts/[address]/filled-orders` | GET | Filled order history for a currency pair | — |
+| `/api/accounts/[address]/filled-orders` | GET | Filled order history for a currency pair | `test-filled-orders.sh` |
 | `/api/accounts/[address]/credentials` | GET | List account's credentials (XLS-70) | `test-credentials.sh` |
 | `/api/accounts/[address]/domains` | GET | List account's permissioned domains (XLS-80) | `test-domains.sh` |
 | `/api/accounts/[address]/rippling` | POST | Enable DefaultRipple flag & repair NoRipple trust lines | `test-rippling.sh` |
@@ -47,7 +49,7 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `/api/dex/offers` | POST | Place a DEX offer (OfferCreate), optional `domainID` for permissioned DEX | `test-dex-offers.sh`, `test-permissioned-dex.sh` |
 | `/api/dex/offers/cancel` | POST | Cancel a DEX offer (OfferCancel) | `test-dex-offers.sh` |
 | `/api/dex/orderbook` | GET | View order book for a currency pair, optional `domain` query param | `test-dex-offers.sh` |
-| `/api/dex/trades` | GET | Recent trades for a currency pair | — |
+| `/api/dex/trades` | GET | Recent trades for a currency pair | `test-dex-trades.sh` |
 | `/api/amm/info` | GET | AMM pool info for a currency pair | `test-amm.sh` |
 | `/api/amm/create` | POST | Create AMM pool | `test-amm.sh` |
 | `/api/amm/deposit` | POST | Deposit to AMM pool | `test-amm.sh` |

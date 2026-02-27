@@ -7,7 +7,9 @@ export BASE_URL="${BASE_URL:-http://localhost:3000}"
 PASSED=0
 FAILED=0
 SCRIPTS=(
+  "test-ping.sh"
   "test-generate-account.sh"
+  "test-fund-account.sh"
   "test-account-info.sh"
   "test-balances.sh"
   "test-trustlines.sh"
@@ -16,6 +18,9 @@ SCRIPTS=(
   "test-transfer.sh"
   "test-rippling.sh"
   "test-dex-offers.sh"
+  "test-filled-orders.sh"
+  "test-dex-trades.sh"
+  "test-amm.sh"
   "test-credentials.sh"
   "test-domains.sh"
   "test-permissioned-dex.sh"
