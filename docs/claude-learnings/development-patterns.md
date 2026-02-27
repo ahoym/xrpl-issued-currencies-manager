@@ -236,6 +236,16 @@ All curl calls use `-s -w "\n%{http_code}"` to append the HTTP status code on th
 - `PASS: description` / `FAIL: description` for assertions
 - Suppress setup noise with `> /dev/null`
 
+## Playwright E2E Gotchas
+
+### Nav Bar Text Matches XRPL Address Regex
+
+The nav bar links ("Trade", "Transact", "Explorer", "Testnet") concatenate to `TradeTransactExplorerTestnet` via `textContent`. The substring `radeTransactExplorerTestnet` matches `/r[a-zA-Z0-9]{24,}/` — false-positive for XRPL address selectors. Use `getByRole("link", { name: /^r[a-zA-Z0-9]{24,}/ })` with the `^` anchor instead of `getByText()`.
+
+### Currency Select Option Values Use `"currency|issuer"` Encoding
+
+`<select>` options for currency pairs encode values as `"currency|issuer"` (e.g., `"XRP|"`, `"USD|rAddress..."`). `selectOption({ label })` requires an exact string match — use `page.locator("option").filter({ hasText })` + `getAttribute("value")` to select by partial text.
+
 ## Naming Conventions
 
 | What | Pattern | Example |

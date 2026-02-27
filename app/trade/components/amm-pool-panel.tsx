@@ -101,6 +101,54 @@ export function AmmPoolPanel({
             </div>
           )}
 
+          {pool.invertedSpotPrice && (
+            <div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                Inverted Spot
+              </span>
+              <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                1 {asset2Currency} ={" "}
+                {new BigNumber(pool.invertedSpotPrice).toFixed(4)}{" "}
+                {asset1Currency}
+              </p>
+            </div>
+          )}
+
+          {pool.effectivePrice && (
+            <div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                Effective Price{" "}
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                  (fee-adjusted)
+                </span>
+              </span>
+              <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                1 {asset2Currency} ={" "}
+                {new BigNumber(pool.effectivePrice).toFixed(4)} {asset1Currency}
+              </p>
+            </div>
+          )}
+
+          {(pool.marginalBuyPrice || pool.marginalSellPrice) && (
+            <div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                Marginal Prices
+              </span>
+              {pool.marginalBuyPrice && (
+                <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                  Buy: {new BigNumber(pool.marginalBuyPrice).toFixed(4)}{" "}
+                  {asset2Currency}/{asset1Currency}
+                </p>
+              )}
+              {pool.marginalSellPrice && (
+                <p className="font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                  Sell: {new BigNumber(pool.marginalSellPrice).toFixed(4)}{" "}
+                  {asset2Currency}/{asset1Currency}
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               Reserves

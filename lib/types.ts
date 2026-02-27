@@ -40,7 +40,7 @@ export interface OrderBookEntry {
   taker_pays: OrderBookAmount;
   taker_gets_funded?: OrderBookAmount;
   taker_pays_funded?: OrderBookAmount;
-  quality: string;
+  quality?: string;
   sequence: number;
 }
 
@@ -86,6 +86,14 @@ export interface DomainInfo {
   sequence: number;
 }
 
+export interface MidpriceMetrics {
+  mid: string | null;
+  microPrice: string | null;
+  weightedMid: string | null;
+  spread: string | null;
+  spreadBps: string | null;
+}
+
 export interface AmmAuctionSlot {
   account: string;
   discountedFee: number;
@@ -109,6 +117,10 @@ export interface AmmPoolInfo {
   tradingFee?: number;
   tradingFeeDisplay?: string;
   spotPrice?: string;
+  invertedSpotPrice?: string;
+  effectivePrice?: string;
+  marginalBuyPrice?: string;
+  marginalSellPrice?: string;
   assetFrozen?: boolean;
   asset2Frozen?: boolean;
   auctionSlot?: AmmAuctionSlot | null;

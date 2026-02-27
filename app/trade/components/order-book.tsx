@@ -2,7 +2,8 @@
 
 import BigNumber from "bignumber.js";
 import type { OrderBookEntry, DepthSummary } from "@/lib/types";
-import { matchesCurrency } from "@/lib/xrpl/match-currency";
+import { buildAsks, buildBids } from "@/lib/xrpl/order-book-levels";
+import { computeMicroPrice, computeVwap } from "@/lib/xrpl/midprice";
 
 export const DEPTH_OPTIONS = [10, 25, 50, 100] as const;
 export type DepthLevel = (typeof DEPTH_OPTIONS)[number];
@@ -38,33 +39,8 @@ export function OrderBook({
 }: OrderBookProps) {
   const allOffers = [...(orderBook?.buy ?? []), ...(orderBook?.sell ?? [])];
 
-  // Asks: creator sells base (taker_gets = base)
-  // Use funded amounts when available to reflect actual fillable size; drop unfunded offers
-  const asks = allOffers
-    .filter((o) => matchesCurrency(o.taker_gets, baseCurrency, baseIssuer))
-    .map((o) => {
-      const amount = new BigNumber((o.taker_gets_funded ?? o.taker_gets).value);
-      const total = new BigNumber((o.taker_pays_funded ?? o.taker_pays).value);
-      const price = amount.gt(0) ? total.div(amount) : new BigNumber(0);
-      return { price, amount, total, account: o.account };
-    })
-    .filter((o) => o.amount.gt(0) && o.price.gt(0));
-  // Sort asks highest-first so the best (lowest) ask appears at the bottom, adjacent to the spread
-  asks.sort((a, b) => b.price.comparedTo(a.price) ?? 0);
-
-  // Bids: creator buys base (taker_pays = base, taker_gets = quote)
-  // Use funded amounts when available to reflect actual fillable size; drop unfunded offers
-  const bids = allOffers
-    .filter((o) => matchesCurrency(o.taker_pays, baseCurrency, baseIssuer))
-    .map((o) => {
-      const amount = new BigNumber((o.taker_pays_funded ?? o.taker_pays).value);
-      const total = new BigNumber((o.taker_gets_funded ?? o.taker_gets).value);
-      const price = amount.gt(0) ? total.div(amount) : new BigNumber(0);
-      return { price, amount, total, account: o.account };
-    })
-    .filter((o) => o.amount.gt(0) && o.price.gt(0));
-  // Sort bids highest-first so the best (highest) bid appears at the top, adjacent to the spread
-  bids.sort((a, b) => b.price.comparedTo(a.price) ?? 0);
+  const asks = buildAsks(allOffers, baseCurrency, baseIssuer);
+  const bids = buildBids(allOffers, baseCurrency, baseIssuer);
 
   // Depth summary computed from FULL unsliced arrays
   const depthSummary: DepthSummary = {
@@ -104,6 +80,20 @@ export function OrderBook({
     bestAsk !== null && bestBid !== null ? bestAsk.minus(bestBid) : null;
   const mid =
     bestAsk !== null && bestBid !== null ? bestAsk.plus(bestBid).div(2) : null;
+
+  // Micro-price: volume-weighted at top of book
+  const microPrice =
+    bestAsk !== null && bestBid !== null
+      ? computeMicroPrice(
+          bestAsk,
+          bestBid,
+          visibleAsks[visibleAsks.length - 1].amount,
+          visibleBids[0].amount,
+        )
+      : null;
+
+  // Weighted midprice: VWAP across all visible levels
+  const weightedMid = computeVwap([...visibleAsks, ...visibleBids]);
 
   return (
     <div>
@@ -224,7 +214,7 @@ export function OrderBook({
         {/* Spread / Mid divider */}
         <div className="my-2 border border-dashed border-zinc-200 bg-zinc-50/50 py-2 text-center text-xs dark:border-zinc-700 dark:bg-zinc-800/30">
           {spread !== null && mid !== null ? (
-            <span className="text-zinc-600 dark:text-zinc-300">
+            <span className="group relative text-zinc-600 dark:text-zinc-300">
               <span className="font-bold text-zinc-900 dark:text-zinc-100">
                 {mid.toFixed(6)}
               </span>
@@ -233,6 +223,13 @@ export function OrderBook({
                 Spread: {spread.toFixed(6)} (
                 {spread.div(mid).times(10_000).toFixed(1)} bps)
               </span>
+              {(microPrice || weightedMid) && (
+                <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-zinc-800 px-2.5 py-1.5 text-[11px] leading-relaxed text-zinc-100 shadow-lg group-hover:block dark:bg-zinc-700">
+                  {microPrice && <>Micro-price: {microPrice.toFixed(6)}</>}
+                  {microPrice && weightedMid && <br />}
+                  {weightedMid && <>Weighted mid: {weightedMid.toFixed(6)}</>}
+                </span>
+              )}
             </span>
           ) : (
             <span className="text-zinc-400 dark:text-zinc-500">
