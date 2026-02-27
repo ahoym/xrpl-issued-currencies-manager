@@ -85,9 +85,9 @@ describe("computeMidpriceMetrics", () => {
 
   it("weighted mid reflects volume distribution across levels", () => {
     // Large volume at lower ask, small at higher
-    const asks = [level(1.10, 5), level(1.02, 100)];
+    const asks = [level(1.1, 5), level(1.02, 100)];
     // Large volume at higher bid, small at lower
-    const bids = [level(0.98, 100), level(0.90, 5)];
+    const bids = [level(0.98, 100), level(0.9, 5)];
 
     const result = computeMidpriceMetrics(asks, bids);
 

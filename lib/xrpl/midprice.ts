@@ -15,10 +15,7 @@ export function computeMicroPrice(
 ): BigNumber | null {
   const denom = bestBidVol.plus(bestAskVol);
   if (!denom.gt(0)) return null;
-  return bestBid
-    .times(bestAskVol)
-    .plus(bestAsk.times(bestBidVol))
-    .div(denom);
+  return bestBid.times(bestAskVol).plus(bestAsk.times(bestBidVol)).div(denom);
 }
 
 /**
@@ -52,18 +49,21 @@ export function computeMidpriceMetrics(
   const bestAsk = bestAskLevel?.price ?? null;
   const bestBid = bestBidLevel?.price ?? null;
 
-  const mid =
-    bestAsk && bestBid ? bestAsk.plus(bestBid).div(2) : null;
+  const mid = bestAsk && bestBid ? bestAsk.plus(bestBid).div(2) : null;
 
-  const spread =
-    bestAsk && bestBid ? bestAsk.minus(bestBid) : null;
+  const spread = bestAsk && bestBid ? bestAsk.minus(bestBid) : null;
 
   const spreadBps =
     spread && mid && mid.gt(0) ? spread.div(mid).times(10_000) : null;
 
   const microPrice =
     bestAsk && bestBid && bestAskLevel && bestBidLevel
-      ? computeMicroPrice(bestAsk, bestBid, bestAskLevel.amount, bestBidLevel.amount)
+      ? computeMicroPrice(
+          bestAsk,
+          bestBid,
+          bestAskLevel.amount,
+          bestBidLevel.amount,
+        )
       : null;
 
   const weightedMid = computeVwap([...asks, ...bids]);
