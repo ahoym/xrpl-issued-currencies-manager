@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { Client } from "xrpl";
 import type { BookOffersRequest, BookOffer } from "xrpl";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
@@ -12,6 +13,27 @@ import { DEFAULT_ORDERBOOK_LIMIT, MAX_API_LIMIT } from "@/lib/xrpl/constants";
 import { Assets } from "@/lib/assets";
 import { buildAsks, buildBids } from "@/lib/xrpl/order-book-levels";
 import { computeMidpriceMetrics } from "@/lib/xrpl/midprice";
+
+const MAINNET_URL = "wss://xrplcluster.com";
+
+let mainnetClient: Client | null = null;
+
+async function getMainnetClient(): Promise<Client> {
+  if (mainnetClient?.isConnected()) {
+    return mainnetClient;
+  }
+  if (mainnetClient) {
+    try {
+      await mainnetClient.connect();
+      return mainnetClient;
+    } catch {
+      mainnetClient = null;
+    }
+  }
+  mainnetClient = new Client(MAINNET_URL);
+  await mainnetClient.connect();
+  return mainnetClient;
+}
 
 function normalizeOffer(offer: BookOffer) {
   return {
@@ -47,7 +69,10 @@ export async function GET(request: NextRequest) {
     const { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer } =
       pairOrError;
 
-    const client = await getClient(resolveNetwork(network));
+    const isMainnet = network === "mainnet";
+    const client = isMainnet
+      ? await getMainnetClient()
+      : await getClient(resolveNetwork(network));
 
     const currency1 =
       baseCurrency === Assets.XRP
