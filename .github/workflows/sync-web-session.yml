@@ -1,0 +1,45 @@
+# Syncs the web-session branch with main + Claude Code skills from dotfiles.
+#
+# web-session = main HEAD + 1 commit containing .claude/commands/ (skills).
+# This lets web-based Claude sessions access skills that normally load from ~/.claude/.
+#
+# Triggers:
+#   - Push to main: keeps web-session current with latest main
+#   - Manual dispatch: refresh skills after dotfiles updates
+
+name: Sync Web Session
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Clone dotfiles and copy skills
+        run: |
+          git clone --depth 1 https://github.com/ahoym/dotfiles.git /tmp/dotfiles
+          cp -r /tmp/dotfiles/.claude/commands .claude/commands
+
+      - name: Copy project web skills
+        run: cp -r .claude/web-skills/* .claude/commands/
+
+      - name: Commit and force-push web-session
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B web-session
+          git add .claude/commands/
+          git commit -m "[web-session] sync skills"
+          git push --force origin web-session
