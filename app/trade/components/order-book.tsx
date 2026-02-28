@@ -44,9 +44,13 @@ export function OrderBook({
 
   // Depth summary computed from FULL unsliced arrays
   const depthSummary: DepthSummary = {
-    bidVolume: bids.reduce((acc, b) => acc + b.total.toNumber(), 0),
+    bidVolume: bids
+      .reduce((acc, b) => acc.plus(b.total), new BigNumber(0))
+      .toFixed(),
     bidLevels: bids.length,
-    askVolume: asks.reduce((acc, a) => acc + a.amount.toNumber(), 0),
+    askVolume: asks
+      .reduce((acc, a) => acc.plus(a.amount), new BigNumber(0))
+      .toFixed(),
     askLevels: asks.length,
   };
 
@@ -117,10 +121,12 @@ export function OrderBook({
       {depthSummary.bidLevels + depthSummary.askLevels > 0 && (
         <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
           {depthSummary.bidLevels} bids ·{" "}
-          {formatCompact(depthSummary.bidVolume)} {quoteCurrency} depth
+          {formatCompact(parseFloat(depthSummary.bidVolume))} {quoteCurrency}{" "}
+          depth
           <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">|</span>
           {depthSummary.askLevels} asks ·{" "}
-          {formatCompact(depthSummary.askVolume)} {baseCurrency} depth
+          {formatCompact(parseFloat(depthSummary.askVolume))} {baseCurrency}{" "}
+          depth
         </p>
       )}
 

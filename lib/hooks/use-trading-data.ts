@@ -137,7 +137,6 @@ export function useTradingData({
           base_currency: selling.currency,
           quote_currency: buying.currency,
           network: net,
-          limit: "200",
         });
         if (selling.issuer) params.set("base_issuer", selling.issuer);
         if (buying.issuer) params.set("quote_issuer", buying.issuer);
