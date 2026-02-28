@@ -61,8 +61,7 @@ const CACHE_HEADERS = {
 export async function GET(request: NextRequest) {
   try {
     const network = getNetworkParam(request);
-    const domain =
-      request.nextUrl.searchParams.get("domain") ?? undefined;
+    const domain = request.nextUrl.searchParams.get("domain") ?? undefined;
 
     if (domain && !DOMAIN_ID_REGEX.test(domain)) {
       return Response.json(
