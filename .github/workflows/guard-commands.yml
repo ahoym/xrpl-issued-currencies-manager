@@ -1,0 +1,47 @@
+# Prevents .claude/commands/ from being merged into main.
+#
+# Skills live on the web-session branch only. If a PR to main includes
+# files under .claude/commands/, this check fails with rebase instructions.
+
+name: Guard Commands
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  guard:
+    name: Block .claude/commands/ from main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for .claude/commands/ in PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COMMANDS_FILES=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --paginate --jq '.[].filename | select(startswith(".claude/commands/"))')
+
+          if [ -n "$COMMANDS_FILES" ]; then
+            echo "::error::PR contains files under .claude/commands/ which must not be merged to main."
+            echo ""
+            echo "These files belong on the web-session branch only."
+            echo "Your branch likely includes the skills commit from web-session."
+            echo ""
+            echo "To fix, rebase your branch to drop the skills commit:"
+            echo ""
+            echo "  # Find the skills commit"
+            echo "  MERGE_BASE=\$(git merge-base HEAD origin/main)"
+            echo "  SKILLS_COMMIT=\$(git log --format='%H %s' \"\$MERGE_BASE\"..HEAD | grep '\\[web-session\\] sync skills' | awk '{print \$1}')"
+            echo ""
+            echo "  # Rebase past it"
+            echo "  git rebase --onto origin/main \"\$SKILLS_COMMIT\""
+            echo "  git push --force-with-lease"
+            echo ""
+            echo "Or use /web-create-pr from a web session to handle this automatically."
+            echo ""
+            echo "Files found:"
+            echo "$COMMANDS_FILES"
+            exit 1
+          fi
+
+          echo "No .claude/commands/ files in PR — OK"
