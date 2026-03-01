@@ -67,8 +67,4 @@ The new abstraction + all its consumers + its tests belong in one commit. This m
 
 ## Remaining Refactoring Opportunities
 
-Identified but intentionally deferred (diminishing returns or high risk):
-
-1. **`useTradingData`** (404 LOC, 6+ concerns) — could be split into smaller hooks, but it's a single consumer (`/trade` page) and splitting would require careful dependency threading
-2. **Trade page components** (`trade-form.tsx`, `order-book.tsx`) — large but internally cohesive; splitting would increase prop drilling without clear benefit
-3. **AbortController in fetch hooks** — `useApiFetch` doesn't cancel in-flight requests on re-render. Low priority since XRPL API calls are fast, but would improve correctness
+See `docs/plans/deferred-refactoring.md` for detailed plans on the three identified items (useTradingData split, trade component split, AbortController in fetch hooks).
