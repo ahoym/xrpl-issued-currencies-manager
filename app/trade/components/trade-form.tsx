@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import BigNumber from "bignumber.js";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
@@ -67,16 +67,15 @@ export function TradeForm({
   const [expiration, setExpiration] = useState("");
   const { submitting, error, success, submit, clearError } = useFormSubmit();
 
-  const lastPrefillKey = useRef(prefill?.key);
-  useEffect(() => {
-    if (prefill && prefill.key !== lastPrefillKey.current) {
-      lastPrefillKey.current = prefill.key;
-      setTab(prefill.tab);
-      setPrice(prefill.price);
-      setAmount(prefill.amount);
-      clearError();
-    }
-  }, [prefill, clearError]);
+  // Apply prefill from orderbook click (render-time state adjustment)
+  const [appliedPrefillKey, setAppliedPrefillKey] = useState(prefill?.key);
+  if (prefill && prefill.key !== appliedPrefillKey) {
+    setAppliedPrefillKey(prefill.key);
+    setTab(prefill.tab);
+    setPrice(prefill.price);
+    setAmount(prefill.amount);
+    clearError();
+  }
 
   const bnAmount = amount ? new BigNumber(amount) : null;
   const bnPrice = price ? new BigNumber(price) : null;

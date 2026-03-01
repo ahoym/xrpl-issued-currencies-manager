@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { WalletInfo, DomainInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { useFormSubmit } from "@/lib/hooks/use-form-submit";
@@ -39,8 +39,12 @@ export function CreateDomainForm({
   >([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);
   const { submitting, error, success, submit, clearError } = useFormSubmit();
 
-  // Pre-fill when editing a domain
-  useEffect(() => {
+  // Pre-fill when editing a different domain (render-time state adjustment)
+  const [prevEditingDomainID, setPrevEditingDomainID] = useState(
+    editingDomain?.domainID,
+  );
+  if (editingDomain?.domainID !== prevEditingDomainID) {
+    setPrevEditingDomainID(editingDomain?.domainID);
     if (editingDomain) {
       setCredentials(
         editingDomain.acceptedCredentials.map((ac) => ({
@@ -50,10 +54,14 @@ export function CreateDomainForm({
       );
       clearError();
     }
-  }, [editingDomain, clearError]);
+  }
 
   // Update default issuer when it becomes available (only for new domains)
-  useEffect(() => {
+  const [prevDefaultIssuer, setPrevDefaultIssuer] = useState(
+    defaultCredentialIssuer,
+  );
+  if (defaultCredentialIssuer !== prevDefaultIssuer) {
+    setPrevDefaultIssuer(defaultCredentialIssuer);
     if (defaultCredentialIssuer && !editingDomain) {
       setCredentials((prev) =>
         prev.map((dc) => ({
@@ -62,7 +70,7 @@ export function CreateDomainForm({
         })),
       );
     }
-  }, [defaultCredentialIssuer, editingDomain]);
+  }
 
   function resetForm() {
     setCredentials([

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { WalletInfo, BalanceEntry } from "@/lib/types";
 import { errorTextClass } from "@/lib/ui/ui";
 import { Assets } from "@/lib/assets";
@@ -43,18 +43,15 @@ export function TransferModal({
     (r) => r.address !== sender.address,
   );
 
-  // Auto-select first currency when balances arrive
-  useEffect(() => {
-    if (balances.length > 0 && !selectedCurrency) {
-      setSelectedCurrency("0");
-    }
-  }, [balances, selectedCurrency]);
+  // Auto-select first currency when balances arrive (render-time state adjustment)
+  if (balances.length > 0 && !selectedCurrency) {
+    setSelectedCurrency("0");
+  }
 
-  useEffect(() => {
-    if (otherRecipients.length > 0 && !selectedRecipient) {
-      setSelectedRecipient(otherRecipients[0].address);
-    }
-  }, [otherRecipients, selectedRecipient]);
+  // Auto-select first recipient when available
+  if (otherRecipients.length > 0 && !selectedRecipient) {
+    setSelectedRecipient(otherRecipients[0].address);
+  }
 
   const selectedBalance = balances[parseInt(selectedCurrency)] || null;
 
