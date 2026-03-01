@@ -1,22 +1,23 @@
 "use client";
 
-import { useApiFetch } from "./use-api-fetch";
-import type { PersistedState, TrustLine } from "../types";
+import type { TrustLine } from "../types";
+import { createAccountFetchHook } from "./create-account-fetch-hook";
 
+const useTrustLinesFetch = createAccountFetchHook<TrustLine>(
+  "trustlines",
+  "trustLines",
+);
+
+/**
+ * Fetch trust lines for an account.
+ */
 export function useFetchTrustLines(
   address: string | undefined,
-  network: PersistedState["network"],
+  network: string,
   refreshKey: number,
 ) {
-  const { data, loading, error, refresh, refetch } = useApiFetch<TrustLine>(
-    () => {
-      if (!address) return null;
-      const params = new URLSearchParams({ network });
-      return `/api/accounts/${encodeURIComponent(address)}/trustlines?${params}`;
-    },
-    (json) => (json.trustLines as TrustLine[]) ?? [],
-    refreshKey,
-  );
+  const { data, loading, error, refresh, refetch } =
+    useTrustLinesFetch(address, network, refreshKey);
 
   return { lines: data, loading, error, refresh, refetch };
 }

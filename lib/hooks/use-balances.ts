@@ -1,31 +1,23 @@
 "use client";
 
-import { useApiFetch } from "./use-api-fetch";
-import type { PersistedState, BalanceEntry } from "@/lib/types";
+import type { BalanceEntry } from "@/lib/types";
+import { createAccountFetchHook } from "./create-account-fetch-hook";
+
+const useBalancesFetch = createAccountFetchHook<BalanceEntry>(
+  "balances",
+  "balances",
+);
 
 /**
  * Fetch account balances (XRP + issued currencies) from the API.
- * Returns the same shape as useApiFetch but aliased for convenience.
  */
 export function useBalances(
   address: string | undefined,
-  network: PersistedState["network"],
+  network: string,
   refreshKey?: number,
 ) {
-  const {
-    data: balances,
-    loading,
-    error,
-    refresh,
-    refetch,
-  } = useApiFetch<BalanceEntry>(
-    () =>
-      address
-        ? `/api/accounts/${encodeURIComponent(address)}/balances?network=${network}`
-        : null,
-    (json) => (json.balances as BalanceEntry[]) ?? [],
-    refreshKey,
-  );
+  const { data: balances, loading, error, refresh, refetch } =
+    useBalancesFetch(address, network, refreshKey);
 
   return { balances, loading, error, refresh, refetch };
 }
