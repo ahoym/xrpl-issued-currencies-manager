@@ -3,10 +3,9 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import {
   DEFAULT_ACCOUNT_OFFERS_LIMIT,
-  MAX_API_LIMIT,
 } from "@/lib/xrpl/constants";
 import { fromXrplAmount } from "@/lib/xrpl/currency";
-import { getNetworkParam, validateAddress, apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, validateAddress, apiErrorResponse, parseLimit } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -19,11 +18,7 @@ export async function GET(
     if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(
-      Number.isNaN(rawLimit) ? DEFAULT_ACCOUNT_OFFERS_LIMIT : rawLimit,
-      MAX_API_LIMIT,
-    );
+    const limit = parseLimit(sp, DEFAULT_ACCOUNT_OFFERS_LIMIT);
     const rawMarker = sp.get("marker") ?? undefined;
     if (
       rawMarker !== undefined &&
@@ -54,7 +49,7 @@ export async function GET(
           expiration: offer.expiration,
         };
         // XLS-80: include DomainID if the offer was placed on a permissioned DEX
-        const domainID = (offer as unknown as Record<string, unknown>).DomainID;
+        const domainID = (offer).DomainID;
         if (domainID) {
           mapped.domainID = domainID;
         }

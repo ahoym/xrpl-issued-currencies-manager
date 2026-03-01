@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const body: DeleteCredentialRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed", "credentialType"],
     );
     if (invalid) return invalid;
@@ -32,9 +32,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = walletFromSeed(body.seed);
-    if ("error" in result) return result.error;
-    const { wallet } = result;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
     if (body.subject) {
       const badSubject = validateAddress(body.subject, "subject address");

@@ -9,6 +9,7 @@ import {
   walletFromSeed,
   validateAddress,
   validateCredentialType,
+  extractCreatedLedgerIndex,
   txFailureResponse,
   apiErrorResponse,
 } from "@/lib/api";
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     const body: CreateDomainRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed"],
     );
     if (invalid) return invalid;
@@ -49,9 +50,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = walletFromSeed(body.seed);
-    if ("error" in result) return result.error;
-    const { wallet } = result;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
     for (const ac of body.acceptedCredentials) {
       const badIssuer = validateAddress(
@@ -88,26 +88,7 @@ export async function POST(request: NextRequest) {
     const failure = txFailureResponse(submitted);
     if (failure) return failure;
 
-    // Extract DomainID from created node in metadata
-    let domainID: string | undefined;
-    const meta = submitted.result.meta;
-    if (typeof meta === "object" && meta !== null && "AffectedNodes" in meta) {
-      const nodes = (
-        meta as unknown as { AffectedNodes: Array<Record<string, unknown>> }
-      ).AffectedNodes;
-      for (const node of nodes) {
-        if ("CreatedNode" in node) {
-          const created = node.CreatedNode as {
-            LedgerEntryType: string;
-            LedgerIndex: string;
-          };
-          if (created.LedgerEntryType === "PermissionedDomain") {
-            domainID = created.LedgerIndex;
-            break;
-          }
-        }
-      }
-    }
+    const domainID = extractCreatedLedgerIndex(submitted.result.meta, "PermissionedDomain");
 
     return Response.json(
       { result: submitted.result, domainID },

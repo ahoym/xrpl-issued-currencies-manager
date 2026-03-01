@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import { Wallet, isValidClassicAddress } from "xrpl";
 import type { TxResponse } from "xrpl";
-import type { ApiError } from "./xrpl/types";
-import { MAX_CREDENTIAL_TYPE_LENGTH } from "./xrpl/constants";
+import type { ApiError, DexAmount } from "./xrpl/types";
+import { MAX_CREDENTIAL_TYPE_LENGTH, MAX_API_LIMIT } from "./xrpl/constants";
 import { Assets } from "./assets";
 
 // ---------------------------------------------------------------------------
@@ -19,10 +19,11 @@ export function getNetworkParam(request: NextRequest): string | undefined {
  * Returns a 400 Response listing missing fields, or null if all present.
  */
 export function validateRequired(
-  data: Record<string, unknown>,
-  fields: string[],
+  data: unknown,
+  fields: readonly string[],
 ): Response | null {
-  const missing = fields.filter((f) => !data[f]);
+  const record = data as Record<string, unknown>;
+  const missing = fields.filter((f) => !record[f]);
   if (missing.length > 0) {
     return Response.json(
       {
@@ -40,20 +41,16 @@ export function validateRequired(
 
 /**
  * Try to derive a Wallet from a seed string.
- * Returns `{ wallet }` on success or `{ error: Response }` on failure.
+ * Returns the Wallet on success or a 400 Response on failure.
  */
-export function walletFromSeed(
-  seed: string,
-): { wallet: Wallet } | { error: Response } {
+export function walletFromSeed(seed: string): Wallet | Response {
   try {
-    return { wallet: Wallet.fromSeed(seed) };
+    return Wallet.fromSeed(seed);
   } catch {
-    return {
-      error: Response.json(
-        { error: "Invalid seed format" } satisfies ApiError,
-        { status: 400 },
-      ),
-    };
+    return Response.json(
+      { error: "Invalid seed format" } satisfies ApiError,
+      { status: 400 },
+    );
   }
 }
 
@@ -199,6 +196,133 @@ export function validateCurrencyPair(
   }
 
   return { baseCurrency, baseIssuer, quoteCurrency, quoteIssuer };
+}
+
+// ---------------------------------------------------------------------------
+// Query parameter helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse and clamp a `limit` query param from a URL search params object.
+ * Returns at most `MAX_API_LIMIT`, falling back to `defaultLimit` if absent or invalid.
+ */
+export function parseLimit(
+  searchParams: URLSearchParams,
+  defaultLimit: number,
+): number {
+  const raw = parseInt(searchParams.get("limit") ?? "", 10);
+  return Math.min(Number.isNaN(raw) ? defaultLimit : raw, MAX_API_LIMIT);
+}
+
+// ---------------------------------------------------------------------------
+// DEX amount validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate a DexAmount object (currency + value + issuer when non-XRP).
+ * Returns a 400 Response on error, or null if valid.
+ */
+export function validateDexAmount(
+  amount: DexAmount,
+  fieldName: string,
+): Response | null {
+  if (!amount.currency || !amount.value) {
+    return Response.json(
+      {
+        error: `${fieldName} must include currency and value`,
+      } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  if (amount.currency !== Assets.XRP && !amount.issuer) {
+    return Response.json(
+      {
+        error: `${fieldName}.issuer is required for non-XRP currencies`,
+      } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  if (amount.currency !== Assets.XRP && amount.issuer) {
+    const bad = validateAddress(amount.issuer, `${fieldName}.issuer address`);
+    if (bad) return bad;
+  }
+
+  return validatePositiveAmount(amount.value, `${fieldName}.value`);
+}
+
+// ---------------------------------------------------------------------------
+// AMM mode validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that required amounts are present for a given AMM deposit/withdraw mode.
+ * Returns a 400 Response on error, or null if valid.
+ */
+export function validateAmmModeAmounts(
+  mode: string,
+  amount: unknown,
+  amount2: unknown,
+): Response | null {
+  const twoAssetModes = ["two-asset", "two-asset-if-empty"];
+  if (twoAssetModes.includes(mode)) {
+    if (!amount) {
+      return Response.json(
+        { error: `amount is required for ${mode} mode` } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+    if (!amount2) {
+      return Response.json(
+        { error: `amount2 is required for ${mode} mode` } satisfies ApiError,
+        { status: 400 },
+      );
+    }
+  }
+
+  if (mode === "single-asset" && !amount) {
+    return Response.json(
+      {
+        error: "amount is required for single-asset mode",
+      } satisfies ApiError,
+      { status: 400 },
+    );
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Metadata extraction helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract a newly created ledger object's index from transaction metadata.
+ * Searches AffectedNodes for a CreatedNode matching the specified ledger entry type.
+ */
+export function extractCreatedLedgerIndex(
+  meta: unknown,
+  entryType: string,
+): string | undefined {
+  if (typeof meta !== "object" || meta === null || !("AffectedNodes" in meta)) {
+    return undefined;
+  }
+  const nodes = (
+    meta as { AffectedNodes: Array<Record<string, unknown>> }
+  ).AffectedNodes;
+  for (const node of nodes) {
+    if ("CreatedNode" in node) {
+      const created = node.CreatedNode as {
+        LedgerEntryType: string;
+        LedgerIndex: string;
+      };
+      if (created.LedgerEntryType === entryType) {
+        return created.LedgerIndex;
+      }
+    }
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------

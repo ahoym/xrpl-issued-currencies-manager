@@ -19,6 +19,11 @@ export const NETWORKS = {
     url: "wss://s.devnet.rippletest.net:51233",
     faucet: "https://faucet.devnet.rippletest.net",
   },
+  mainnet: {
+    name: "Mainnet",
+    url: "wss://xrplcluster.com",
+    faucet: null,
+  },
 } as const;
 
 export type NetworkId = keyof typeof NETWORKS;
@@ -26,6 +31,7 @@ export type NetworkId = keyof typeof NETWORKS;
 export const EXPLORER_URLS: Record<NetworkId, string> = {
   testnet: "https://testnet.xrpl.org",
   devnet: "https://devnet.xrpl.org",
+  mainnet: "https://livenet.xrpl.org",
 };
 
 export const DEFAULT_NETWORK: NetworkId = "testnet";

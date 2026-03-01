@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
-import { DEFAULT_TRANSACTION_LIMIT, MAX_API_LIMIT } from "@/lib/xrpl/constants";
-import { getNetworkParam, validateAddress, apiErrorResponse } from "@/lib/api";
+import { DEFAULT_TRANSACTION_LIMIT } from "@/lib/xrpl/constants";
+import { getNetworkParam, validateAddress, apiErrorResponse, parseLimit } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -15,11 +15,7 @@ export async function GET(
     if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(
-      Number.isNaN(rawLimit) ? DEFAULT_TRANSACTION_LIMIT : rawLimit,
-      MAX_API_LIMIT,
-    );
+    const limit = parseLimit(sp, DEFAULT_TRANSACTION_LIMIT);
     const client = await getClient(resolveNetwork(getNetworkParam(request)));
 
     const response = await client.request({

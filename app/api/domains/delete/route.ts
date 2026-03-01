@@ -8,6 +8,7 @@ import {
   txFailureResponse,
   apiErrorResponse,
 } from "@/lib/api";
+import { DOMAIN_ID_REGEX } from "@/lib/xrpl/constants";
 import type { DeleteDomainRequest, ApiError } from "@/lib/xrpl/types";
 
 export async function POST(request: NextRequest) {
@@ -15,16 +16,15 @@ export async function POST(request: NextRequest) {
     const body: DeleteDomainRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed", "domainID"],
     );
     if (invalid) return invalid;
 
-    const result = walletFromSeed(body.seed);
-    if ("error" in result) return result.error;
-    const { wallet } = result;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
-    if (!/^[0-9A-Fa-f]{64}$/.test(body.domainID)) {
+    if (!DOMAIN_ID_REGEX.test(body.domainID.toUpperCase())) {
       return Response.json(
         {
           error: "domainID must be a 64-character hex string",

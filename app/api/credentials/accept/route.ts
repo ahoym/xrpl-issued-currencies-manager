@@ -18,14 +18,13 @@ export async function POST(request: NextRequest) {
     const body: AcceptCredentialRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed", "issuer", "credentialType"],
     );
     if (invalid) return invalid;
 
-    const result = walletFromSeed(body.seed);
-    if ("error" in result) return result.error;
-    const { wallet } = result;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
     const badIssuer = validateAddress(body.issuer, "issuer address");
     if (badIssuer) return badIssuer;

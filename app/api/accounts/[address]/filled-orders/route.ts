@@ -3,7 +3,6 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import {
   DEFAULT_ORDERBOOK_LIMIT,
-  MAX_API_LIMIT,
   TRADES_FETCH_MULTIPLIER,
 } from "@/lib/xrpl/constants";
 import {
@@ -11,6 +10,7 @@ import {
   validateAddress,
   validateCurrencyPair,
   apiErrorResponse,
+  parseLimit,
 } from "@/lib/api";
 import { parseFilledOrders } from "@/lib/xrpl/filled-orders";
 
@@ -25,11 +25,7 @@ export async function GET(
     if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(
-      Number.isNaN(rawLimit) ? DEFAULT_ORDERBOOK_LIMIT : rawLimit,
-      MAX_API_LIMIT,
-    );
+    const limit = parseLimit(sp, DEFAULT_ORDERBOOK_LIMIT);
 
     // Validate currency pair from query params
     const pairOrError = validateCurrencyPair(request);

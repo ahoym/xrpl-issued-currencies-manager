@@ -5,10 +5,43 @@ import { matchesCurrency } from "@/lib/xrpl/match-currency";
 import { Assets } from "@/lib/assets";
 import type { FilledOrder } from "@/lib/types";
 
+/** Shape of a single entry in the XRPL `account_tx` response. */
+interface AccountTxEntry {
+  tx_json?: {
+    TransactionType: string;
+    Account: string;
+    Fee?: string;
+    TakerPays?: Amount;
+    TakerGets?: Amount;
+    hash?: string;
+  };
+  meta?: TransactionMetadata | string;
+  close_time_iso?: string;
+  date?: string;
+  hash?: string;
+}
+
 /** Convert an XRPL Amount to {currency, issuer} for comparison. */
 function amountCurrency(amt: Amount): { currency: string; issuer?: string } {
   if (typeof amt === "string") return { currency: Assets.XRP };
   return { currency: decodeCurrency(amt.currency), issuer: amt.issuer };
+}
+
+/**
+ * If the balance change is XRP on the submitting account, subtract the
+ * transaction fee (which inflates the apparent balance change).
+ */
+function adjustForFee(
+  value: number,
+  currency: string,
+  account: string,
+  submitter: string,
+  feeDrops: string,
+): number {
+  if (currency === Assets.XRP && account === submitter) {
+    return value - parseFloat(feeDrops) / 1_000_000;
+  }
+  return value;
 }
 
 /**
@@ -30,9 +63,8 @@ export function parseFilledOrders(
   for (const rawEntry of transactions) {
     if (results.length >= limit) break;
 
-    const entry = rawEntry as Record<string, unknown>;
-    const tx_json = entry.tx_json as Record<string, unknown> | undefined;
-    const meta = entry.meta as TransactionMetadata | undefined;
+    const entry = rawEntry as AccountTxEntry;
+    const { tx_json, meta } = entry;
 
     if (!tx_json || !meta) continue;
     if (tx_json.TransactionType !== "OfferCreate") continue;
@@ -44,6 +76,7 @@ export function parseFilledOrders(
 
     // Use getBalanceChanges to find actually executed amounts
     const changes = getBalanceChanges(meta);
+    const feeDrops = tx_json.Fee ?? "0";
 
     // Sum positive balance changes for base and quote across non-issuer accounts
     let baseTotal = 0;
@@ -59,26 +92,9 @@ export function parseFilledOrders(
         if (val <= 0) continue;
 
         if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
-          // Transaction fee is only paid in XRP by the submitting account — subtract it
-          if (
-            baseCurrency === Assets.XRP &&
-            acctChanges.account === tx_json.Account
-          ) {
-            const fee = parseFloat(String(tx_json.Fee ?? "0")) / 1_000_000;
-            baseTotal += val - fee;
-          } else {
-            baseTotal += val;
-          }
+          baseTotal += adjustForFee(val, baseCurrency, acctChanges.account, tx_json.Account, feeDrops);
         } else if (matchesCurrency(bal, quoteCurrency, quoteIssuer)) {
-          if (
-            quoteCurrency === Assets.XRP &&
-            acctChanges.account === tx_json.Account
-          ) {
-            const fee = parseFloat(String(tx_json.Fee ?? "0")) / 1_000_000;
-            quoteTotal += val - fee;
-          } else {
-            quoteTotal += val;
-          }
+          quoteTotal += adjustForFee(val, quoteCurrency, acctChanges.account, tx_json.Account, feeDrops);
         }
       }
     }
@@ -87,17 +103,14 @@ export function parseFilledOrders(
     if (baseTotal <= 0 || quoteTotal <= 0) continue;
 
     // Determine side: if TakerPays matches base currency, it's a buy (taker is buying base)
-    const takerPays = amountCurrency(tx_json.TakerPays as Amount);
+    const takerPays = tx_json.TakerPays ? amountCurrency(tx_json.TakerPays) : undefined;
     const isBuy =
+      takerPays !== undefined &&
       takerPays.currency === baseCurrency &&
       (baseCurrency === Assets.XRP || takerPays.issuer === baseIssuer);
 
-    // Extract time and hash from entry fields
-    const time =
-      (entry.close_time_iso as string) ?? (entry.date as string) ?? "";
-    const hash =
-      (entry.hash as string) ?? (tx_json.hash as string | undefined) ?? "";
-
+    const time = entry.close_time_iso ?? entry.date ?? "";
+    const hash = entry.hash ?? tx_json.hash ?? "";
     const price = quoteTotal / baseTotal;
 
     results.push({
