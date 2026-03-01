@@ -183,6 +183,13 @@ All test scripts (bash and E2E) generate fresh wallets from the XRPL faucet at r
 
 8. **`api_post` defaults to expecting HTTP 201**, not 200. Tests that expect 200 (like the rippling endpoint) must pass the expected status explicitly: `api_post "/path" "$json" 200`.
 
+## Cross-references
+
+- API routes tested by bash scripts: `docs/learnings/api-surface.md` (endpoint definitions, validation rules)
+- CI/CD pipeline configuration: `docs/learnings/config-ops.md` (workflow details, concurrency)
+- Project structure and module layout: `docs/learnings/structure.md` (where tests live relative to source)
+- Test coverage gap analysis: `docs/learnings/SYSTEM_OVERVIEW.md` § Test Coverage Gaps
+
 ## Scan Limitations
 
 - Did not execute any tests to verify they pass; findings are based on code reading only.

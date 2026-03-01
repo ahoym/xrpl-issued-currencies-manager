@@ -4,13 +4,17 @@
 
 Next.js 16 app for managing XRPL issued currencies. No database — all state comes from the XRP Ledger. Wallet secrets stay client-side and are only sent to API routes when signing is needed.
 
-**Stack**: Next.js 16.1.6, React 19, TypeScript 5, Tailwind v4, pnpm, xrpl v4.5.0
+**Stack**: Next.js 16.1.6, React 19, TypeScript 5, Tailwind v4, pnpm, xrpl v4.6.0
 
 ## Commands
 
 - `pnpm dev` — start dev server
 - `pnpm build` — production build (use to verify compilation)
 - `pnpm lint` — run ESLint
+- `pnpm typecheck` — TypeScript type checking (`tsc --noEmit`)
+- `pnpm test` — run Vitest unit tests (lib/xrpl math utilities)
+- `pnpm e2e` — run Playwright E2E browser tests (requires devnet)
+- `pnpm format:check` / `pnpm format:write` — Prettier format check / auto-format
 - `scripts/test-all.sh` — run all API test scripts against a running dev server
 - Individual test scripts accept `BASE_URL` env var (defaults to `http://localhost:3000`)
 
@@ -75,6 +79,12 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `lp-token.ts` | `isLpTokenCurrency()`, `formatLpTokenLabel()` — LP token detection and display |
 | `amm-fee.ts` | `formatAmmFee()`, `parseAmmFeeInput()` — AMM fee formatting |
 | `amm-helpers.ts` | `buildCurrencySpec()` — XRPL Currency spec builder for AMM |
+| `order-book-levels.ts` | `buildAsks()`, `buildBids()` — construct priced order book levels from raw offers |
+| `midprice.ts` | `computeMidpriceMetrics()` — mid, micro-price, weighted VWAP, spread |
+| `aggregate-depth.ts` | `aggregateDepth()` — bid/ask volume and level counts |
+| `amm-math.ts` | AMM constant-product math: spot price, marginal prices, share calculations |
+| `estimate-fill.ts` | `estimateFill()` — CLOB-only fill estimation with slippage |
+| `estimate-fill-combined.ts` | `estimateFillCombined()` — interleaved CLOB + AMM fill estimation |
 
 **Shared Types** (`lib/`)
 
@@ -110,6 +120,9 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `hooks/use-wallet-generation.ts` | `useWalletGeneration()` |
 | `hooks/use-make-market-execution.ts` | `useMakeMarketExecution()` — batch offer placement with progress |
 | `hooks/use-amm-pool.ts` | `useAmmPool()` — fetches AMM pool info for selected pair |
+| `hooks/use-offer-expiration-timers.ts` | `useOfferExpirationTimers()` — schedules refresh when offers expire |
+| `hooks/use-page-visible.ts` | `usePageVisible()` — Page Visibility API hook |
+| `hooks/use-poll-interval.ts` | `usePollInterval()` — 3s silent polling gated on page visibility |
 
 ### Frontend Pages
 
@@ -130,6 +143,15 @@ Next.js 16 app for managing XRPL issued currencies. No database — all state co
 | `make-market.sh` | Places 3-level bid/ask ladders across 6 currency pairs on the DEX; auto-reads latest state from `examples/` |
 | `test-rippling.sh` | Tests DefaultRipple flag behavior and verifies peer-to-peer transfers work after enabling rippling |
 | `test-permissioned-dex.sh` | Tests full permissioned DEX flow (credential, domain, domain-scoped offers) — requires devnet |
+
+## Context-Specific Guides
+
+@lib/xrpl/CLAUDE.md - XRPL core library: encoding asymmetry, client singleton, math modules, Node-only vs browser-safe split
+
+## Deep Reference Docs
+
+@docs/learnings/SYSTEM_OVERVIEW.md - Cross-domain architecture overview, resilience assessment, test coverage gaps
+@docs/learnings/inconsistencies.md - Doc-vs-code discrepancies and config artifact drift
 
 ## Gotchas
 

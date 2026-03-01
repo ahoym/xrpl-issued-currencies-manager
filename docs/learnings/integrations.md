@@ -184,6 +184,13 @@ Keyed by `{IP}:{method}:{pathname}`. In-memory only (not distributed).
 
 7. **Trust comment in `networks.ts`**: The file explicitly notes that these URLs are security-critical -- changing them could enable transaction interception. The URLs are hardcoded with no env-var override, making them tamper-resistant but also inflexible.
 
+## Cross-references
+
+- API surface and endpoint details: `docs/learnings/api-surface.md` (all 29 endpoints, validation, error codes)
+- Rate limiting configuration: `docs/learnings/config-ops.md` (proxy tiers, bucket keying)
+- Frontend data fetching patterns: `docs/learnings/processing-flows.md` (mutation-refresh cycle, polling)
+- Network configuration constants: `docs/learnings/config-ops.md` § Key Configuration Properties
+
 ## Scan Limitations
 
 - **Test scripts** (`scripts/*.sh`): These use `curl` against the API and were not deeply analyzed for integration patterns, as they are test-time tooling rather than production code.

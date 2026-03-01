@@ -888,6 +888,13 @@ Polling: `usePollInterval` fires a silent (no loading spinner) refresh every 3 s
 
 10. **Trust line validation is async and multi-step**: The `useTrustLineValidation` hook first checks for a matching trust line, then if found and the sender is not the issuer, makes a second API call to check the issuer's DefaultRipple flag. Both checks are needed before a peer-to-peer transfer.
 
+## Cross-references
+
+- API endpoints that consume these types: `docs/learnings/api-surface.md` (endpoint tables, validation rules)
+- Workflow orchestration and state transitions: `docs/learnings/processing-flows.md` (credential/offer/domain lifecycles in action)
+- XRPL client and amount conversions: `docs/learnings/integrations.md` (how DexAmount flows to the ledger)
+- Currency encoding details: `docs/learnings/processing-flows.md` § Business Rules > Currency Code Encoding
+
 ## Scan Limitations
 
 1. **API route handler implementations not read**: Only the type definitions and request/response shapes were analyzed. The actual route handler logic in `app/api/` directories was not examined for additional implicit data shapes or transformations.

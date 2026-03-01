@@ -230,6 +230,13 @@ No database, no Docker, no external services beyond the public XRPL testnet/devn
 
 - **No unit test CI job** -- The `ci.yml` workflow runs lint, typecheck, format-check, and build, but does not run `pnpm test` (Vitest unit tests). Unit tests are only run manually or via Playwright setup (which is in a separate `e2e.yml` workflow).
 
+## Cross-references
+
+- API endpoint details: `docs/learnings/api-surface.md` (rate limiting per-endpoint, caching headers)
+- Test patterns and CI gaps: `docs/learnings/testing.md` (what runs in CI vs manually)
+- Project structure and build system: `docs/learnings/structure.md` (module layout, dependency tree)
+- External service configuration: `docs/learnings/integrations.md` (hardcoded network URLs, faucet endpoints)
+
 ## Scan Limitations
 
 - **Vercel project settings not visible** -- Vercel configuration beyond what's in the repo (environment variables, domain settings, build settings, serverless function regions) is managed in the Vercel dashboard and not captured here.

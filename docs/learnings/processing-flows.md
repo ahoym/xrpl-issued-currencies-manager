@@ -479,6 +479,14 @@ All mutation routes follow a uniform pattern via `txFailureResponse()` in `lib/a
 
 10. **Poll interval is visibility-gated**: `usePollInterval` stops polling when the browser tab is hidden (Page Visibility API). This prevents unnecessary WebSocket traffic for background tabs. Combined with the in-flight guard (`inFlightRef`), it prevents request pileup if the ledger is slow to respond.
 
+## Cross-references
+
+- API endpoint definitions and request shapes: `docs/learnings/api-surface.md` (endpoint tables, auth, caching)
+- Type definitions and entity field listings: `docs/learnings/data-model.md` (all request/response interfaces)
+- State machines (credential, offer, domain, AMM): `docs/learnings/data-model.md` § State Machines
+- XRPL WebSocket client behavior: `docs/learnings/integrations.md` (singleton, network switching, reconnect)
+- External service error handling: `docs/learnings/integrations.md` § Error handling
+
 ## Scan Limitations
 
 - **Test scripts** (`scripts/`) were not read. They contain end-to-end curl-based tests that may document additional edge cases or expected behaviors.

@@ -345,6 +345,13 @@ Next.js 16 uses `proxy.ts` instead. Having both files causes a build error.
 
 10. **The `POST /api/accounts/{address}/rippling` endpoint performs multiple sequential transactions.** It first submits an AccountSet, then iterates over all trust lines with `no_ripple === true` and submits a TrustSet for each one. If any intermediate TrustSet fails, the endpoint returns immediately with that error, leaving partially-updated state.
 
+## Cross-references
+
+- Request/response type definitions: `docs/learnings/data-model.md` (full field listings, entity relationships)
+- End-to-end workflow traces: `docs/learnings/processing-flows.md` (how API calls chain together)
+- XRPL client and external service details: `docs/learnings/integrations.md` (WebSocket singleton, faucet paths)
+- Rate limiting and configuration: `docs/learnings/config-ops.md` (proxy tiers, constants)
+
 ## Scan Limitations
 
 1. **OpenAPI spec was not diffed against route handlers.** The `openapi.yaml` file is large (56KB) and was only sampled at the beginning. Discrepancies between the spec and actual handler behavior may exist.

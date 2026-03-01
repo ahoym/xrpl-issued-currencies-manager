@@ -234,6 +234,14 @@ Five GitHub Actions workflows:
 
 10. **Playwright `fullyParallel: false` but 5 workers in CI**: The 5 test projects run in parallel (each on its own worker), but tests within each project run serially. The global setup creates shared state via `.auth/wallet.json`.
 
+## Cross-references
+
+- API endpoint details and request/response shapes: `docs/learnings/api-surface.md`
+- Type definitions and entity relationships: `docs/learnings/data-model.md`
+- CI/CD pipeline and deployment config: `docs/learnings/config-ops.md`
+- Test infrastructure and patterns: `docs/learnings/testing.md`
+- External service connections: `docs/learnings/integrations.md`
+
 ## Scan Limitations
 
 1. **OpenAPI spec not read**: `openapi.yaml` (46KB) was not read in detail. It is documented as being programmatically consumed and must be kept in sync with API routes.
