@@ -32,6 +32,15 @@ lib/
 - **The orchestrator provides context** (wallet addresses, network, callbacks for cross-component refresh).
 - **Refresh coordination**: Pass `refreshKey` numbers or `onChanged` callbacks down to trigger sibling refreshes when one component modifies shared data.
 
+### Shared UI Primitives
+
+Before building inline collapsible sections, tab bars, or form submission state, check for existing shared abstractions:
+
+- **`CollapsibleSection`** (`app/components/collapsible-section.tsx`) — toggleable section with chevron; use instead of hand-rolled `collapsed` state + click handler
+- **`TabBar<T>`** (`app/components/tab-bar.tsx`) — generic typed tab navigation; use instead of hand-rolled tab buttons with active-class logic
+- **`useFormSubmit<T>`** (`lib/hooks/use-form-submit.ts`) — form submission state machine (submitting/error/success + auto-clear); use instead of hand-rolled `useState` + `try/catch` + `setTimeout` in form components
+- **Button classes** (`lib/ui/ui.ts`) — `primaryButtonClass`, `secondaryButtonClass`, `successButtonClass`, `dangerButtonClass`; use instead of inline Tailwind for action buttons
+
 ### When NOT to Extract
 
 - Don't extract a hook for a one-off action unique to a single component

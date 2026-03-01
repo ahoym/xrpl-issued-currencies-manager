@@ -3,10 +3,13 @@
 Task-specific research, patterns, and gotchas. Consult based on what you're working on — don't load everything.
 
 **If modifying frontend components, hooks, or page layout:**
-→ `frontend-architecture.md` — AppStateContext shape, data fetching patterns (useApiFetch / useApiMutation / mutation-refresh cycle), per-page hook and API usage, shared component catalog
+→ `frontend-architecture.md` — AppStateContext shape, data fetching patterns (useApiFetch / useApiMutation / mutation-refresh cycle), per-page hook and API usage, shared component catalog, `useFormSubmit` and `createAccountFetchHook` patterns, `CollapsibleSection` / `TabBar` shared components
 
 **If rendering on-ledger data (URIs, credential fields, user-supplied strings) in the UI:**
 → `frontend-security.md` — XSS prevention for untrusted data in href/src attributes; protocol allowlist pattern
+
+**If writing or modifying unit tests for hooks or utilities:**
+→ `.claude/guidelines/testing.md` — Vitest + jsdom + @testing-library/react v16 setup, `renderHook` patterns for React 19, mocking fetch, fake timers, test file location conventions, known jsdom gotchas
 
 **If adding or modifying API routes or test scripts:**
 → `development-patterns.md` — Annotated POST/GET route skeletons, validation helper reference, test script structure with lib.sh helpers, naming conventions
