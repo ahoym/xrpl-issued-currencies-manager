@@ -36,6 +36,25 @@ function readNetwork(): PersistedState["network"] {
   return "testnet";
 }
 
+/**
+ * One-time migration from the old single-key storage format.
+ * Returns the migrated network if migration occurred, null otherwise.
+ */
+export function migrateLegacyStorage(): PersistedState["network"] | null {
+  try {
+    const old = localStorage.getItem(OLD_STORAGE_KEY);
+    if (!old) return null;
+    const parsed: PersistedState = JSON.parse(old);
+    const { network: oldNetwork, ...data } = parsed;
+    localStorage.setItem(networkDataKey(oldNetwork), JSON.stringify(data));
+    localStorage.setItem(NETWORK_KEY, oldNetwork);
+    localStorage.removeItem(OLD_STORAGE_KEY);
+    return oldNetwork;
+  } catch {
+    return null;
+  }
+}
+
 interface AppStateValue {
   readonly state: PersistedState;
   readonly hydrated: boolean;
@@ -68,19 +87,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   // One-time migration from old single-key storage
   useEffect(() => {
-    try {
-      const old = localStorage.getItem(OLD_STORAGE_KEY);
-      if (!old) return;
-      const parsed: PersistedState = JSON.parse(old);
-      const { network: oldNetwork, ...data } = parsed;
-      localStorage.setItem(networkDataKey(oldNetwork), JSON.stringify(data));
-      localStorage.setItem(NETWORK_KEY, oldNetwork);
-      localStorage.removeItem(OLD_STORAGE_KEY);
-      // Apply migrated state
+    const migrated = migrateLegacyStorage();
+    if (migrated) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time migration from legacy storage format
-      setNetworkRaw(oldNetwork);
-    } catch {
-      // corrupt old data — ignore
+      setNetworkRaw(migrated);
     }
   }, []);
 
@@ -106,12 +116,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setIssuer = useCallback(
-    (issuer: WalletInfo) => {
-      setNetworkData((prev) => ({ ...prev, issuer }));
-    },
+  const setWalletField = useCallback(
+    (field: keyof Pick<NetworkData, "issuer" | "credentialIssuer" | "domainOwner">) =>
+      (wallet: WalletInfo) => {
+        setNetworkData((prev) => ({ ...prev, [field]: wallet }));
+      },
     [setNetworkData],
   );
+
+  const setIssuer = setWalletField("issuer");
+  const setCredentialIssuer = setWalletField("credentialIssuer");
+  const setDomainOwner = setWalletField("domainOwner");
 
   const addCurrency = useCallback(
     (code: string) => {
@@ -139,20 +154,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         ...prev,
         recipients: [...prev.recipients, wallet],
       }));
-    },
-    [setNetworkData],
-  );
-
-  const setCredentialIssuer = useCallback(
-    (wallet: WalletInfo) => {
-      setNetworkData((prev) => ({ ...prev, credentialIssuer: wallet }));
-    },
-    [setNetworkData],
-  );
-
-  const setDomainOwner = useCallback(
-    (wallet: WalletInfo) => {
-      setNetworkData((prev) => ({ ...prev, domainOwner: wallet }));
     },
     [setNetworkData],
   );
