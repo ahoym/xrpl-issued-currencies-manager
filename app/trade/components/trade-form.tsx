@@ -7,7 +7,13 @@ import { useAppState } from "@/lib/hooks/use-app-state";
 import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
-import { inputClass, labelClass, errorTextClass } from "@/lib/ui/ui";
+import {
+  inputClass,
+  labelClass,
+  errorTextClass,
+  successButtonClass,
+  dangerButtonClass,
+} from "@/lib/ui/ui";
 import { buildDexAmount } from "@/lib/xrpl/build-dex-amount";
 
 interface CurrencyOption {
@@ -333,11 +339,7 @@ export function TradeForm({
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`w-full rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
-              tab === "buy"
-                ? "bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
-                : "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
-            }`}
+            className={`w-full ${tab === "buy" ? successButtonClass : dangerButtonClass}`}
           >
             {submitting
               ? "Placing..."
