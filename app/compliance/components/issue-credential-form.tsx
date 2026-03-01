@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import {
   inputClass,
@@ -10,7 +11,6 @@ import {
   primaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 interface IssueCredentialFormProps {
@@ -31,17 +31,12 @@ export function IssueCredentialForm({
   const [credType, setCredType] = useState("");
   const [expiration, setExpiration] = useState("");
   const [uri, setUri] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { submitting, error, success, submit } = useFormSubmit();
   const [collapsed, setCollapsed] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!subject || !credType) return;
-    setSubmitting(true);
-    setError(null);
-    setSuccess(false);
 
     const payload: Record<string, unknown> = {
       seed: credentialIssuer.seed,
@@ -61,28 +56,16 @@ export function IssueCredentialForm({
       payload.uri = uri;
     }
 
-    try {
-      const res = await fetch("/api/credentials/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to issue credential");
-      } else {
-        setSuccess(true);
-        setSubject("");
-        setCredType("");
-        setExpiration("");
-        setUri("");
-        onIssued();
-        setTimeout(() => setSuccess(false), SUCCESS_MESSAGE_DURATION_MS);
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setSubmitting(false);
+    const result = await submit("/api/credentials/create", payload, {
+      errorFallback: "Failed to issue credential",
+    });
+
+    if (result) {
+      setSubject("");
+      setCredType("");
+      setExpiration("");
+      setUri("");
+      onIssued();
     }
   }
 

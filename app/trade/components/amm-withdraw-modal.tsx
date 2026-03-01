@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { AmmPoolInfo } from "@/lib/types";
 import type { CurrencyOption } from "@/lib/hooks/use-trading-data";
-import { useApiMutation } from "@/lib/hooks/use-api-mutation";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import { ModalShell } from "@/app/components/modal-shell";
 import {
   inputClass,
@@ -11,7 +11,6 @@ import {
   primaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 interface AmmWithdrawModalProps {
@@ -47,7 +46,7 @@ export function AmmWithdrawModal({
   const [singleAmount, setSingleAmount] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { loading, error, mutate } = useApiMutation<WithdrawResponse>();
+  const { submitting: loading, error, submit } = useFormSubmit<WithdrawResponse>();
 
   const selectedCurrency =
     selectedAsset === "base" ? baseCurrency.currency : quoteCurrency.currency;
@@ -98,19 +97,18 @@ export function AmmWithdrawModal({
       };
     }
 
-    const result = await mutate("/api/amm/withdraw", body, "Withdrawal failed");
+    const result = await submit("/api/amm/withdraw", body, {
+      errorFallback: "Withdrawal failed",
+    });
 
-    if (result !== null) {
+    if (result) {
       const message =
         result.poolDeleted === true
           ? "Pool has been deleted."
           : "Withdrawal successful!";
       setSuccessMessage(message);
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onSuccess();
-        onClose();
-      }, SUCCESS_MESSAGE_DURATION_MS);
+      onSuccess();
+      onClose();
     }
   }
 

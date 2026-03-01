@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { CurrencyOption } from "@/lib/hooks/use-trading-data";
-import { useApiMutation } from "@/lib/hooks/use-api-mutation";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import { ModalShell } from "@/app/components/modal-shell";
 import { parseAmmFeeInput } from "@/lib/xrpl/amm-fee";
 import {
@@ -11,7 +11,6 @@ import {
   primaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 interface AmmCreateModalProps {
@@ -41,9 +40,8 @@ export function AmmCreateModal({
   const [baseAmount, setBaseAmount] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
   const [feeInput, setFeeInput] = useState("0.30");
-  const [success, setSuccess] = useState(false);
 
-  const { loading, error, mutate } = useApiMutation();
+  const { submitting: loading, error, success, submit } = useFormSubmit();
 
   const feeUnits = parseAmmFeeInput(feeInput);
   const feeDisplay = (feeUnits / 1000).toFixed(2) + "%";
@@ -80,18 +78,15 @@ export function AmmCreateModal({
       network,
     };
 
-    const result = await mutate(
+    const result = await submit(
       "/api/amm/create",
       body as Record<string, unknown>,
-      "Failed to create AMM pool",
+      { errorFallback: "Failed to create AMM pool" },
     );
 
-    if (result !== null) {
-      setSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, SUCCESS_MESSAGE_DURATION_MS);
+    if (result) {
+      onSuccess();
+      onClose();
     }
   }
 

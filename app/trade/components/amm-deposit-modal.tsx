@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { AmmPoolInfo } from "@/lib/types";
 import type { CurrencyOption } from "@/lib/hooks/use-trading-data";
-import { useApiMutation } from "@/lib/hooks/use-api-mutation";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import { ModalShell } from "@/app/components/modal-shell";
 import {
   inputClass,
@@ -11,7 +11,6 @@ import {
   primaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 interface AmmDepositModalProps {
@@ -44,9 +43,8 @@ export function AmmDepositModal({
   const [amount2, setAmount2] = useState("");
   const [selectedAsset, setSelectedAsset] = useState<"base" | "quote">("base");
   const [singleAmount, setSingleAmount] = useState("");
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { loading, error, mutate } = useApiMutation<Record<string, unknown>>();
+  const { submitting: loading, error, success, submit } = useFormSubmit();
 
   const selectedCurrency =
     selectedAsset === "base" ? baseCurrency.currency : quoteCurrency.currency;
@@ -100,15 +98,13 @@ export function AmmDepositModal({
       };
     }
 
-    const result = await mutate("/api/amm/deposit", body, "Deposit failed");
+    const result = await submit("/api/amm/deposit", body, {
+      errorFallback: "Deposit failed",
+    });
 
-    if (result !== null) {
-      setSuccessMessage("Deposit successful!");
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onSuccess();
-        onClose();
-      }, SUCCESS_MESSAGE_DURATION_MS);
+    if (result) {
+      onSuccess();
+      onClose();
     }
   }
 
@@ -233,8 +229,8 @@ export function AmmDepositModal({
         )}
 
         {error && <p className={errorTextClass}>{error}</p>}
-        {successMessage && (
-          <p className={successBannerClass}>{successMessage}</p>
+        {success && (
+          <p className={successBannerClass}>Deposit successful!</p>
         )}
 
         <button
