@@ -6,6 +6,7 @@ import { LSF_DEFAULT_RIPPLE } from "@/lib/xrpl/constants";
 import { errorTextClass } from "@/lib/ui/ui";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { BalanceDisplay } from "../../components/balance-display";
+import { CollapsibleSection } from "../../components/collapsible-section";
 import { CurrencyManager } from "./currency-manager";
 import { ExplorerLink } from "../../components/explorer-link";
 import { SecretField } from "./secret-field";
@@ -147,28 +148,19 @@ export function IssuerSetup({
     }
   }
 
-  const [collapsed, setCollapsed] = useState(false);
-
   return (
     <section className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
-        aria-expanded={!collapsed}
-        className="flex w-full items-center justify-between p-6 text-left"
+      <CollapsibleSection
+        title={
+          <div>
+            <h2 className="text-lg font-semibold">1. Issuer Wallet</h2>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              Generate a funded wallet that will act as the currency issuer.
+            </p>
+          </div>
+        }
+        buttonClassName="flex w-full items-center justify-between p-6 text-left"
       >
-        <div>
-          <h2 className="text-lg font-semibold">1. Issuer Wallet</h2>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Generate a funded wallet that will act as the currency issuer.
-          </p>
-        </div>
-        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
-          {collapsed ? "▸" : "▾"}
-        </span>
-      </button>
-
-      {!collapsed && (
         <div className="px-6 pb-6">
           {!issuer ? (
             <div>
@@ -253,7 +245,7 @@ export function IssuerSetup({
             </div>
           )}
         </div>
-      )}
+      </CollapsibleSection>
     </section>
   );
 }

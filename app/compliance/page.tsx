@@ -6,6 +6,7 @@ import { useWalletGeneration } from "@/lib/hooks/use-wallet-generation";
 import { useAccountCredentials } from "@/lib/hooks/use-account-credentials";
 import { useAccountDomains } from "@/lib/hooks/use-account-domains";
 import { LoadingScreen } from "../components/loading-screen";
+import { TabBar } from "../components/tab-bar";
 import { WalletSetupCard } from "./components/wallet-setup-card";
 import { IssueCredentialForm } from "./components/issue-credential-form";
 import { IssuedCredentialsTable } from "./components/issued-credentials-table";
@@ -17,6 +18,11 @@ import {
 import { DomainsList } from "./components/domains-list";
 
 type Tab = "credentials" | "domains";
+
+const COMPLIANCE_TABS: { value: Tab; label: string }[] = [
+  { value: "credentials", label: "Credentials" },
+  { value: "domains", label: "Domains" },
+];
 
 export default function CompliancePage() {
   const { state, hydrated, setCredentialIssuer, setDomainOwner } =
@@ -54,13 +60,6 @@ export default function CompliancePage() {
 
   const genError = credIssuerGen.error || domainOwnerGen.error;
 
-  const tabClass = (tab: Tab) =>
-    `px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-      activeTab === tab
-        ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-        : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-    }`;
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-bold">Compliance</h1>
@@ -95,20 +94,12 @@ export default function CompliancePage() {
       )}
 
       {/* Tabs */}
-      <div className="mt-8 flex border-b border-zinc-200 dark:border-zinc-800">
-        <button
-          className={tabClass("credentials")}
-          onClick={() => setActiveTab("credentials")}
-        >
-          Credentials
-        </button>
-        <button
-          className={tabClass("domains")}
-          onClick={() => setActiveTab("domains")}
-        >
-          Domains
-        </button>
-      </div>
+      <TabBar
+        tabs={COMPLIANCE_TABS}
+        active={activeTab}
+        onChange={setActiveTab}
+        className="mt-8 flex border-b border-zinc-200 dark:border-zinc-800"
+      />
 
       {/* Credentials Tab */}
       {activeTab === "credentials" && (

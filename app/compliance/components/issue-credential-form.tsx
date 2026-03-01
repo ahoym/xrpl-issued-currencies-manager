@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { useFormSubmit } from "@/lib/hooks/use-form-submit";
+import { CollapsibleSection } from "@/app/components/collapsible-section";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import {
   inputClass,
@@ -32,7 +33,6 @@ export function IssueCredentialForm({
   const [expiration, setExpiration] = useState("");
   const [uri, setUri] = useState("");
   const { submitting, error, success, submit } = useFormSubmit();
-  const [collapsed, setCollapsed] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,21 +71,14 @@ export function IssueCredentialForm({
 
   return (
     <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
-        aria-expanded={!collapsed}
-        className="flex w-full items-center justify-between p-4 text-left"
+      <CollapsibleSection
+        title={
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Issue Credential
+          </h3>
+        }
       >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Issue Credential
-        </h3>
-        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
-          {collapsed ? "▸" : "▾"}
-        </span>
-      </button>
-      {!collapsed &&
-        (success ? (
+        {success ? (
           <div className={`mx-4 mb-4 ${successBannerClass}`}>
             Credential issued!
           </div>
@@ -151,7 +144,8 @@ export function IssueCredentialForm({
               {submitting ? "Issuing..." : "Issue Credential"}
             </button>
           </form>
-        ))}
+        )}
+      </CollapsibleSection>
     </div>
   );
 }
