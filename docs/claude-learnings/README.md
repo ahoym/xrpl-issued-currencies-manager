@@ -23,6 +23,9 @@ Task-specific research, patterns, and gotchas. Consult based on what you're work
 **If debugging xrpl.js type issues or transaction metadata extraction:**
 → `xrpl-implementation-gotchas.md` — v4.5.0 type definitions for credentials/domains, `getOrderbook()` vs raw `book_offers` (domain support), credential vs currency hex encoding differences, TransactionMetadata double cast pattern
 
+**If running a Claude Code web session** (build issues, PR creation, tool availability):
+→ `web-session-ops.md` — `pnpm build` fails (font fetch blocked, use `pnpm typecheck`), no GitHub API auth for PR creation (output manual URL), context window management tips, available tools matrix
+
 **If implementing AMM (XLS-30) features** (subdirectory: `xrpl-amm/`):
 → `xrpl-amm/info.md` — AMM concepts, transaction types (Create/Deposit/Withdraw/Vote/Bid/Delete), LP tokens, CLOB integration, xrpl.js type availability
 → `xrpl-amm/codebase-summary.md` — Existing infrastructure to reuse, trade page component hierarchy, patterns AMM code must follow, what's greenfield
