@@ -24,6 +24,7 @@ SCRIPTS=(
   "test-credentials.sh"
   "test-domains.sh"
   "test-permissioned-dex.sh"
+  "test-error-paths.sh"
 )
 
 echo "============================================"

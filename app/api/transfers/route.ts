@@ -39,14 +39,13 @@ export async function POST(request: NextRequest) {
     const body: TransferRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["senderSeed", "recipientAddress", "currencyCode", "amount"],
     );
     if (invalid) return invalid;
 
-    const seedResult = walletFromSeed(body.senderSeed);
-    if ("error" in seedResult) return seedResult.error;
-    const senderWallet = seedResult.wallet;
+    const senderWallet = walletFromSeed(body.senderSeed);
+    if (senderWallet instanceof Response) return senderWallet;
 
     const badRecipient = validateAddress(
       body.recipientAddress,

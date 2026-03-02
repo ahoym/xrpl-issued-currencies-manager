@@ -3,10 +3,9 @@ import { getClient } from "@/lib/xrpl/client";
 import { resolveNetwork } from "@/lib/xrpl/networks";
 import {
   DEFAULT_ACCOUNT_OFFERS_LIMIT,
-  MAX_API_LIMIT,
 } from "@/lib/xrpl/constants";
 import { fromXrplAmount } from "@/lib/xrpl/currency";
-import { getNetworkParam, validateAddress, apiErrorResponse } from "@/lib/api";
+import { getNetworkParam, validateAddress, apiErrorResponse, parseLimit } from "@/lib/api";
 
 export async function GET(
   request: NextRequest,
@@ -19,11 +18,7 @@ export async function GET(
     if (badAddress) return badAddress;
 
     const sp = request.nextUrl.searchParams;
-    const rawLimit = parseInt(sp.get("limit") ?? "", 10);
-    const limit = Math.min(
-      Number.isNaN(rawLimit) ? DEFAULT_ACCOUNT_OFFERS_LIMIT : rawLimit,
-      MAX_API_LIMIT,
-    );
+    const limit = parseLimit(sp, DEFAULT_ACCOUNT_OFFERS_LIMIT);
     const rawMarker = sp.get("marker") ?? undefined;
     if (
       rawMarker !== undefined &&
@@ -53,7 +48,10 @@ export async function GET(
           quality: offer.quality,
           expiration: offer.expiration,
         };
-        // XLS-80: include DomainID if the offer was placed on a permissioned DEX
+        // XLS-80: include DomainID if the offer was placed on a permissioned DEX.
+        // Cast required: xrpl.js types (through v4.6.0) omit DomainID from the
+        // account_offers response type, even though rippled returns it. The field
+        // IS typed on the ledger entry (Offer) and transaction (OfferCreate).
         const domainID = (offer as unknown as Record<string, unknown>).DomainID;
         if (domainID) {
           mapped.domainID = domainID;

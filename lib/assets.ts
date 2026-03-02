@@ -15,4 +15,5 @@ export const WELL_KNOWN_CURRENCIES: Record<
     RLUSD: "rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV",
   },
   devnet: {},
+  mainnet: {},
 };

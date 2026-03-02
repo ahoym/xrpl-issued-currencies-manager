@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body: CancelOfferRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed"],
     );
     if (invalid) return invalid;
@@ -27,9 +27,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const seedResult = walletFromSeed(body.seed);
-    if ("error" in seedResult) return seedResult.error;
-    const wallet = seedResult.wallet;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
     const client = await getClient(resolveNetwork(body.network));
 

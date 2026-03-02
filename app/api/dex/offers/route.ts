@@ -7,86 +7,27 @@ import { resolveOfferFlags, VALID_OFFER_FLAGS } from "@/lib/xrpl/offers";
 import {
   validateRequired,
   walletFromSeed,
-  validateAddress,
-  validatePositiveAmount,
+  validateDexAmount,
   txFailureResponse,
   apiErrorResponse,
 } from "@/lib/api";
 import type { CreateOfferRequest, OfferFlag, ApiError } from "@/lib/xrpl/types";
-import { Assets } from "@/lib/assets";
+
 
 export async function POST(request: NextRequest) {
   try {
     const body: CreateOfferRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed", "takerGets", "takerPays"],
     );
     if (invalid) return invalid;
 
-    if (!body.takerGets.currency || !body.takerGets.value) {
-      return Response.json(
-        {
-          error: "takerGets must include currency and value",
-        } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (!body.takerPays.currency || !body.takerPays.value) {
-      return Response.json(
-        {
-          error: "takerPays must include currency and value",
-        } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (body.takerGets.currency !== Assets.XRP && !body.takerGets.issuer) {
-      return Response.json(
-        {
-          error: "takerGets.issuer is required for non-XRP currencies",
-        } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (body.takerPays.currency !== Assets.XRP && !body.takerPays.issuer) {
-      return Response.json(
-        {
-          error: "takerPays.issuer is required for non-XRP currencies",
-        } satisfies ApiError,
-        { status: 400 },
-      );
-    }
-
-    if (body.takerGets.currency !== Assets.XRP && body.takerGets.issuer) {
-      const bad = validateAddress(
-        body.takerGets.issuer,
-        "takerGets.issuer address",
-      );
-      if (bad) return bad;
-    }
-
-    if (body.takerPays.currency !== Assets.XRP && body.takerPays.issuer) {
-      const bad = validateAddress(
-        body.takerPays.issuer,
-        "takerPays.issuer address",
-      );
-      if (bad) return bad;
-    }
-
-    const badGets = validatePositiveAmount(
-      body.takerGets.value,
-      "takerGets.value",
-    );
+    const badGets = validateDexAmount(body.takerGets, "takerGets");
     if (badGets) return badGets;
 
-    const badPays = validatePositiveAmount(
-      body.takerPays.value,
-      "takerPays.value",
-    );
+    const badPays = validateDexAmount(body.takerPays, "takerPays");
     if (badPays) return badPays;
 
     if (body.expiration !== undefined) {
@@ -123,9 +64,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const seedResult = walletFromSeed(body.seed);
-    if ("error" in seedResult) return seedResult.error;
-    const wallet = seedResult.wallet;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
     const client = await getClient(resolveNetwork(body.network));
 

@@ -57,16 +57,15 @@ export async function POST(
     const body: TrustLineRequest = await request.json();
 
     const invalid = validateRequired(
-      body as unknown as Record<string, unknown>,
+      body,
       ["seed", "currency", "issuer", "limit"],
     );
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));
 
-    const seedResult = walletFromSeed(body.seed);
-    if ("error" in seedResult) return seedResult.error;
-    const wallet = seedResult.wallet;
+    const wallet = walletFromSeed(body.seed);
+    if (wallet instanceof Response) return wallet;
 
     const mismatch = validateSeedMatchesAddress(wallet, address);
     if (mismatch) return mismatch;
