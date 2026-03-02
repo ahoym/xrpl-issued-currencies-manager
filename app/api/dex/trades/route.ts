@@ -131,8 +131,12 @@ export async function GET(request: NextRequest) {
         takerPays.currency === baseCurrency &&
         (baseCurrency === Assets.XRP || takerPays.issuer === baseIssuer);
 
-      // Extract time and hash from entry fields
-      const entryAny = entry;
+      // Extract time and hash from the account_tx entry. Cast required: xrpl.js
+      // types (through v4.6.0) omit close_time_iso/date/hash from the
+      // AccountTxTransaction wrapper, even though rippled returns them.
+      // date is available indirectly via tx_json.date as a Ripple epoch number,
+      // but close_time_iso (ISO 8601 string) is only on the wrapper.
+      const entryAny = entry as unknown as Record<string, unknown>;
       const time =
         (entryAny.close_time_iso as string) ?? (entryAny.date as string) ?? "";
       const hash =

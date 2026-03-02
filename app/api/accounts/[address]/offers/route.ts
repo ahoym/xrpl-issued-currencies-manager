@@ -48,8 +48,11 @@ export async function GET(
           quality: offer.quality,
           expiration: offer.expiration,
         };
-        // XLS-80: include DomainID if the offer was placed on a permissioned DEX
-        const domainID = (offer).DomainID;
+        // XLS-80: include DomainID if the offer was placed on a permissioned DEX.
+        // Cast required: xrpl.js types (through v4.6.0) omit DomainID from the
+        // account_offers response type, even though rippled returns it. The field
+        // IS typed on the ledger entry (Offer) and transaction (OfferCreate).
+        const domainID = (offer as unknown as Record<string, unknown>).DomainID;
         if (domainID) {
           mapped.domainID = domainID;
         }
