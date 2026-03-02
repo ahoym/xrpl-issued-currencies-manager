@@ -1,0 +1,399 @@
+---
+name: execute
+description: Execute a structured parallel plan by launching concurrent subagents with DAG-based scheduling. Use when the user references a parallel plan file to execute.
+disable-model-invocation: true
+---
+
+# Execute Parallel Plan
+
+Execute a structured parallel plan produced by `/parallel-plan:make`. Acts as a coordinator — launches subagents, verifies outputs, unblocks dependents, and handles failures.
+
+## Usage
+
+- `/parallel-plan:execute <plan-file>` — Execute a parallel plan file
+- `/parallel-plan:execute` — Execute the most recently discussed parallel plan
+
+## Reference Files
+
+- `~/.claude/skill-references/agent-prompting.md` — Read before crafting agent prompts for best practices on speed, landmarks, and boundaries
+- `~/.claude/skill-references/code-quality-checklist.md` — Include in agent prompts so implementations self-review for structural issues
+- `~/.claude/skill-references/subagent-patterns.md` — Universal patterns for launching and orchestrating subagents
+
+## Role: Coordinator
+
+You are a **team lead**, not an implementer. Your job is to:
+- Launch subagents when their dependencies are satisfied
+- Read and verify each agent's output on completion
+- Unblock dependent agents by launching them
+- Resolve failures (fix dependencies, re-prompt agents)
+- Track progress and report results
+
+You should **never write implementation code directly**. All code changes go through subagents. This keeps your context focused on orchestration and lets you react to agent completions without blocking.
+
+## Instructions
+
+### Step 0: Fresh-eyes plan review
+
+Before doing anything else, perform a structured review of the plan with fresh eyes. You are reading this plan for the first time — use that perspective to catch issues the planner may have missed due to context fatigue or tunnel vision.
+
+This step has two phases: **strategic review** (do we understand what we're building and why?) followed by **technical verification** (are the agent prompts, landmarks, and dependencies correct?). Both must pass before execution begins.
+
+#### Phase A: Strategic review
+
+1. **Read the full plan** — internalize the context, shared contract, DAG structure, and every agent prompt. Understand the overall shape of the change.
+
+2. **Discover source research** — look for the research artifacts that informed this plan. Check:
+   - The plan's **Context** section for references to research directories or files
+   - Sibling directories or parent directories for ralph research output (`spec.md`, `progress.md`, `implementation-plan.md`, `assumptions-and-questions.md`, `info.md`)
+   - The plan file's own directory for related `.md` files
+
+   If source research is found, read the key artifacts: `implementation-plan.md` (or equivalent), `assumptions-and-questions.md`, and `progress.md`. These contain the user-confirmed decisions that the parallel plan must faithfully implement.
+
+3. **Cross-reference research decisions** — if source research was found, verify that confirmed decisions carried through into the parallel plan:
+   - **Resolved questions** → check that the answers are reflected in agent prompts (e.g., if the user confirmed "panel goes in the left column," verify the UI agent's prompt says that, not "center column")
+   - **Confirmed assumptions** → check that the shared contract's types, API shapes, and import paths match what the research specified
+   - **Scope boundaries** → check that features marked "out of scope" or "future work" in the research are NOT included in any agent's prompt
+   - **Specific technical decisions** → check that implementation choices (error handling approach, dynamic vs hardcoded values, specific flag/mode support) match the research
+
+   Flag any mismatches — these are high-priority issues because they mean the plan diverged from user-confirmed decisions.
+
+4. **Present strategic summary** — before diving into technical details, give the user a concise overview:
+   - **What we're building**: 2-3 sentence description of the feature/change
+   - **How it's parallelized**: DAG shape in plain language (e.g., "Agent A does types, then B/C/D do API routes in parallel, then E does the hook, then F/G do UI components, then H wires everything together")
+   - **Key decisions reflected**: list 3-5 user decisions from research that the plan implements (so the user can quickly confirm they carried through)
+   - **Strategic concerns**: anything that looks off from a feature/product perspective (not technical issues — those come in Phase B)
+   - If no source research was found, note this and present just the DAG summary
+
+5. **Get strategic approval** — wait for the user to confirm the strategic summary is correct before proceeding to technical verification. If the user identifies mismatches with their intent, update the plan before continuing. This is the "are we building the right thing?" gate.
+
+#### Phase B: Technical verification
+
+6. **Re-read source files** — for each agent that modifies existing files, read those files and verify:
+   - Code landmarks in the prompt still match the actual code (function names, line numbers, surrounding context)
+   - The file structure hasn't changed since the plan was written
+   - Import paths referenced in the plan are correct
+7. **Audit dependencies** — for each `depends_on` (hard dependency), ask: does the downstream agent truly need the upstream to be fully completed and verified, or would it suffice for the upstream's files to exist on disk (soft dependency)? Flag any hard dependencies that could be downgraded.
+8. **Check agent scope balance** — flag agents that seem too large (> 200s estimated, touching 5+ files) or too small (< 30 lines of changes). Suggest splits or merges.
+9. **Review the Review Notes** — if the planner included a **Review Notes** section, examine each flagged uncertainty and form your own judgment.
+10. **Check Required Bash Permissions** — read the plan's **Required Bash Permissions** section. Verify each listed command pattern has a matching allow rule in `.claude/settings.local.json`. If any are missing, stop and tell the user — agents will silently fail without these permissions.
+11. **Present technical findings** — report your review to the user:
+   - Issues found (stale landmarks, wrong dependencies, scope imbalances)
+   - Proposed adjustments (with rationale)
+   - Planner's flagged uncertainties and your assessment
+   - Permission gaps (if any)
+   - Or: "Plan looks good, no issues found" — don't invent problems
+12. **Get final approval** — wait for the user to approve the plan (with or without your suggested adjustments) before proceeding. If the user approves adjustments, apply them to the plan file before continuing.
+
+Do NOT skip this step. The value of a fresh session is the fresh perspective — use it.
+
+### Step 1: Pre-execution verification
+
+Before launching any agents, verify the project's toolchain works. Read the plan's **Pre-Execution Verification** section and run the listed commands.
+
+Also check for a code formatter:
+- Look for `.prettierrc`, `.prettierrc.json`, `biome.json`, or a `format`/`format:check` script in `package.json` (or equivalents for other ecosystems)
+- If found, note the format command — you'll need to either include it in each agent's prompt or run it as a post-completion step in Step 8
+
+**Check Edit/Write permissions:** Background agents cannot prompt for tool permissions. Read `.claude/settings.local.json` and verify that `"Edit"` and `"Write"` appear in the `permissions.allow` array. If either is missing, stop and tell the user — agents need these to modify files and will silently fail without them.
+
+**Coordinator permissions audit:** The coordinator (you) runs Bash commands for build verification and fallback git operations. Audit `.claude/settings.local.json` for the following coordinator command patterns and **add any that are missing** (after confirming with the user):
+
+- `Bash(pnpm build:*)` (or the project's build command) — final build verification
+- `Bash(git -C:*)` — fallback git operations inside worktrees
+- `Bash(git branch:*)` — fallback branch creation
+- `Bash(git worktree:*)` — fallback worktree management
+
+**Agent permissions audit (when Branch Strategy exists):** Agents handle their own git workflow (cherry-pick, commit, push, PR creation). These permissions must be pre-registered since background agents cannot prompt:
+
+- `Bash(git cherry-pick:*)` — pulling in dependency commits
+- `Bash(git branch:*)` — renaming the auto-generated worktree branch
+- `Bash(git add:*)`, `Bash(git commit:*)` — staging and committing
+- `Bash(git push:*)` — pushing to remote
+- `Bash(gh pr create:*)` or `Bash(glab mr create:*)` — creating PRs/MRs
+
+Present all missing patterns to the user in a single batch and add them all at once. This prevents repeated permission prompts during execution.
+
+**Important — avoid `cd &&` compound commands:** Permission patterns match on the command prefix. A command like `cd /tmp/worktree && git add .` starts with `cd`, NOT `git`, so `Bash(git add:*)` won't match. Always use `git -C <dir>` instead of `cd <dir> && git` for worktree operations. This avoids needing additional permission patterns.
+
+If the plan includes a **Branch Strategy** section, also verify:
+- The current branch is the base branch specified in the strategy (usually `main`)
+- Working tree is clean (`git status --porcelain` is empty)
+- Remote is accessible (`git ls-remote origin` succeeds)
+- PR/MR creation CLI is available (`gh --version` for GitHub, `glab --version` for GitLab — check the project's git remote URL to determine which)
+
+If any command fails or permissions are missing, stop and report to the user — don't waste agent cycles on a broken toolchain.
+
+### Step 2: Parse the plan
+
+Read the parallel plan file. It must follow the structured format from `/parallel-plan:make`:
+- **Shared Contract** section with types, API contracts, import paths
+- **Prompt Preamble** section (optional) with process instructions common to all agents (TDD workflow, project commands, completion report format, general rules). This does NOT contain the shared contract — the contract is a separate section.
+- **Agents** section with lettered agents, each having `depends_on`, `soft_depends_on`, file lists, descriptions, and prompts
+- **Pre-Execution Verification** section
+- **Integration Tests** section
+- **DAG Visualization**
+- **Required Bash Permissions** section
+- **Review Notes** section (optional — planner's flagged uncertainties)
+- **Branch Strategy** section (optional) with per-agent branch names, branch-from sources, MR/PR targets, and merge order
+
+Extract and store the **Shared Contract** and **Prompt Preamble** sections — you will prepend these to every agent prompt in Step 5. If a **Branch Strategy** section exists, extract the per-agent branch configuration — you will use it in Step 6 to create branches, commits, and PRs/MRs as agents complete.
+
+If the plan doesn't follow this format, ask the user to run `/parallel-plan:make` first.
+
+### Step 3: Check for existing execution state
+
+Execution state is tracked in a **lightweight state file** (`.parallel-plan-state.json`) alongside the plan file, not by editing the plan markdown. This avoids fragmenting the coordinator's attention with repeated plan edits.
+
+**State file location:** Same directory as the plan file, named `.parallel-plan-state.json`.
+
+**State file schema:**
+```json
+{
+  "started": "2026-02-18 12:00:00",
+  "lastUpdated": "2026-02-18 12:05:00",
+  "build": "not yet run",
+  "integration": "not yet run",
+  "agents": {
+    "A": { "status": "pending", "agentId": null, "duration": null, "notes": "", "branch": null, "prUrl": null },
+    "B": { "status": "pending", "agentId": null, "duration": null, "notes": "blocked by: A", "branch": null, "prUrl": null }
+  }
+}
+```
+
+- **If the state file exists with non-pending agents** — this is a **resumed execution**. Read the state to determine:
+  - `completed` agents: skip these entirely — their work is already done. Create their tasks as already-completed so the DAG tracks them. If a completed agent has no `branch` in the state file and the plan has a Branch Strategy, retry the branch/PR creation step (Step 6, item 6). **Critical: process these in topological order** (dependencies before dependents) — each branch must be committed and pushed before any dependent branch is created from it. Creating all branches first and committing later results in dependent branches missing their dependency's files, which breaks CI.
+  - `in_progress` agents with an Agent ID: attempt to resume the agent using the `resume` parameter on the Task tool. If the agent completed, read output and verify. If stale (no recent progress in output file), re-launch with the same prompt.
+  - `failed` agents: read the notes field for attempt history and checkpoint. Diagnose the failure, attempt to fix the underlying issue, then re-launch. If a checkpoint was recorded, instruct the new agent to resume from that step.
+  - `pending` agents whose dependencies are all `completed`: these are ready to launch immediately.
+- **If the state file doesn't exist** — this is a **fresh execution**. Create the state file with one entry per agent, all `pending`, noting `blocked by: <deps>` where applicable.
+
+Update the state file whenever an agent's status changes (batch updates when multiple things happen at once). At the end of execution, also update the plan file's `## Execution State` section with the final results for archival.
+
+**State vocabulary**:
+- `pending` — not yet started, may be blocked by dependencies
+- `in_progress` — agent launched, awaiting completion
+- `completed` — agent finished successfully, output verified
+- `failed` — agent finished with errors, needs intervention or re-launch
+
+### Step 4: Create the task DAG
+
+Use `TaskCreate` for each agent. Set `blockedBy` according to each agent's `depends_on` list. This gives the user visibility into progress and maps the DAG into the task system.
+
+Record the start timestamp (`date +%s`).
+
+### Step 5: Launch ready agents
+
+Identify all agents whose dependencies are satisfied and launch them **all simultaneously** in a single message using `Task` with `run_in_background: true`.
+
+**Important: Background agents cannot prompt for permissions.** If a Bash command doesn't match a pre-configured allow pattern, or if `Edit`/`Write` tools aren't in the allow list, the agent silently fails. This is verified during Step 0 (plan review) and Step 1 (pre-execution verification) — do not skip those checks.
+
+An agent is **ready** when:
+- All `depends_on` (hard) agents are `completed` (verified), AND
+- All `soft_depends_on` agents have their files written to disk (the agent is at least `in_progress` and has created its output files — it doesn't need to be verified)
+
+For soft dependencies, check that the dependency agent's `creates` files exist on disk before launching. If the soft dependency agent is still running but its files don't exist yet, wait.
+
+Read `~/.claude/skill-references/agent-prompting.md` before crafting prompts if you haven't already.
+
+**Model selection:** Before launching each agent, evaluate its complexity and choose the appropriate model (see `~/.claude/skill-references/agent-prompting.md` § Model Selection). The plan may suggest models, but the coordinator makes the final call based on actual scope. Override aggressively — a pattern-matching API route doesn't need opus.
+
+**Discovery tracking:** Maintain a running **discoveries digest** — a cumulative list of all discoveries from completed agents. Discoveries serve two purposes:
+
+1. **Sequential waves**: When launching agents after a dependency completes, append the digest to new agents' prompts. This propagates learnings to downstream agents that haven't started yet.
+2. **Post-execution documentation**: In fan-out DAGs where all agents launch simultaneously, discoveries arrive too late to help running agents. They're still valuable — collect them for the final report and project learnings.
+
+Don't treat discovery propagation as a blocking step. If all dependent agents are already running when a discovery arrives, just add it to the digest for the final report. Format:
+
+```
+## Discoveries from completed agents
+- Agent A: walletFromSeed returns { wallet } | { error }, narrow with "error" in result
+- Agent B: encodeXrplCurrency handles 3-char codes differently from longer ones
+```
+
+**Dependency file excerpts for soft-dep agents:** When launching an agent whose soft dependencies have completed, include the actual function signatures and type definitions from the dependency's output files — not just the planned contract. Read the key exports from the dependency's files and add them to the prompt. This ensures the agent works against reality (what was actually implemented) rather than just the plan (what was intended). This catches contract drift before it causes downstream failures.
+
+**Parallel `tsc` on shared working tree:** When multiple agents run `npx tsc --noEmit` concurrently on the same working tree, each agent sees type errors from other agents' half-written files. Best fix: use `isolation: "worktree"` so each agent's tsc only sees its own files. When worktrees aren't feasible, add "ignore type errors from files outside your scope" to the prompt preamble.
+
+**Formatting:** If a project formatter was detected in Step 1, include the format command in each agent's prompt as a final step before the test suite. Alternatively, you may run formatting once as a post-completion step in Step 8 — but per-agent is preferred because it catches issues earlier and keeps each agent's output clean.
+
+**Prompt construction:** For each agent, build the full prompt by concatenating:
+1. **Shared Contract** — the full Shared Contract section from the plan (types, API contracts, import paths)
+2. **Prompt Preamble** — the Prompt Preamble section from the plan (TDD workflow, project commands, completion report format), if present
+3. **Agent prompt** — the agent's `prompt` field from the plan
+4. **Code quality checklist** — append the contents of `~/.claude/skill-references/code-quality-checklist.md` as a final self-review step (read the file once and reuse for all agents)
+
+This ensures every agent sees the shared contract and common instructions without the planner having to duplicate them in each agent's prompt. The agent's `prompt` field focuses on agent-specific work: task description, landmarks, TDD steps, file scope, and DO NOT MODIFY boundaries.
+
+If the plan has no Prompt Preamble section, fall back to the previous behavior: each agent's prompt must be self-contained with all necessary context.
+
+**Agent isolation and git workflow (when Branch Strategy exists):** Launch agents with `isolation: "worktree"` so each agent works in its own git worktree. Agents are responsible for their own branch management, commits, and PR creation — the coordinator does NOT create PRs on the agents' behalf.
+
+For each agent, append a **Git Workflow** section to its prompt:
+
+```
+## Git Workflow
+
+Your branch name: `<branch-name-from-plan>`
+PR base: `<target-branch>`
+<cherry-pick line if agent has dependencies, omitted for root agents>
+
+After completing your implementation:
+1. Rename your branch: `git branch -m <branch-name>`
+2. Stage and commit your changes (include `Co-Authored-By: Claude <model> <noreply@anthropic.com>`)
+3. Push: `git push -u origin <branch-name>`
+4. Create PR: `gh pr create --base <target> --title "<title>" --body "<body>"`
+5. Include the PR URL in your Completion Report
+```
+
+For agents with dependencies, add a cherry-pick step **before** implementation:
+
+```
+Before starting your implementation, pull in dependency files:
+git cherry-pick main..<dependency-branch>
+```
+
+This brings in all commits from the dependency's branch that aren't on main. For deeper DAGs (C depends on B depends on A), cherry-pick the immediate dependency's branch — it already includes its own dependencies' commits.
+
+**Dependency ordering for cherry-pick:** An agent can only cherry-pick a dependency's branch if that branch has been pushed. This means agents with dependencies can only be launched after their dependency agent has completed, committed, and pushed. In practice, this makes `soft_depends_on` behave like `depends_on` when Branch Strategy is active — the coordinator must wait for the dependency to complete before launching.
+
+**Coordinator permissions for agent git workflow:** When agents handle their own PRs, they need these Bash permissions pre-registered in `.claude/settings.local.json`:
+- `Bash(git cherry-pick:*)` — for pulling in dependency commits
+- `Bash(git branch:*)` — for renaming the auto-generated worktree branch
+- `Bash(git add:*)`, `Bash(git commit:*)`, `Bash(git push:*)` — for committing and pushing
+- `Bash(gh pr create:*)` or `Bash(glab mr create:*)` — for creating PRs
+
+Verify these are present during Step 1 (pre-execution verification).
+
+### Step 6: Monitor and advance (the scheduling loop)
+
+**Critical: Steps 1–8 below are an atomic per-agent completion workflow.** When an agent completes, execute ALL of these steps for that agent before moving on to launching the next wave. Do NOT defer state updates or PR creation to a later batch — this is the #1 cause of lost progress on session interruption and missing PRs.
+
+When an agent completes:
+
+1. **Read the output** — verify the agent completed successfully. Look for the **Completion Report** at the end of the agent's output:
+   - Files created/modified
+   - TDD steps completed (N/N)
+   - Checkpoint (last completed step)
+   - Discoveries (gotchas, learnings for other agents or future work)
+2. **Verify contract compliance** — read the key files the agent created/modified. Check:
+   - Types match the shared contract
+   - Exports are named correctly
+   - File paths match what the plan specified
+   - Tests exist for the agent's implementation (TDD was followed)
+   - Test file paths match what the plan's `tdd_steps` specified
+3. **Import audit** — grep the agent's output files for import statements. For each import, verify the imported module is either:
+   - An existing file in the repo (predates the plan)
+   - A file owned by a completed hard/soft dependency agent
+   - If the agent imports from a **parallel** (non-dependency) agent's file, flag it — this means the agent's PR branch won't compile in isolation. Note this in the state file so the PR description can document the cross-dependency.
+4. **Contract drift detection** — if the agent's actual exports differ from the shared contract (e.g., different function signature, renamed export, extra required parameter), update the shared contract and note the drift in the discoveries digest. Downstream agents need the corrected contract, not the original plan.
+5. **Capture discoveries** — append all discoveries from this agent to the running discoveries digest. Include both agent-reported discoveries (from its Completion Report) and coordinator-detected issues (from steps 2-4 above).
+6. **Update task status** — mark the agent's task as completed
+7. **Persist execution state immediately** — update the state file (`.parallel-plan-state.json`) RIGHT NOW, not later:
+   - Set the agent's status → `completed` (or `failed`), agentId, duration, and notes (include checkpoint and discoveries)
+   - **Capture `duration_ms`** from the task completion notification (it's included in the `<usage>` block) — convert to seconds for the state file and scorecard
+   - Update the `lastUpdated` timestamp
+   - When multiple agents complete simultaneously, update all of them in a single write
+   - This ensures the state file always reflects current progress, enabling resumption if the session is interrupted
+8. **Verify branch and PR (agent-managed)** — if the plan has a Branch Strategy section, the agent itself handles branch creation, committing, pushing, and PR creation (see Step 5 "Agent isolation and git workflow"). The coordinator's job here is just to verify:
+   - Check the agent's Completion Report for the PR URL
+   - If present, update the state file with `branch` and `prUrl`
+   - If the agent failed to create the PR (permission issue, push failure, etc.), fall back to coordinator-managed PR creation:
+     1. The agent's worktree and branch still exist — find the worktree path from the Task result
+     2. Rename, commit, push, and create the PR manually using `git -C <worktree-dir>` commands
+     3. Log the fallback in state notes
+   - **Critical ordering rule**: a dependency's branch must be fully committed and pushed BEFORE launching any dependent agent (which needs to cherry-pick from it). This is enforced naturally — dependent agents can't be launched until the dependency completes, and the dependency's PR creation is part of its completion.
+9. **Check for newly unblocked agents** — an agent is unblocked when:
+   - All its `depends_on` (hard) agents are `completed`, AND
+   - All its `soft_depends_on` agents have their output files on disk
+10. **Launch newly unblocked agents** — immediately, in parallel if multiple are ready. When launching, update the agent's row to `in_progress` with the new Agent ID.
+11. **Repeat** until all agents are complete
+
+**Key principle: launch agents as soon as their specific dependencies are satisfied.** Don't wait for unrelated agents to finish. This is swim-lane scheduling, not batch phases.
+
+**Checking agent progress:** Use `TaskOutput` with `block: false` for non-blocking status checks on running agents, or `block: true` with a timeout to wait for completion. Do NOT fall back to ad-hoc Bash commands (like `tail` or `grep` on agent output files) to check progress — these require Bash permissions that may not be pre-configured and will prompt the user. `TaskOutput` is a dedicated tool that needs no Bash permissions.
+
+**Soft dependency acceleration:** While waiting for hard-dependent agents to complete, periodically check if soft-dependent agents can start. A soft dependency is satisfied as soon as the dependency's `creates` files exist on disk — even if the dependency agent is still running (e.g., still in its REFACTOR phase). This lets downstream agents start sooner.
+
+### Step 7: Handle failures
+
+If an agent produces bad output, follow the **escalation ladder** — each attempt increases coordinator involvement:
+
+1. **Diagnose** — read the output, identify what went wrong. Check the agent's Completion Report for its checkpoint (last completed step) and any error context.
+2. **Record the attempt** — update the state file notes with a structured record:
+   `attempt 1: <what failed and why>`. This prevents retrying the same approach and gives context if escalating to the user.
+3. **Fix dependencies** — if the issue is a missing type, wrong import path, or incorrect file created by a predecessor agent, fix the dependency file first.
+
+**Attempt 1: Resume with error context.** Resume the agent using its agent ID with a message explaining what went wrong. Often the agent just hit a transient issue or made a small mistake it can self-correct. Tell it to start from its checkpoint.
+
+**Attempt 2: Relaunch with corrected prompt.** Launch a fresh agent with a *corrected* prompt — incorporate what went wrong, adjust the approach (e.g., different import path, simpler type cast, explicit code snippet for the failing section), and tell it to start from the checkpoint rather than step 1.
+
+**Attempt 3: Reduce scope.** Split the failing agent's remaining work into a smaller piece. Do the blocking part manually (small fix only — you're the coordinator, not the implementer, but a 1-2 line fix to unblock is acceptable), then relaunch for the rest. Or split into two simpler agents.
+
+**After 3 attempts:** Mark as `failed` in the state file with all attempt notes, and escalate to the user with the full attempt history.
+
+**Don't let a failed agent block the entire DAG.** If agent B fails but agent C is independent, C should still proceed.
+
+### Step 8: Verify and report
+
+After all agents complete:
+
+1. **Run the project formatter** (if detected in Step 1) on all changed files. This catches formatting inconsistencies across agents before the build step. If you didn't include the formatter in each agent's prompt, this is your safety net.
+2. **Run the project's build/compile command** to verify compilation
+3. **Run integration tests** — execute the tests listed in the plan's **Integration Tests** section. These verify the pieces work together across agent boundaries, catching issues that per-agent TDD can't.
+4. If build, formatting, or integration tests fail, diagnose and fix — launch a targeted subagent for non-trivial fixes
+5. Record the end timestamp
+6. **Collect discoveries** — gather all discoveries reported by agents (from the state file notes). Report these to the user as a consolidated list — they may be worth saving as project learnings.
+7. **Finalize execution state** — update the state file, then sync the final results to the plan file's `## Execution State` section using the Edit tool (for archival):
+   - Set `Build` to `pass` or `fail (N attempts)`
+   - Set `Integration` to `pass` or `fail (details)`
+   - Ensure all agent rows reflect their final status, including branch names and PR/MR URLs (if Branch Strategy was used)
+   - Update `Last updated` to the final timestamp
+8. Report the execution scorecard:
+
+```
+## Execution Scorecard
+
+| Agent | Task | Time | Tool Uses | Status | PR |
+|-------|------|------|-----------|--------|----|
+| A     | ...  | 64s  | 10        | pass   | <url or —> |
+| B     | ...  | 46s  | 8         | pass   | <url or —> |
+| C     | ...  | 80s  | 10        | pass   | <url or —> |
+| D     | ...  | 45s  | 7         | pass   | <url or —> |
+
+| Metric | Value |
+|--------|-------|
+| Wall-clock time | Xs |
+| Sum-of-parts time | Ys |
+| Effective speedup | Y/X = Z.Zx |
+| Build | pass/fail (attempts) |
+| Integration tests | pass/fail (details) |
+| Contract violations | none / description |
+| Failure escalations | none / description |
+| Max concurrency achieved | N agents |
+| Discoveries | N items (see below) |
+
+## Agent Discoveries
+<Consolidated list of discoveries from all agents' Completion Reports.
+ Each entry notes which agent reported it.>
+
+## Merge Order (if Branch Strategy was used)
+<List the PRs/MRs in the order they should be merged:
+ 1. Merge order 1 PR(s) first (root agents)
+ 2. After merge, rebase order 2 branches onto updated main
+ 3. Merge order 2 PR(s)
+ 4. Continue until all PRs are merged
+ Include the actual PR URLs for easy clicking.>
+```
+
+## Important Notes
+
+- **You are the coordinator, not an implementer** — delegate all code changes to subagents
+- **Verify after every agent** — catch contract violations before they cascade to dependent agents
+- **Launch eagerly** — as soon as an agent's dependencies are satisfied, launch it. Don't batch.
+- **State per agent, not per wave** — update the state file immediately when each agent completes. Never defer to a batch phase. If the session is interrupted, the state file is the recovery mechanism — it must always be current.
+- **Agents own their PRs** — when Branch Strategy exists, agents commit, push, and create PRs themselves. The coordinator verifies and captures the PR URL. This parallelizes PR creation naturally (each agent handles its own) instead of bottlenecking on the coordinator.
+- **Never use `cd <dir> && git`** — permission patterns match on command prefix. Use `git -C <dir>` for all worktree operations so commands match `Bash(git -C:*)`.
+- **Pre-register all permissions** — during Step 1, audit and add ALL Bash permissions the coordinator and agents will need. A single batch prompt at the start is far better than repeated interruptions during execution.
+- **Prompts are self-contained** — each agent receives `Shared Contract + Prompt Preamble + Agent Prompt`, which together include everything the agent needs. Don't assume agents can read the plan file or see other agents' work.
+- **Use haiku model** for simple agents (single file, small edit, < 30 lines changed) to minimize cost and latency
+- **Branch Strategy is optional** — if the plan has no Branch Strategy section, skip all branch/commit/PR operations. The executor works the same as before, just without git integration.
