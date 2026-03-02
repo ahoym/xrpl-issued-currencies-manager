@@ -137,9 +137,13 @@ describe("useFormSubmit", () => {
     const { result } = renderHook(() => useFormSubmit());
 
     await act(async () => {
-      await result.current.submit("/api/test", {}, {
-        errorFallback: "Transfer failed",
-      });
+      await result.current.submit(
+        "/api/test",
+        {},
+        {
+          errorFallback: "Transfer failed",
+        },
+      );
     });
 
     expect(result.current.error).toBe("Transfer failed");

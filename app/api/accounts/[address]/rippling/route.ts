@@ -19,10 +19,7 @@ export async function POST(
     const { address } = await params;
     const body = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed"],
-    );
+    const invalid = validateRequired(body, ["seed"]);
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));

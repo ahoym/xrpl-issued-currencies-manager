@@ -3,7 +3,8 @@ import {
   getRequest,
   routeParams,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -12,12 +13,15 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 vi.mock("@/lib/xrpl/filled-orders", () => ({
-  parseFilledOrders: vi.fn().mockReturnValue([]) }));
+  parseFilledOrders: vi.fn().mockReturnValue([]),
+}));
 
 import { GET } from "./route";
 
@@ -25,7 +29,8 @@ const validAddress = TEST_WALLET.address;
 const baseParams = {
   base_currency: "USD",
   base_issuer: TEST_WALLET_2.address,
-  quote_currency: "XRP" };
+  quote_currency: "XRP",
+};
 
 describe("GET /api/accounts/[address]/filled-orders", () => {
   beforeEach(() => {
@@ -49,7 +54,8 @@ describe("GET /api/accounts/[address]/filled-orders", () => {
   it("returns 400 when base_currency is missing", async () => {
     const res = await GET(
       getRequest(`/api/accounts/${validAddress}/filled-orders`, {
-        quote_currency: "XRP" }),
+        quote_currency: "XRP",
+      }),
       routeParams({ address: validAddress }),
     );
     expect(res.status).toBe(400);
@@ -61,7 +67,8 @@ describe("GET /api/accounts/[address]/filled-orders", () => {
     const res = await GET(
       getRequest(`/api/accounts/${validAddress}/filled-orders`, {
         base_currency: "USD",
-        base_issuer: TEST_WALLET_2.address }),
+        base_issuer: TEST_WALLET_2.address,
+      }),
       routeParams({ address: validAddress }),
     );
     expect(res.status).toBe(400);
@@ -73,7 +80,8 @@ describe("GET /api/accounts/[address]/filled-orders", () => {
     const res = await GET(
       getRequest(`/api/accounts/${validAddress}/filled-orders`, {
         base_currency: "USD",
-        quote_currency: "XRP" }),
+        quote_currency: "XRP",
+      }),
       routeParams({ address: validAddress }),
     );
     expect(res.status).toBe(400);
@@ -87,7 +95,8 @@ describe("GET /api/accounts/[address]/filled-orders", () => {
 
   it("returns filled orders on success", async () => {
     mockClient.request.mockResolvedValueOnce({
-      result: { transactions: [] } });
+      result: { transactions: [] },
+    });
 
     const res = await GET(
       getRequest(`/api/accounts/${validAddress}/filled-orders`, baseParams),
@@ -101,7 +110,8 @@ describe("GET /api/accounts/[address]/filled-orders", () => {
 
   it("calls account_tx with correct account and multiplied limit", async () => {
     mockClient.request.mockResolvedValueOnce({
-      result: { transactions: [] } });
+      result: { transactions: [] },
+    });
 
     await GET(
       getRequest(`/api/accounts/${validAddress}/filled-orders`, baseParams),
@@ -112,7 +122,8 @@ describe("GET /api/accounts/[address]/filled-orders", () => {
       expect.objectContaining({
         command: "account_tx",
         account: validAddress,
-        limit: expect.any(Number) }),
+        limit: expect.any(Number),
+      }),
     );
   });
 

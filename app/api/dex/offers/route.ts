@@ -13,15 +13,11 @@ import {
 } from "@/lib/api";
 import type { CreateOfferRequest, OfferFlag, ApiError } from "@/lib/xrpl/types";
 
-
 export async function POST(request: NextRequest) {
   try {
     const body: CreateOfferRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "takerGets", "takerPays"],
-    );
+    const invalid = validateRequired(body, ["seed", "takerGets", "takerPays"]);
     if (invalid) return invalid;
 
     const badGets = validateDexAmount(body.takerGets, "takerGets");

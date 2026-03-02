@@ -4,7 +4,8 @@ import {
   successTxResult,
   failedTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,14 +14,15 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
-const VALID_DOMAIN_ID =
-  "A".repeat(64);
+const VALID_DOMAIN_ID = "A".repeat(64);
 
 describe("POST /api/domains/create", () => {
   beforeEach(() => {
@@ -34,8 +36,13 @@ describe("POST /api/domains/create", () => {
             {
               CreatedNode: {
                 LedgerEntryType: "PermissionedDomain",
-                LedgerIndex: VALID_DOMAIN_ID } },
-          ] } } });
+                LedgerIndex: VALID_DOMAIN_ID,
+              },
+            },
+          ],
+        },
+      },
+    });
   });
 
   it("returns 400 for missing seed", async () => {
@@ -50,7 +57,8 @@ describe("POST /api/domains/create", () => {
 
   it("returns 400 for missing acceptedCredentials", async () => {
     const req = postRequest("/api/domains/create", {
-      seed: TEST_WALLET.seed });
+      seed: TEST_WALLET.seed,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -62,7 +70,8 @@ describe("POST /api/domains/create", () => {
   it("returns 400 for empty acceptedCredentials array", async () => {
     const req = postRequest("/api/domains/create", {
       seed: TEST_WALLET.seed,
-      acceptedCredentials: [] });
+      acceptedCredentials: [],
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -73,11 +82,13 @@ describe("POST /api/domains/create", () => {
   it("returns 400 for too many credentials (>10)", async () => {
     const creds = Array.from({ length: 11 }, () => ({
       issuer: TEST_WALLET_2.address,
-      credentialType: "KYC" }));
+      credentialType: "KYC",
+    }));
 
     const req = postRequest("/api/domains/create", {
       seed: TEST_WALLET.seed,
-      acceptedCredentials: creds });
+      acceptedCredentials: creds,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -90,7 +101,8 @@ describe("POST /api/domains/create", () => {
       seed: TEST_WALLET.seed,
       acceptedCredentials: [
         { issuer: "not-valid-address", credentialType: "KYC" },
-      ] });
+      ],
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -103,7 +115,8 @@ describe("POST /api/domains/create", () => {
       seed: TEST_WALLET.seed,
       acceptedCredentials: [
         { issuer: TEST_WALLET_2.address, credentialType: "KYC" },
-      ] });
+      ],
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -117,8 +130,11 @@ describe("POST /api/domains/create", () => {
         AcceptedCredentials: expect.arrayContaining([
           expect.objectContaining({
             Credential: expect.objectContaining({
-              Issuer: TEST_WALLET_2.address }) }),
-        ]) }),
+              Issuer: TEST_WALLET_2.address,
+            }),
+          }),
+        ]),
+      }),
       expect.any(Object),
     );
   });
@@ -129,13 +145,15 @@ describe("POST /api/domains/create", () => {
       acceptedCredentials: [
         { issuer: TEST_WALLET_2.address, credentialType: "KYC" },
       ],
-      domainID: VALID_DOMAIN_ID });
+      domainID: VALID_DOMAIN_ID,
+    });
     const res = await POST(req);
 
     expect(res.status).toBe(201);
     expect(mockClient.submitAndWait).toHaveBeenCalledWith(
       expect.objectContaining({
-        DomainID: VALID_DOMAIN_ID }),
+        DomainID: VALID_DOMAIN_ID,
+      }),
       expect.any(Object),
     );
   });
@@ -149,7 +167,8 @@ describe("POST /api/domains/create", () => {
       seed: TEST_WALLET.seed,
       acceptedCredentials: [
         { issuer: TEST_WALLET_2.address, credentialType: "KYC" },
-      ] });
+      ],
+    });
     const res = await POST(req);
     const body = await res.json();
 

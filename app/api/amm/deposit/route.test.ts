@@ -4,7 +4,8 @@ import {
   successTxResult,
   failedTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,9 +14,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -25,7 +28,8 @@ const validBody = {
   asset2: { currency: "USD", issuer: TEST_WALLET_2.address },
   amount: { currency: "XRP", value: "100" },
   amount2: { currency: "USD", issuer: TEST_WALLET_2.address, value: "50" },
-  mode: "two-asset" };
+  mode: "two-asset",
+};
 
 describe("POST /api/amm/deposit", () => {
   beforeEach(() => {
@@ -98,11 +102,14 @@ describe("POST /api/amm/deposit", () => {
     const res = await POST(
       postRequest("/api/amm/deposit", {
         ...noAmount,
-        mode: "two-asset-if-empty" }),
+        mode: "two-asset-if-empty",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toMatch(/amount is required for two-asset-if-empty mode/);
+    expect(body.error).toMatch(
+      /amount is required for two-asset-if-empty mode/,
+    );
   });
 
   it("returns 400 when two-asset-if-empty mode is missing amount2", async () => {
@@ -110,7 +117,8 @@ describe("POST /api/amm/deposit", () => {
     const res = await POST(
       postRequest("/api/amm/deposit", {
         ...noAmount2,
-        mode: "two-asset-if-empty" }),
+        mode: "two-asset-if-empty",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -125,7 +133,8 @@ describe("POST /api/amm/deposit", () => {
         seed: validBody.seed,
         asset: validBody.asset,
         asset2: validBody.asset2,
-        mode: "single-asset" }),
+        mode: "single-asset",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -155,7 +164,8 @@ describe("POST /api/amm/deposit", () => {
         asset: validBody.asset,
         asset2: validBody.asset2,
         amount: validBody.amount,
-        mode: "single-asset" }),
+        mode: "single-asset",
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -175,7 +185,8 @@ describe("POST /api/amm/deposit", () => {
         Asset2: expect.any(Object),
         Flags: expect.any(Number),
         Amount: expect.anything(),
-        Amount2: expect.anything() }),
+        Amount2: expect.anything(),
+      }),
       expect.any(Object),
     );
   });

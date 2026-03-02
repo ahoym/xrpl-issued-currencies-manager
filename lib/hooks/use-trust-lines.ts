@@ -16,8 +16,11 @@ export function useFetchTrustLines(
   network: string,
   refreshKey: number,
 ) {
-  const { data, loading, error, refresh, refetch } =
-    useTrustLinesFetch(address, network, refreshKey);
+  const { data, loading, error, refresh, refetch } = useTrustLinesFetch(
+    address,
+    network,
+    refreshKey,
+  );
 
   return { lines: data, loading, error, refresh, refetch };
 }

@@ -1,7 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import {
-  getRequest,
-  TEST_WALLET } from "@/lib/test-helpers";
+import { getRequest, TEST_WALLET } from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -10,16 +8,19 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { GET } from "./route";
 
 const baseParams = {
   base_currency: "USD",
   base_issuer: TEST_WALLET.address,
-  quote_currency: "XRP" };
+  quote_currency: "XRP",
+};
 
 /** Build a mock amm_info response. Amount order matches base/quote. */
 function mockAmmInfoResponse() {
@@ -30,13 +31,18 @@ function mockAmmInfoResponse() {
         amount: {
           currency: "5553440000000000000000000000000000000000",
           issuer: TEST_WALLET.address,
-          value: "1000" },
+          value: "1000",
+        },
         amount2: "500000000", // 500 XRP in drops
         lp_token: {
           currency: "03A16F2CC3E89C24E0E11DBFC02246A9EFE3B54B",
           issuer: "rAMMAccountXXXXXXXXXXXXXXXXXXX",
-          value: "707.107" },
-        trading_fee: 500 } } };
+          value: "707.107",
+        },
+        trading_fee: 500,
+      },
+    },
+  };
 }
 
 describe("GET /api/amm/info", () => {
@@ -61,7 +67,8 @@ describe("GET /api/amm/info", () => {
     const res = await GET(
       getRequest("/api/amm/info", {
         base_currency: "USD",
-        base_issuer: TEST_WALLET.address }),
+        base_issuer: TEST_WALLET.address,
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -72,7 +79,8 @@ describe("GET /api/amm/info", () => {
     const res = await GET(
       getRequest("/api/amm/info", {
         base_currency: "USD",
-        quote_currency: "XRP" }),
+        quote_currency: "XRP",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -122,9 +130,7 @@ describe("GET /api/amm/info", () => {
   });
 
   it("returns { exists: false } when Account not found error", async () => {
-    mockClient.request.mockRejectedValueOnce(
-      new Error("Account not found"),
-    );
+    mockClient.request.mockRejectedValueOnce(new Error("Account not found"));
 
     const res = await GET(getRequest("/api/amm/info", baseParams));
     expect(res.status).toBe(200);

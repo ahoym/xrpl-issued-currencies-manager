@@ -3,7 +3,8 @@ import {
   getRequest,
   routeParams,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
 import { LSF_ACCEPTED } from "@/lib/xrpl/constants";
 
@@ -14,9 +15,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { GET } from "./route";
 
@@ -41,8 +44,11 @@ describe("GET /api/accounts/[address]/credentials", () => {
             Subject: TEST_WALLET_2.address,
             CredentialType: credTypeHex,
             Flags: LSF_ACCEPTED,
-            Expiration: 780000000 },
-        ] } });
+            Expiration: 780000000,
+          },
+        ],
+      },
+    });
 
     const request = getRequest(
       `/api/accounts/${TEST_WALLET.address}/credentials`,
@@ -60,7 +66,8 @@ describe("GET /api/accounts/[address]/credentials", () => {
       subject: TEST_WALLET_2.address,
       credentialType: "KYC",
       accepted: true,
-      expiration: 780000000 });
+      expiration: 780000000,
+    });
   });
 
   it("decodes URI from hex when present", async () => {
@@ -75,8 +82,11 @@ describe("GET /api/accounts/[address]/credentials", () => {
             Subject: TEST_WALLET_2.address,
             CredentialType: encodeCredentialType("AML"),
             Flags: 0,
-            URI: uriHex },
-        ] } });
+            URI: uriHex,
+          },
+        ],
+      },
+    });
 
     const request = getRequest(
       `/api/accounts/${TEST_WALLET.address}/credentials`,
@@ -98,13 +108,17 @@ describe("GET /api/accounts/[address]/credentials", () => {
             Issuer: TEST_WALLET.address,
             Subject: TEST_WALLET_2.address,
             CredentialType: encodeCredentialType("KYC"),
-            Flags: 0 },
+            Flags: 0,
+          },
           {
             Issuer: TEST_WALLET_2.address,
             Subject: TEST_WALLET.address,
             CredentialType: encodeCredentialType("AML"),
-            Flags: 0 },
-        ] } });
+            Flags: 0,
+          },
+        ],
+      },
+    });
 
     const request = getRequest(
       `/api/accounts/${TEST_WALLET.address}/credentials`,
@@ -127,13 +141,17 @@ describe("GET /api/accounts/[address]/credentials", () => {
             Issuer: TEST_WALLET.address,
             Subject: TEST_WALLET_2.address,
             CredentialType: encodeCredentialType("KYC"),
-            Flags: 0 },
+            Flags: 0,
+          },
           {
             Issuer: TEST_WALLET_2.address,
             Subject: TEST_WALLET.address,
             CredentialType: encodeCredentialType("AML"),
-            Flags: 0 },
-        ] } });
+            Flags: 0,
+          },
+        ],
+      },
+    });
 
     const request = getRequest(
       `/api/accounts/${TEST_WALLET.address}/credentials`,

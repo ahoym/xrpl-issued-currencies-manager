@@ -4,7 +4,8 @@ import {
   successTxResult,
   failedTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,16 +14,19 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
 const validBody = {
   seed: TEST_WALLET.seed!,
   takerGets: { currency: "XRP", value: "100" },
-  takerPays: { currency: "USD", issuer: TEST_WALLET_2.address, value: "50" } };
+  takerPays: { currency: "USD", issuer: TEST_WALLET_2.address, value: "50" },
+};
 
 describe("POST /api/dex/offers", () => {
   beforeEach(() => {
@@ -35,7 +39,10 @@ describe("POST /api/dex/offers", () => {
 
   it("returns 400 when seed is missing", async () => {
     const res = await POST(
-      postRequest("/api/dex/offers", { takerGets: validBody.takerGets, takerPays: validBody.takerPays }),
+      postRequest("/api/dex/offers", {
+        takerGets: validBody.takerGets,
+        takerPays: validBody.takerPays,
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -44,7 +51,10 @@ describe("POST /api/dex/offers", () => {
 
   it("returns 400 when takerGets is missing", async () => {
     const res = await POST(
-      postRequest("/api/dex/offers", { seed: validBody.seed, takerPays: validBody.takerPays }),
+      postRequest("/api/dex/offers", {
+        seed: validBody.seed,
+        takerPays: validBody.takerPays,
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -53,7 +63,10 @@ describe("POST /api/dex/offers", () => {
 
   it("returns 400 when takerPays is missing", async () => {
     const res = await POST(
-      postRequest("/api/dex/offers", { seed: validBody.seed, takerGets: validBody.takerGets }),
+      postRequest("/api/dex/offers", {
+        seed: validBody.seed,
+        takerGets: validBody.takerGets,
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -64,7 +77,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerGets: { value: "100" } }),
+        takerGets: { value: "100" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -75,7 +89,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerGets: { currency: "XRP" } }),
+        takerGets: { currency: "XRP" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -86,7 +101,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerPays: { value: "50" } }),
+        takerPays: { value: "50" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -97,7 +113,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerGets: { currency: "USD", value: "100" } }),
+        takerGets: { currency: "USD", value: "100" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -108,7 +125,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerPays: { currency: "EUR", value: "50" } }),
+        takerPays: { currency: "EUR", value: "50" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -119,7 +137,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerGets: { currency: "USD", issuer: "notAnAddress", value: "100" } }),
+        takerGets: { currency: "USD", issuer: "notAnAddress", value: "100" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -130,7 +149,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerPays: { currency: "USD", issuer: "notAnAddress", value: "50" } }),
+        takerPays: { currency: "USD", issuer: "notAnAddress", value: "50" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -141,7 +161,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerGets: { currency: "XRP", value: "0" } }),
+        takerGets: { currency: "XRP", value: "0" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -152,7 +173,12 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        takerPays: { currency: "USD", issuer: TEST_WALLET_2.address, value: "-1" } }),
+        takerPays: {
+          currency: "USD",
+          issuer: TEST_WALLET_2.address,
+          value: "-1",
+        },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -199,7 +225,8 @@ describe("POST /api/dex/offers", () => {
     const res = await POST(
       postRequest("/api/dex/offers", {
         ...validBody,
-        flags: ["badFlag"] }),
+        flags: ["badFlag"],
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();

@@ -229,9 +229,7 @@ export function AmmDepositModal({
         )}
 
         {error && <p className={errorTextClass}>{error}</p>}
-        {success && (
-          <p className={successBannerClass}>Deposit successful!</p>
-        )}
+        {success && <p className={successBannerClass}>Deposit successful!</p>}
 
         <button
           onClick={handleSubmit}

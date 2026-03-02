@@ -37,14 +37,30 @@ function makeTx(overrides: Record<string, unknown> = {}) {
 
 describe("parseFilledOrders", () => {
   it("returns empty array for no transactions", () => {
-    const result = parseFilledOrders([], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result).toEqual([]);
   });
 
   it("skips non-OfferCreate transactions", () => {
     mockGetBalanceChanges.mockReturnValue([]);
     const tx = makeTx({ TransactionType: "Payment" });
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result).toEqual([]);
   });
 
@@ -52,14 +68,30 @@ describe("parseFilledOrders", () => {
     mockGetBalanceChanges.mockReturnValue([]);
     const tx = makeTx();
     tx.meta.TransactionResult = "tecUNFUNDED";
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result).toEqual([]);
   });
 
   it("skips transactions from other accounts", () => {
     mockGetBalanceChanges.mockReturnValue([]);
     const tx = makeTx({ Account: "rOtherAccount123456789012345" });
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result).toEqual([]);
   });
 
@@ -136,14 +168,20 @@ describe("parseFilledOrders", () => {
     mockGetBalanceChanges.mockReturnValue([
       {
         account: ISSUER,
-        balances: [
-          { currency: "USD", issuer: ISSUER, value: "100" },
-        ],
+        balances: [{ currency: "USD", issuer: ISSUER, value: "100" }],
       },
     ]);
 
     const tx = makeTx();
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result).toEqual([]);
   });
 
@@ -158,7 +196,15 @@ describe("parseFilledOrders", () => {
     ]);
 
     const tx = makeTx();
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result).toEqual([]);
   });
 
@@ -174,7 +220,15 @@ describe("parseFilledOrders", () => {
     ]);
 
     const txs = Array.from({ length: 5 }, () => makeTx());
-    const result = parseFilledOrders(txs, WALLET, "XRP", undefined, "USD", ISSUER, 2);
+    const result = parseFilledOrders(
+      txs,
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      2,
+    );
     expect(result).toHaveLength(2);
   });
 
@@ -191,7 +245,15 @@ describe("parseFilledOrders", () => {
     ]);
 
     const tx = makeTx({ Fee: String(fee) });
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
 
     expect(result).toHaveLength(1);
     // The fee should have been subtracted from the XRP amount
@@ -232,7 +294,15 @@ describe("parseFilledOrders", () => {
     delete (tx as Record<string, unknown>).close_time_iso;
     (tx as Record<string, unknown>).date = "2024-06-15T12:00:00Z";
 
-    const result = parseFilledOrders([tx], WALLET, "XRP", undefined, "USD", ISSUER, 10);
+    const result = parseFilledOrders(
+      [tx],
+      WALLET,
+      "XRP",
+      undefined,
+      "USD",
+      ISSUER,
+      10,
+    );
     expect(result[0].time).toBe("2024-06-15T12:00:00Z");
   });
 });

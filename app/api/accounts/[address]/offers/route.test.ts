@@ -52,9 +52,7 @@ describe("GET /api/accounts/[address]/offers", () => {
       },
     });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/offers`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/offers`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -77,10 +75,9 @@ describe("GET /api/accounts/[address]/offers", () => {
   });
 
   it("returns 400 for empty marker", async () => {
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/offers`,
-      { marker: "" },
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/offers`, {
+      marker: "",
+    });
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -92,10 +89,9 @@ describe("GET /api/accounts/[address]/offers", () => {
 
   it("returns 400 for marker exceeding 256 characters", async () => {
     const longMarker = "A".repeat(257);
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/offers`,
-      { marker: longMarker },
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/offers`, {
+      marker: longMarker,
+    });
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -114,9 +110,7 @@ describe("GET /api/accounts/[address]/offers", () => {
       },
     });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/offers`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/offers`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -146,9 +140,7 @@ describe("GET /api/accounts/[address]/offers", () => {
       },
     });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/offers`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/offers`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -160,9 +152,7 @@ describe("GET /api/accounts/[address]/offers", () => {
   it("returns 404 when account is not found", async () => {
     mockClient.request.mockRejectedValue(new Error("actNotFound"));
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/offers`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/offers`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),

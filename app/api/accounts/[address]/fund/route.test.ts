@@ -1,9 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import {
-  postRequest,
-  routeParams,
-  TEST_WALLET,
-} from "@/lib/test-helpers";
+import { postRequest, routeParams, TEST_WALLET } from "@/lib/test-helpers";
 
 // The fund route uses fetch() to call the faucet directly (no getClient)
 // We need to mock global fetch
@@ -36,10 +32,7 @@ describe("POST /api/accounts/[address]/fund", () => {
     });
 
     const req = postRequest(`/api/accounts/${TEST_WALLET.address}/fund`, {});
-    const res = await POST(
-      req,
-      routeParams({ address: TEST_WALLET.address }),
-    );
+    const res = await POST(req, routeParams({ address: TEST_WALLET.address }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -55,10 +48,7 @@ describe("POST /api/accounts/[address]/fund", () => {
     });
 
     const req = postRequest(`/api/accounts/${TEST_WALLET.address}/fund`, {});
-    const res = await POST(
-      req,
-      routeParams({ address: TEST_WALLET.address }),
-    );
+    const res = await POST(req, routeParams({ address: TEST_WALLET.address }));
     const body = await res.json();
 
     expect(res.status).toBe(502);

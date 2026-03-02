@@ -47,10 +47,9 @@ export function walletFromSeed(seed: string): Wallet | Response {
   try {
     return Wallet.fromSeed(seed);
   } catch {
-    return Response.json(
-      { error: "Invalid seed format" } satisfies ApiError,
-      { status: 400 },
-    );
+    return Response.json({ error: "Invalid seed format" } satisfies ApiError, {
+      status: 400,
+    });
   }
 }
 
@@ -308,9 +307,8 @@ export function extractCreatedLedgerIndex(
   if (typeof meta !== "object" || meta === null || !("AffectedNodes" in meta)) {
     return undefined;
   }
-  const nodes = (
-    meta as { AffectedNodes: Array<Record<string, unknown>> }
-  ).AffectedNodes;
+  const nodes = (meta as { AffectedNodes: Array<Record<string, unknown>> })
+    .AffectedNodes;
   for (const node of nodes) {
     if ("CreatedNode" in node) {
       const created = node.CreatedNode as {

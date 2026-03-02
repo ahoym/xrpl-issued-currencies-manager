@@ -15,10 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: DeleteDomainRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "domainID"],
-    );
+    const invalid = validateRequired(body, ["seed", "domainID"]);
     if (invalid) return invalid;
 
     const wallet = walletFromSeed(body.seed);

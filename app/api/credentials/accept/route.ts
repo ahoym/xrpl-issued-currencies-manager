@@ -17,10 +17,11 @@ export async function POST(request: NextRequest) {
   try {
     const body: AcceptCredentialRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "issuer", "credentialType"],
-    );
+    const invalid = validateRequired(body, [
+      "seed",
+      "issuer",
+      "credentialType",
+    ]);
     if (invalid) return invalid;
 
     const wallet = walletFromSeed(body.seed);

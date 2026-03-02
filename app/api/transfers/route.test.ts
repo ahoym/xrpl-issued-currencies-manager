@@ -5,7 +5,8 @@ import {
   failedTxResult,
   TEST_WALLET,
   TEST_WALLET_2,
-  TEST_WALLET_3 } from "@/lib/test-helpers";
+  TEST_WALLET_3,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -14,9 +15,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -28,7 +31,8 @@ describe("POST /api/transfers", () => {
 
   it("returns 400 for missing required fields", async () => {
     const req = postRequest("/api/transfers", {
-      senderSeed: TEST_WALLET.seed });
+      senderSeed: TEST_WALLET.seed,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -41,7 +45,8 @@ describe("POST /api/transfers", () => {
       senderSeed: TEST_WALLET.seed,
       recipientAddress: "invalid",
       currencyCode: "XRP",
-      amount: "10" });
+      amount: "10",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -54,7 +59,8 @@ describe("POST /api/transfers", () => {
       senderSeed: TEST_WALLET.seed,
       recipientAddress: TEST_WALLET_2.address,
       currencyCode: "USD",
-      amount: "100" });
+      amount: "100",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -67,7 +73,8 @@ describe("POST /api/transfers", () => {
       senderSeed: TEST_WALLET.seed,
       recipientAddress: TEST_WALLET_2.address,
       currencyCode: "XRP",
-      amount: "10" });
+      amount: "10",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -77,7 +84,8 @@ describe("POST /api/transfers", () => {
       expect.objectContaining({
         TransactionType: "Payment",
         Account: TEST_WALLET.address,
-        Destination: TEST_WALLET_2.address }),
+        Destination: TEST_WALLET_2.address,
+      }),
       expect.any(Object),
     );
   });
@@ -88,7 +96,8 @@ describe("POST /api/transfers", () => {
       recipientAddress: TEST_WALLET_2.address,
       currencyCode: "USD",
       amount: "100",
-      issuerAddress: TEST_WALLET_3.address });
+      issuerAddress: TEST_WALLET_3.address,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -97,15 +106,14 @@ describe("POST /api/transfers", () => {
   });
 
   it("returns 400 with friendly message on tecPATH_DRY", async () => {
-    mockClient.submitAndWait.mockResolvedValue(
-      failedTxResult("tecPATH_DRY"),
-    );
+    mockClient.submitAndWait.mockResolvedValue(failedTxResult("tecPATH_DRY"));
 
     const req = postRequest("/api/transfers", {
       senderSeed: TEST_WALLET.seed,
       recipientAddress: TEST_WALLET_2.address,
       currencyCode: "XRP",
-      amount: "10" });
+      amount: "10",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -124,7 +132,8 @@ describe("POST /api/transfers", () => {
       senderSeed: TEST_WALLET.seed,
       recipientAddress: TEST_WALLET_2.address,
       currencyCode: "XRP",
-      amount: "10" });
+      amount: "10",
+    });
     const res = await POST(req);
     const body = await res.json();
 

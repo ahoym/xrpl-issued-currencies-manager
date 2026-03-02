@@ -14,10 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: CancelOfferRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed"],
-    );
+    const invalid = validateRequired(body, ["seed"]);
     if (invalid) return invalid;
 
     if (body.offerSequence === undefined) {

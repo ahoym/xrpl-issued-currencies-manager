@@ -69,9 +69,7 @@ export function useFormSubmit<
         const data = await res.json();
 
         if (!res.ok) {
-          setError(
-            data.error ?? options?.errorFallback ?? "Request failed",
-          );
+          setError(data.error ?? options?.errorFallback ?? "Request failed");
           return null;
         }
 

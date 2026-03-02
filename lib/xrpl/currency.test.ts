@@ -67,9 +67,9 @@ describe("decodeCurrency", () => {
 
   it("returns 'LP Token' for LP token currency codes", () => {
     // LP tokens start with 03
-    expect(
-      decodeCurrency("03A7B5D51F6F25E13E2A1B0E6FFD8E47C1C0B200"),
-    ).toBe("LP Token");
+    expect(decodeCurrency("03A7B5D51F6F25E13E2A1B0E6FFD8E47C1C0B200")).toBe(
+      "LP Token",
+    );
   });
 
   it("returns original code for non-decodable hex", () => {
@@ -115,9 +115,9 @@ describe("toXrplAmount", () => {
   });
 
   it("throws when issuer is missing for non-XRP", () => {
-    expect(() =>
-      toXrplAmount({ currency: "USD", value: "10" }),
-    ).toThrow("issuer is required");
+    expect(() => toXrplAmount({ currency: "USD", value: "10" })).toThrow(
+      "issuer is required",
+    );
   });
 });
 

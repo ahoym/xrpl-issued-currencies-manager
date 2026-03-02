@@ -18,9 +18,7 @@ export const TEST_WALLET_3 = Wallet.generate();
 // Mock XRPL client factory
 // ---------------------------------------------------------------------------
 
-export function createMockClient(
-  overrides: Record<string, unknown> = {},
-) {
+export function createMockClient(overrides: Record<string, unknown> = {}) {
   return {
     request: vi.fn(),
     submitAndWait: vi.fn(),

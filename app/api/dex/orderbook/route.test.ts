@@ -1,7 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import {
-  getRequest,
-  TEST_WALLET } from "@/lib/test-helpers";
+import { getRequest, TEST_WALLET } from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -10,9 +8,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 // Mock the xrpl Client constructor (used for mainnet fallback path)
 vi.mock("xrpl", async (importOriginal) => {
@@ -25,7 +25,8 @@ import { GET } from "./route";
 const baseParams = {
   base_currency: "USD",
   base_issuer: TEST_WALLET.address,
-  quote_currency: "XRP" };
+  quote_currency: "XRP",
+};
 
 describe("GET /api/dex/orderbook", () => {
   beforeEach(() => {
@@ -49,7 +50,8 @@ describe("GET /api/dex/orderbook", () => {
     const res = await GET(
       getRequest("/api/dex/orderbook", {
         base_currency: "USD",
-        base_issuer: TEST_WALLET.address }),
+        base_issuer: TEST_WALLET.address,
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -60,7 +62,8 @@ describe("GET /api/dex/orderbook", () => {
     const res = await GET(
       getRequest("/api/dex/orderbook", {
         base_currency: "USD",
-        quote_currency: "XRP" }),
+        quote_currency: "XRP",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -71,7 +74,8 @@ describe("GET /api/dex/orderbook", () => {
     const res = await GET(
       getRequest("/api/dex/orderbook", {
         ...baseParams,
-        domain: "not-a-valid-hex" }),
+        domain: "not-a-valid-hex",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -85,14 +89,16 @@ describe("GET /api/dex/orderbook", () => {
   it("returns order book data on success", async () => {
     mockClient.getOrderbook.mockResolvedValueOnce({
       buy: [],
-      sell: [] });
+      sell: [],
+    });
 
     const res = await GET(getRequest("/api/dex/orderbook", baseParams));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.base).toEqual({
       currency: "USD",
-      issuer: TEST_WALLET.address });
+      issuer: TEST_WALLET.address,
+    });
     expect(body.quote).toEqual({ currency: "XRP", issuer: undefined });
     expect(body.buy).toEqual([]);
     expect(body.sell).toEqual([]);
@@ -119,12 +125,14 @@ describe("GET /api/dex/orderbook", () => {
   it("returns order book data via book_offers when domain is provided", async () => {
     const validDomain = "A".repeat(64);
     mockClient.request.mockResolvedValue({
-      result: { offers: [] } });
+      result: { offers: [] },
+    });
 
     const res = await GET(
       getRequest("/api/dex/orderbook", {
         ...baseParams,
-        domain: validDomain }),
+        domain: validDomain,
+      }),
     );
     expect(res.status).toBe(200);
     const body = await res.json();

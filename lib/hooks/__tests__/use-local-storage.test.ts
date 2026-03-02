@@ -9,9 +9,7 @@ describe("useLocalStorage", () => {
   });
 
   it("returns initial value when nothing stored", () => {
-    const { result } = renderHook(() =>
-      useLocalStorage("test-key", "default"),
-    );
+    const { result } = renderHook(() => useLocalStorage("test-key", "default"));
 
     expect(result.current.value).toBe("default");
   });
@@ -19,9 +17,7 @@ describe("useLocalStorage", () => {
   it("hydrates from localStorage on mount", async () => {
     localStorage.setItem("test-key", JSON.stringify("stored-value"));
 
-    const { result } = renderHook(() =>
-      useLocalStorage("test-key", "default"),
-    );
+    const { result } = renderHook(() => useLocalStorage("test-key", "default"));
 
     // After hydration effect runs
     await vi.waitFor(() => {
@@ -31,9 +27,7 @@ describe("useLocalStorage", () => {
   });
 
   it("persists value to localStorage on set", () => {
-    const { result } = renderHook(() =>
-      useLocalStorage("test-key", "default"),
-    );
+    const { result } = renderHook(() => useLocalStorage("test-key", "default"));
 
     act(() => {
       result.current.set("new-value");
@@ -56,9 +50,7 @@ describe("useLocalStorage", () => {
 
   it("stores complex objects", () => {
     const initial = { items: [] as string[], count: 0 };
-    const { result } = renderHook(() =>
-      useLocalStorage("obj-key", initial),
-    );
+    const { result } = renderHook(() => useLocalStorage("obj-key", initial));
 
     const updated = { items: ["a", "b"], count: 2 };
     act(() => {
@@ -72,9 +64,7 @@ describe("useLocalStorage", () => {
   it("removes value and resets to initial", () => {
     localStorage.setItem("test-key", JSON.stringify("stored"));
 
-    const { result } = renderHook(() =>
-      useLocalStorage("test-key", "default"),
-    );
+    const { result } = renderHook(() => useLocalStorage("test-key", "default"));
 
     act(() => {
       result.current.remove();
@@ -103,17 +93,13 @@ describe("useLocalStorage", () => {
   it("returns initial value when stored JSON is corrupt", () => {
     localStorage.setItem("bad-key", "not-json{{{");
 
-    const { result } = renderHook(() =>
-      useLocalStorage("bad-key", "fallback"),
-    );
+    const { result } = renderHook(() => useLocalStorage("bad-key", "fallback"));
 
     expect(result.current.value).toBe("fallback");
   });
 
   it("sets hydrated to true after mount", async () => {
-    const { result } = renderHook(() =>
-      useLocalStorage("test-key", "default"),
-    );
+    const { result } = renderHook(() => useLocalStorage("test-key", "default"));
 
     await vi.waitFor(() => {
       expect(result.current.hydrated).toBe(true);

@@ -46,7 +46,11 @@ export function AmmWithdrawModal({
   const [singleAmount, setSingleAmount] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { submitting: loading, error, submit } = useFormSubmit<WithdrawResponse>();
+  const {
+    submitting: loading,
+    error,
+    submit,
+  } = useFormSubmit<WithdrawResponse>();
 
   const selectedCurrency =
     selectedAsset === "base" ? baseCurrency.currency : quoteCurrency.currency;

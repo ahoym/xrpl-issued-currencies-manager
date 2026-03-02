@@ -3,7 +3,8 @@ import {
   postRequest,
   successTxResult,
   failedTxResult,
-  TEST_WALLET } from "@/lib/test-helpers";
+  TEST_WALLET,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -12,9 +13,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -40,7 +43,8 @@ describe("POST /api/domains/delete", () => {
   it("returns 400 for invalid domainID format (not 64-char hex)", async () => {
     const req = postRequest("/api/domains/delete", {
       seed: TEST_WALLET.seed,
-      domainID: "too-short" });
+      domainID: "too-short",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -63,7 +67,8 @@ describe("POST /api/domains/delete", () => {
   it("returns 400 for invalid seed", async () => {
     const req = postRequest("/api/domains/delete", {
       seed: "bad-seed",
-      domainID: VALID_DOMAIN_ID });
+      domainID: VALID_DOMAIN_ID,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -74,7 +79,8 @@ describe("POST /api/domains/delete", () => {
   it("returns 201 on success", async () => {
     const req = postRequest("/api/domains/delete", {
       seed: TEST_WALLET.seed,
-      domainID: VALID_DOMAIN_ID });
+      domainID: VALID_DOMAIN_ID,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -84,19 +90,19 @@ describe("POST /api/domains/delete", () => {
       expect.objectContaining({
         TransactionType: "PermissionedDomainDelete",
         Account: TEST_WALLET.address,
-        DomainID: VALID_DOMAIN_ID }),
+        DomainID: VALID_DOMAIN_ID,
+      }),
       expect.any(Object),
     );
   });
 
   it("returns 422 on transaction failure", async () => {
-    mockClient.submitAndWait.mockResolvedValue(
-      failedTxResult("tecNO_ENTRY"),
-    );
+    mockClient.submitAndWait.mockResolvedValue(failedTxResult("tecNO_ENTRY"));
 
     const req = postRequest("/api/domains/delete", {
       seed: TEST_WALLET.seed,
-      domainID: VALID_DOMAIN_ID });
+      domainID: VALID_DOMAIN_ID,
+    });
     const res = await POST(req);
     const body = await res.json();
 

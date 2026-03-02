@@ -4,7 +4,8 @@ import {
   successTxResult,
   routeParams,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,9 +14,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -24,12 +27,14 @@ describe("POST /api/accounts/[address]/rippling", () => {
     vi.clearAllMocks();
     mockClient.submitAndWait.mockResolvedValue(successTxResult());
     mockClient.request.mockResolvedValue({
-      result: { lines: [] } });
+      result: { lines: [] },
+    });
   });
 
   it("returns 400 for invalid address", async () => {
     const req = postRequest("/api/accounts/bad-address/rippling", {
-      seed: TEST_WALLET.seed });
+      seed: TEST_WALLET.seed,
+    });
     const res = await POST(req, routeParams({ address: "bad-address" }));
     const body = await res.json();
 
@@ -42,10 +47,7 @@ describe("POST /api/accounts/[address]/rippling", () => {
       `/api/accounts/${TEST_WALLET.address}/rippling`,
       {},
     );
-    const res = await POST(
-      req,
-      routeParams({ address: TEST_WALLET.address }),
-    );
+    const res = await POST(req, routeParams({ address: TEST_WALLET.address }));
     const body = await res.json();
 
     expect(res.status).toBe(400);
@@ -54,14 +56,10 @@ describe("POST /api/accounts/[address]/rippling", () => {
   });
 
   it("returns 200 on success with no trust lines to repair", async () => {
-    const req = postRequest(
-      `/api/accounts/${TEST_WALLET.address}/rippling`,
-      { seed: TEST_WALLET.seed },
-    );
-    const res = await POST(
-      req,
-      routeParams({ address: TEST_WALLET.address }),
-    );
+    const req = postRequest(`/api/accounts/${TEST_WALLET.address}/rippling`, {
+      seed: TEST_WALLET.seed,
+    });
+    const res = await POST(req, routeParams({ address: TEST_WALLET.address }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -69,7 +67,8 @@ describe("POST /api/accounts/[address]/rippling", () => {
     expect(body.result.trustLinesUpdated).toBe(0);
     expect(mockClient.submitAndWait).toHaveBeenCalledWith(
       expect.objectContaining({
-        TransactionType: "AccountSet" }),
+        TransactionType: "AccountSet",
+      }),
       expect.any(Object),
     );
   });
@@ -82,17 +81,16 @@ describe("POST /api/accounts/[address]/rippling", () => {
             account: TEST_WALLET_2.address,
             currency: "USD",
             limit: "1000",
-            no_ripple: true },
-        ] } });
+            no_ripple: true,
+          },
+        ],
+      },
+    });
 
-    const req = postRequest(
-      `/api/accounts/${TEST_WALLET.address}/rippling`,
-      { seed: TEST_WALLET.seed },
-    );
-    const res = await POST(
-      req,
-      routeParams({ address: TEST_WALLET.address }),
-    );
+    const req = postRequest(`/api/accounts/${TEST_WALLET.address}/rippling`, {
+      seed: TEST_WALLET.seed,
+    });
+    const res = await POST(req, routeParams({ address: TEST_WALLET.address }));
     const body = await res.json();
 
     expect(res.status).toBe(200);

@@ -2,7 +2,8 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   postRequest,
   successTxResult,
-  failedTxResult } from "@/lib/test-helpers";
+  failedTxResult,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -11,9 +12,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -47,7 +50,8 @@ describe("POST /api/accounts/generate", () => {
     expect(mockClient.submitAndWait).toHaveBeenCalledWith(
       expect.objectContaining({
         TransactionType: "AccountSet",
-        SetFlag: expect.any(Number) }),
+        SetFlag: expect.any(Number),
+      }),
       expect.objectContaining({ wallet: expect.any(Object) }),
     );
   });
@@ -61,9 +65,7 @@ describe("POST /api/accounts/generate", () => {
   });
 
   it("returns 422 when DefaultRipple transaction fails", async () => {
-    mockClient.submitAndWait.mockResolvedValue(
-      failedTxResult("tecINTERNAL"),
-    );
+    mockClient.submitAndWait.mockResolvedValue(failedTxResult("tecINTERNAL"));
     const req = postRequest("/api/accounts/generate", { isIssuer: true });
     const res = await POST(req);
     const body = await res.json();

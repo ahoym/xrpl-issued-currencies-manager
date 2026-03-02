@@ -8,8 +8,7 @@ export const AMM_CREATE_ERRORS: Record<string, string> = {
   tecAMM_UNFUNDED: "Insufficient balance to fund the pool.",
   tecFROZEN: "Cannot create pool: one or both currencies are frozen.",
   tecNO_AUTH: "You are not authorized to hold one of the pool assets.",
-  tecNO_LINE:
-    "You need a trust line for both assets before creating a pool.",
+  tecNO_LINE: "You need a trust line for both assets before creating a pool.",
   tecNO_PERMISSION:
     "One of the selected currencies cannot be used in an AMM pool.",
   tecAMM_INVALID_TOKENS:
@@ -22,8 +21,7 @@ export const AMM_CREATE_ERRORS: Record<string, string> = {
 };
 
 export const AMM_DEPOSIT_ERRORS: Record<string, string> = {
-  tecAMM_EMPTY:
-    "This pool is empty. Use two-asset-if-empty mode to refund it.",
+  tecAMM_EMPTY: "This pool is empty. Use two-asset-if-empty mode to refund it.",
   tecAMM_NOT_EMPTY:
     "This pool already has assets. Use a standard deposit instead.",
   tecAMM_FAILED:
@@ -45,8 +43,7 @@ export const AMM_WITHDRAW_ERRORS: Record<string, string> = {
   tecAMM_INVALID_TOKENS: "Withdrawal amount is too small to process.",
   tecFROZEN: "Cannot withdraw: this currency is frozen by its issuer.",
   tecINSUF_RESERVE_LINE: "Not enough XRP reserve for this withdrawal.",
-  tecNO_AUTH:
-    "You are not authorized to hold one of the withdrawn assets.",
+  tecNO_AUTH: "You are not authorized to hold one of the withdrawn assets.",
   temBAD_AMM_TOKENS: "Invalid LP token specification.",
   terNO_AMM: "No AMM pool exists for this currency pair.",
 };

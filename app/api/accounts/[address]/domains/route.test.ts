@@ -3,7 +3,8 @@ import {
   getRequest,
   routeParams,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 import { encodeCredentialType } from "@/lib/xrpl/credentials";
 
 const mockClient = vi.hoisted(() => ({
@@ -13,9 +14,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { GET } from "./route";
 
@@ -44,14 +47,17 @@ describe("GET /api/accounts/[address]/domains", () => {
               {
                 Credential: {
                   Issuer: TEST_WALLET_2.address,
-                  CredentialType: credTypeHex } },
+                  CredentialType: credTypeHex,
+                },
+              },
             ],
-            Sequence: 42 },
-        ] } });
+            Sequence: 42,
+          },
+        ],
+      },
+    });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/domains`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/domains`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -66,9 +72,11 @@ describe("GET /api/accounts/[address]/domains", () => {
       acceptedCredentials: [
         {
           issuer: TEST_WALLET_2.address,
-          credentialType: "KYC" },
+          credentialType: "KYC",
+        },
       ],
-      sequence: 42 });
+      sequence: 42,
+    });
   });
 
   it("uses address as owner when Owner field is absent", async () => {
@@ -82,14 +90,17 @@ describe("GET /api/accounts/[address]/domains", () => {
               {
                 Credential: {
                   Issuer: TEST_WALLET_2.address,
-                  CredentialType: encodeCredentialType("AML") } },
+                  CredentialType: encodeCredentialType("AML"),
+                },
+              },
             ],
-            Sequence: 1 },
-        ] } });
+            Sequence: 1,
+          },
+        ],
+      },
+    });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/domains`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/domains`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -100,11 +111,10 @@ describe("GET /api/accounts/[address]/domains", () => {
 
   it("returns empty domains array when none exist", async () => {
     mockClient.request.mockResolvedValue({
-      result: { account_objects: [] } });
+      result: { account_objects: [] },
+    });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/domains`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/domains`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -116,9 +126,7 @@ describe("GET /api/accounts/[address]/domains", () => {
   it("returns 404 when account is not found", async () => {
     mockClient.request.mockRejectedValue(new Error("actNotFound"));
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/domains`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/domains`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),

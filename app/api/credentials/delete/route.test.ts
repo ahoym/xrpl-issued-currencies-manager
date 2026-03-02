@@ -4,7 +4,8 @@ import {
   successTxResult,
   failedTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,9 +14,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -39,7 +42,8 @@ describe("POST /api/credentials/delete", () => {
   it("returns 400 when neither subject nor issuer is provided", async () => {
     const req = postRequest("/api/credentials/delete", {
       seed: TEST_WALLET.seed,
-      credentialType: "KYC" });
+      credentialType: "KYC",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -51,7 +55,8 @@ describe("POST /api/credentials/delete", () => {
     const req = postRequest("/api/credentials/delete", {
       seed: "bad-seed",
       credentialType: "KYC",
-      subject: TEST_WALLET_2.address });
+      subject: TEST_WALLET_2.address,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -63,7 +68,8 @@ describe("POST /api/credentials/delete", () => {
     const req = postRequest("/api/credentials/delete", {
       seed: TEST_WALLET.seed,
       credentialType: "KYC",
-      subject: TEST_WALLET_2.address });
+      subject: TEST_WALLET_2.address,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -73,7 +79,8 @@ describe("POST /api/credentials/delete", () => {
       expect.objectContaining({
         TransactionType: "CredentialDelete",
         Account: TEST_WALLET.address,
-        Subject: TEST_WALLET_2.address }),
+        Subject: TEST_WALLET_2.address,
+      }),
       expect.any(Object),
     );
   });
@@ -82,7 +89,8 @@ describe("POST /api/credentials/delete", () => {
     const req = postRequest("/api/credentials/delete", {
       seed: TEST_WALLET.seed,
       credentialType: "KYC",
-      issuer: TEST_WALLET_2.address });
+      issuer: TEST_WALLET_2.address,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -92,20 +100,20 @@ describe("POST /api/credentials/delete", () => {
       expect.objectContaining({
         TransactionType: "CredentialDelete",
         Account: TEST_WALLET.address,
-        Issuer: TEST_WALLET_2.address }),
+        Issuer: TEST_WALLET_2.address,
+      }),
       expect.any(Object),
     );
   });
 
   it("returns 422 on transaction failure", async () => {
-    mockClient.submitAndWait.mockResolvedValue(
-      failedTxResult("tecNO_ENTRY"),
-    );
+    mockClient.submitAndWait.mockResolvedValue(failedTxResult("tecNO_ENTRY"));
 
     const req = postRequest("/api/credentials/delete", {
       seed: TEST_WALLET.seed,
       credentialType: "KYC",
-      subject: TEST_WALLET_2.address });
+      subject: TEST_WALLET_2.address,
+    });
     const res = await POST(req);
     const body = await res.json();
 

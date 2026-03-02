@@ -57,9 +57,7 @@ describe("GET /api/accounts/[address]/balances", () => {
       return Promise.reject(new Error(`unexpected command: ${req.command}`));
     });
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/balances`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/balances`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),
@@ -84,9 +82,7 @@ describe("GET /api/accounts/[address]/balances", () => {
   it("returns 404 when account is not found", async () => {
     mockClient.request.mockRejectedValue(new Error("actNotFound"));
 
-    const request = getRequest(
-      `/api/accounts/${TEST_WALLET.address}/balances`,
-    );
+    const request = getRequest(`/api/accounts/${TEST_WALLET.address}/balances`);
     const response = await GET(
       request,
       routeParams({ address: TEST_WALLET.address }),

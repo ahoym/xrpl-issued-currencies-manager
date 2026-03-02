@@ -3,7 +3,8 @@ import {
   postRequest,
   successTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -12,9 +13,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -26,7 +29,8 @@ describe("POST /api/credentials/create", () => {
 
   it("returns 400 for missing required fields", async () => {
     const req = postRequest("/api/credentials/create", {
-      seed: TEST_WALLET.seed });
+      seed: TEST_WALLET.seed,
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -40,7 +44,8 @@ describe("POST /api/credentials/create", () => {
     const req = postRequest("/api/credentials/create", {
       seed: TEST_WALLET.seed,
       subject: "not-valid",
-      credentialType: "KYC" });
+      credentialType: "KYC",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -52,7 +57,8 @@ describe("POST /api/credentials/create", () => {
     const req = postRequest("/api/credentials/create", {
       seed: TEST_WALLET.seed,
       subject: TEST_WALLET_2.address,
-      credentialType: "x".repeat(129) });
+      credentialType: "x".repeat(129),
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -64,7 +70,8 @@ describe("POST /api/credentials/create", () => {
     const req = postRequest("/api/credentials/create", {
       seed: TEST_WALLET.seed,
       subject: TEST_WALLET_2.address,
-      credentialType: "KYC" });
+      credentialType: "KYC",
+    });
     const res = await POST(req);
     const body = await res.json();
 
@@ -74,7 +81,8 @@ describe("POST /api/credentials/create", () => {
       expect.objectContaining({
         TransactionType: "CredentialCreate",
         Account: TEST_WALLET.address,
-        Subject: TEST_WALLET_2.address }),
+        Subject: TEST_WALLET_2.address,
+      }),
       expect.any(Object),
     );
   });
@@ -85,7 +93,8 @@ describe("POST /api/credentials/create", () => {
       subject: TEST_WALLET_2.address,
       credentialType: "KYC",
       expiration: 800000000,
-      uri: "https://example.com" });
+      uri: "https://example.com",
+    });
     const res = await POST(req);
 
     expect(res.status).toBe(201);
@@ -93,7 +102,8 @@ describe("POST /api/credentials/create", () => {
       expect.objectContaining({
         TransactionType: "CredentialCreate",
         Expiration: 800000000,
-        URI: expect.any(String) }),
+        URI: expect.any(String),
+      }),
       expect.any(Object),
     );
   });

@@ -4,7 +4,8 @@ import {
   successTxResult,
   failedTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,9 +14,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -23,7 +26,8 @@ const validBody = {
   seed: TEST_WALLET.seed!,
   amount: { currency: "XRP", value: "500" },
   amount2: { currency: "USD", issuer: TEST_WALLET_2.address, value: "250" },
-  tradingFee: 500 };
+  tradingFee: 500,
+};
 
 describe("POST /api/amm/create", () => {
   beforeEach(() => {
@@ -70,7 +74,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount: { value: "500" } }),
+        amount: { value: "500" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -81,7 +86,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount: { currency: "XRP" } }),
+        amount: { currency: "XRP" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -92,7 +98,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount2: { value: "250" } }),
+        amount2: { value: "250" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -103,7 +110,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount2: { currency: "USD", issuer: TEST_WALLET_2.address } }),
+        amount2: { currency: "USD", issuer: TEST_WALLET_2.address },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -114,7 +122,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount: { currency: "USD", value: "500" } }),
+        amount: { currency: "USD", value: "500" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -125,7 +134,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount2: { currency: "EUR", value: "250" } }),
+        amount2: { currency: "EUR", value: "250" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -136,7 +146,8 @@ describe("POST /api/amm/create", () => {
     const res = await POST(
       postRequest("/api/amm/create", {
         ...validBody,
-        amount: { currency: "XRP", value: "0" } }),
+        amount: { currency: "XRP", value: "0" },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -150,7 +161,9 @@ describe("POST /api/amm/create", () => {
         amount2: {
           currency: "USD",
           issuer: TEST_WALLET_2.address,
-          value: "-1" } }),
+          value: "-1",
+        },
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -163,7 +176,9 @@ describe("POST /api/amm/create", () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toMatch(/tradingFee must be an integer between 0 and 1000/);
+    expect(body.error).toMatch(
+      /tradingFee must be an integer between 0 and 1000/,
+    );
   });
 
   it("returns 400 for negative tradingFee", async () => {
@@ -172,7 +187,9 @@ describe("POST /api/amm/create", () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toMatch(/tradingFee must be an integer between 0 and 1000/);
+    expect(body.error).toMatch(
+      /tradingFee must be an integer between 0 and 1000/,
+    );
   });
 
   it("returns 400 for non-integer tradingFee", async () => {
@@ -181,7 +198,9 @@ describe("POST /api/amm/create", () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toMatch(/tradingFee must be an integer between 0 and 1000/);
+    expect(body.error).toMatch(
+      /tradingFee must be an integer between 0 and 1000/,
+    );
   });
 
   // ---------------------------------------------------------------------------

@@ -24,10 +24,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: DepositAmmRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "asset", "asset2", "mode"],
-    );
+    const invalid = validateRequired(body, ["seed", "asset", "asset2", "mode"]);
     if (invalid) return invalid;
 
     if (!flagMap[body.mode]) {
@@ -39,7 +36,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const badAmounts = validateAmmModeAmounts(body.mode, body.amount, body.amount2);
+    const badAmounts = validateAmmModeAmounts(
+      body.mode,
+      body.amount,
+      body.amount2,
+    );
     if (badAmounts) return badAmounts;
 
     const wallet = walletFromSeed(body.seed);

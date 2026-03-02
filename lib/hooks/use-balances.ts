@@ -16,8 +16,13 @@ export function useBalances(
   network: string,
   refreshKey?: number,
 ) {
-  const { data: balances, loading, error, refresh, refetch } =
-    useBalancesFetch(address, network, refreshKey);
+  const {
+    data: balances,
+    loading,
+    error,
+    refresh,
+    refetch,
+  } = useBalancesFetch(address, network, refreshKey);
 
   return { balances, loading, error, refresh, refetch };
 }

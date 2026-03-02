@@ -117,7 +117,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setWalletField = useCallback(
-    (field: keyof Pick<NetworkData, "issuer" | "credentialIssuer" | "domainOwner">) =>
+    (
+      field: keyof Pick<
+        NetworkData,
+        "issuer" | "credentialIssuer" | "domainOwner"
+      >,
+    ) =>
       (wallet: WalletInfo) => {
         setNetworkData((prev) => ({ ...prev, [field]: wallet }));
       },

@@ -3,7 +3,8 @@ import {
   postRequest,
   successTxResult,
   failedTxResult,
-  TEST_WALLET } from "@/lib/test-helpers";
+  TEST_WALLET,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -12,15 +13,18 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
 const validBody = {
   seed: TEST_WALLET.seed!,
-  offerSequence: 42 };
+  offerSequence: 42,
+};
 
 describe("POST /api/dex/offers/cancel", () => {
   beforeEach(() => {
@@ -54,7 +58,8 @@ describe("POST /api/dex/offers/cancel", () => {
     const res = await POST(
       postRequest("/api/dex/offers/cancel", {
         seed: TEST_WALLET.seed!,
-        offerSequence: -1 }),
+        offerSequence: -1,
+      }),
     );
     expect(res.status).toBe(500);
   });

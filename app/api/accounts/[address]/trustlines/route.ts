@@ -56,10 +56,12 @@ export async function POST(
 
     const body: TrustLineRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "currency", "issuer", "limit"],
-    );
+    const invalid = validateRequired(body, [
+      "seed",
+      "currency",
+      "issuer",
+      "limit",
+    ]);
     if (invalid) return invalid;
 
     const client = await getClient(resolveNetwork(body.network));

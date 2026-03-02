@@ -23,10 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: CreateDomainRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed"],
-    );
+    const invalid = validateRequired(body, ["seed"]);
     if (invalid) return invalid;
 
     if (
@@ -88,7 +85,10 @@ export async function POST(request: NextRequest) {
     const failure = txFailureResponse(submitted);
     if (failure) return failure;
 
-    const domainID = extractCreatedLedgerIndex(submitted.result.meta, "PermissionedDomain");
+    const domainID = extractCreatedLedgerIndex(
+      submitted.result.meta,
+      "PermissionedDomain",
+    );
 
     return Response.json(
       { result: submitted.result, domainID },

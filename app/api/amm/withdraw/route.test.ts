@@ -4,7 +4,8 @@ import {
   successTxResult,
   failedTxResult,
   TEST_WALLET,
-  TEST_WALLET_2 } from "@/lib/test-helpers";
+  TEST_WALLET_2,
+} from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,9 +14,11 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { POST } from "./route";
 
@@ -25,7 +28,8 @@ const validBody = {
   asset2: { currency: "USD", issuer: TEST_WALLET_2.address },
   amount: { currency: "XRP", value: "50" },
   amount2: { currency: "USD", issuer: TEST_WALLET_2.address, value: "25" },
-  mode: "two-asset" };
+  mode: "two-asset",
+};
 
 describe("POST /api/amm/withdraw", () => {
   beforeEach(() => {
@@ -72,7 +76,8 @@ describe("POST /api/amm/withdraw", () => {
     const res = await POST(
       postRequest("/api/amm/withdraw", {
         ...validBody,
-        mode: "bad-mode" }),
+        mode: "bad-mode",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -101,7 +106,8 @@ describe("POST /api/amm/withdraw", () => {
         seed: validBody.seed,
         asset: validBody.asset,
         asset2: validBody.asset2,
-        mode: "single-asset" }),
+        mode: "single-asset",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -131,7 +137,8 @@ describe("POST /api/amm/withdraw", () => {
         asset: validBody.asset,
         asset2: validBody.asset2,
         amount: validBody.amount,
-        mode: "single-asset" }),
+        mode: "single-asset",
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -148,7 +155,8 @@ describe("POST /api/amm/withdraw", () => {
         seed: validBody.seed,
         asset: validBody.asset,
         asset2: validBody.asset2,
-        mode: "withdraw-all" }),
+        mode: "withdraw-all",
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -166,7 +174,8 @@ describe("POST /api/amm/withdraw", () => {
         seed: validBody.seed,
         asset: validBody.asset,
         asset2: validBody.asset2,
-        mode: "withdraw-all" }),
+        mode: "withdraw-all",
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -186,7 +195,8 @@ describe("POST /api/amm/withdraw", () => {
         Asset2: expect.any(Object),
         Flags: expect.any(Number),
         Amount: expect.anything(),
-        Amount2: expect.anything() }),
+        Amount2: expect.anything(),
+      }),
       expect.any(Object),
     );
   });

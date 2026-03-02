@@ -124,7 +124,10 @@ describe("validateSeedMatchesAddress", () => {
   });
 
   it("returns 400 when seed does not match address", async () => {
-    const result = validateSeedMatchesAddress(TEST_WALLET, "rDifferentAddr123456789012345678");
+    const result = validateSeedMatchesAddress(
+      TEST_WALLET,
+      "rDifferentAddr123456789012345678",
+    );
     expect(result).toBeInstanceOf(Response);
     expect(result!.status).toBe(400);
     const body = await result!.json();
@@ -284,7 +287,9 @@ describe("parseLimit", () => {
 
 describe("validateDexAmount", () => {
   it("returns null for a valid XRP amount", () => {
-    expect(validateDexAmount({ currency: "XRP", value: "100" }, "takerGets")).toBeNull();
+    expect(
+      validateDexAmount({ currency: "XRP", value: "100" }, "takerGets"),
+    ).toBeNull();
   });
 
   it("returns null for a valid issued currency amount", () => {
@@ -373,7 +378,9 @@ describe("extractCreatedLedgerIndex", () => {
         },
       ],
     };
-    expect(extractCreatedLedgerIndex(meta, "PermissionedDomain")).toBe("ABC123");
+    expect(extractCreatedLedgerIndex(meta, "PermissionedDomain")).toBe(
+      "ABC123",
+    );
   });
 
   it("returns undefined when no matching entry type", () => {
@@ -387,11 +394,15 @@ describe("extractCreatedLedgerIndex", () => {
         },
       ],
     };
-    expect(extractCreatedLedgerIndex(meta, "PermissionedDomain")).toBeUndefined();
+    expect(
+      extractCreatedLedgerIndex(meta, "PermissionedDomain"),
+    ).toBeUndefined();
   });
 
   it("returns undefined for null meta", () => {
-    expect(extractCreatedLedgerIndex(null, "PermissionedDomain")).toBeUndefined();
+    expect(
+      extractCreatedLedgerIndex(null, "PermissionedDomain"),
+    ).toBeUndefined();
   });
 
   it("returns undefined when AffectedNodes is missing", () => {
@@ -404,7 +415,9 @@ describe("extractCreatedLedgerIndex", () => {
         { ModifiedNode: { LedgerEntryType: "PermissionedDomain" } },
       ],
     };
-    expect(extractCreatedLedgerIndex(meta, "PermissionedDomain")).toBeUndefined();
+    expect(
+      extractCreatedLedgerIndex(meta, "PermissionedDomain"),
+    ).toBeUndefined();
   });
 });
 
@@ -414,9 +427,9 @@ describe("extractCreatedLedgerIndex", () => {
 
 describe("getTransactionResult", () => {
   it("extracts TransactionResult from meta object", () => {
-    expect(
-      getTransactionResult({ TransactionResult: "tesSUCCESS" }),
-    ).toBe("tesSUCCESS");
+    expect(getTransactionResult({ TransactionResult: "tesSUCCESS" })).toBe(
+      "tesSUCCESS",
+    );
   });
 
   it("returns undefined for null meta", () => {

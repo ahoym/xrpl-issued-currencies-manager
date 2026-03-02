@@ -1,7 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import {
-  getRequest,
-  TEST_WALLET } from "@/lib/test-helpers";
+import { getRequest, TEST_WALLET } from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),
@@ -10,16 +8,19 @@ const mockClient = vi.hoisted(() => ({
   getOrderbook: vi.fn(),
   isConnected: vi.fn().mockReturnValue(true),
   connect: vi.fn(),
-  disconnect: vi.fn() }));
+  disconnect: vi.fn(),
+}));
 vi.mock("@/lib/xrpl/client", () => ({
-  getClient: vi.fn().mockResolvedValue(mockClient) }));
+  getClient: vi.fn().mockResolvedValue(mockClient),
+}));
 
 import { GET } from "./route";
 
 const baseParams = {
   base_currency: "USD",
   base_issuer: TEST_WALLET.address,
-  quote_currency: "XRP" };
+  quote_currency: "XRP",
+};
 
 describe("GET /api/dex/trades", () => {
   beforeEach(() => {
@@ -43,7 +44,8 @@ describe("GET /api/dex/trades", () => {
     const res = await GET(
       getRequest("/api/dex/trades", {
         base_currency: "USD",
-        base_issuer: TEST_WALLET.address }),
+        base_issuer: TEST_WALLET.address,
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -54,7 +56,8 @@ describe("GET /api/dex/trades", () => {
     const res = await GET(
       getRequest("/api/dex/trades", {
         base_currency: "USD",
-        quote_currency: "XRP" }),
+        quote_currency: "XRP",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -65,7 +68,8 @@ describe("GET /api/dex/trades", () => {
     const res = await GET(
       getRequest("/api/dex/trades", {
         base_currency: "XRP",
-        quote_currency: "EUR" }),
+        quote_currency: "EUR",
+      }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -78,21 +82,24 @@ describe("GET /api/dex/trades", () => {
 
   it("returns trades array on success (empty transactions)", async () => {
     mockClient.request.mockResolvedValueOnce({
-      result: { transactions: [] } });
+      result: { transactions: [] },
+    });
 
     const res = await GET(getRequest("/api/dex/trades", baseParams));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.base).toEqual({
       currency: "USD",
-      issuer: TEST_WALLET.address });
+      issuer: TEST_WALLET.address,
+    });
     expect(body.quote).toEqual({ currency: "XRP", issuer: undefined });
     expect(body.trades).toEqual([]);
   });
 
   it("calls account_tx with issuer account and multiplied limit", async () => {
     mockClient.request.mockResolvedValueOnce({
-      result: { transactions: [] } });
+      result: { transactions: [] },
+    });
 
     await GET(getRequest("/api/dex/trades", baseParams));
 
@@ -100,13 +107,15 @@ describe("GET /api/dex/trades", () => {
       expect.objectContaining({
         command: "account_tx",
         account: TEST_WALLET.address,
-        limit: expect.any(Number) }),
+        limit: expect.any(Number),
+      }),
     );
   });
 
   it("respects custom limit query param", async () => {
     mockClient.request.mockResolvedValueOnce({
-      result: { transactions: [] } });
+      result: { transactions: [] },
+    });
 
     await GET(getRequest("/api/dex/trades", { ...baseParams, limit: "5" }));
 

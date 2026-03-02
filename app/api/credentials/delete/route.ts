@@ -17,10 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: DeleteCredentialRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "credentialType"],
-    );
+    const invalid = validateRequired(body, ["seed", "credentialType"]);
     if (invalid) return invalid;
 
     if (!body.subject && !body.issuer) {

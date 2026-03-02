@@ -18,10 +18,12 @@ export async function POST(request: NextRequest) {
   try {
     const body: CreateAmmRequest = await request.json();
 
-    const invalid = validateRequired(
-      body,
-      ["seed", "amount", "amount2", "tradingFee"],
-    );
+    const invalid = validateRequired(body, [
+      "seed",
+      "amount",
+      "amount2",
+      "tradingFee",
+    ]);
     if (invalid) return invalid;
 
     const badAmount = validateDexAmount(body.amount, "amount");

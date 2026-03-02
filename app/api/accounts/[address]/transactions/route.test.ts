@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  getRequest,
-  routeParams,
-  TEST_WALLET,
-} from "@/lib/test-helpers";
+import { getRequest, routeParams, TEST_WALLET } from "@/lib/test-helpers";
 
 const mockClient = vi.hoisted(() => ({
   request: vi.fn(),

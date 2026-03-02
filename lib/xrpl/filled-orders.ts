@@ -92,9 +92,21 @@ export function parseFilledOrders(
         if (val <= 0) continue;
 
         if (matchesCurrency(bal, baseCurrency, baseIssuer)) {
-          baseTotal += adjustForFee(val, baseCurrency, acctChanges.account, tx_json.Account, feeDrops);
+          baseTotal += adjustForFee(
+            val,
+            baseCurrency,
+            acctChanges.account,
+            tx_json.Account,
+            feeDrops,
+          );
         } else if (matchesCurrency(bal, quoteCurrency, quoteIssuer)) {
-          quoteTotal += adjustForFee(val, quoteCurrency, acctChanges.account, tx_json.Account, feeDrops);
+          quoteTotal += adjustForFee(
+            val,
+            quoteCurrency,
+            acctChanges.account,
+            tx_json.Account,
+            feeDrops,
+          );
         }
       }
     }
@@ -103,7 +115,9 @@ export function parseFilledOrders(
     if (baseTotal <= 0 || quoteTotal <= 0) continue;
 
     // Determine side: if TakerPays matches base currency, it's a buy (taker is buying base)
-    const takerPays = tx_json.TakerPays ? amountCurrency(tx_json.TakerPays) : undefined;
+    const takerPays = tx_json.TakerPays
+      ? amountCurrency(tx_json.TakerPays)
+      : undefined;
     const isBuy =
       takerPays !== undefined &&
       takerPays.currency === baseCurrency &&
