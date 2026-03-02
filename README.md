@@ -4,7 +4,7 @@ A Next.js app for managing issued currencies, credentials, permissioned domains,
 
 **Live app**: [xrpl-issued-currencies-manager.vercel.app](https://xrpl-issued-currencies-manager.vercel.app)
 
-**Stack**: Next.js 16, React 19, TypeScript, Tailwind v4, xrpl.js v4.5.0
+**Stack**: Next.js 16, React 19, TypeScript, Tailwind v4, xrpl.js v4.6.0
 
 ## Getting Started
 
@@ -41,7 +41,7 @@ Both recipients also get trust lines to the well-known RLUSD issuer (`rQhWct2fv4
 NETWORK=devnet ./scripts/setup-full-state.sh
 ```
 
-The script saves all wallet keys and metadata to a JSON state file at `scripts/setup-state-<network>-<date>.json`. This file is used as input for the market-making script.
+The script saves all wallet keys and metadata to a JSON state file at `examples/setup-state-<network>-<date>.json`. This file is used as input for the market-making script.
 
 ### Market Making
 
