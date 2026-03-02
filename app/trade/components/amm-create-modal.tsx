@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import type { CurrencyOption } from "@/lib/hooks/use-trading-data";
-import { useApiMutation } from "@/lib/hooks/use-api-mutation";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import { ModalShell } from "@/app/components/modal-shell";
 import { parseAmmFeeInput } from "@/lib/xrpl/amm-fee";
 import {
   inputClass,
   labelClass,
   primaryButtonClass,
+  secondaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 interface AmmCreateModalProps {
@@ -41,9 +41,8 @@ export function AmmCreateModal({
   const [baseAmount, setBaseAmount] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
   const [feeInput, setFeeInput] = useState("0.30");
-  const [success, setSuccess] = useState(false);
 
-  const { loading, error, mutate } = useApiMutation();
+  const { submitting: loading, error, success, submit } = useFormSubmit();
 
   const feeUnits = parseAmmFeeInput(feeInput);
   const feeDisplay = (feeUnits / 1000).toFixed(2) + "%";
@@ -80,18 +79,15 @@ export function AmmCreateModal({
       network,
     };
 
-    const result = await mutate(
+    const result = await submit(
       "/api/amm/create",
       body as Record<string, unknown>,
-      "Failed to create AMM pool",
+      { errorFallback: "Failed to create AMM pool" },
     );
 
-    if (result !== null) {
-      setSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, SUCCESS_MESSAGE_DURATION_MS);
+    if (result) {
+      onSuccess();
+      onClose();
     }
   }
 
@@ -136,7 +132,7 @@ export function AmmCreateModal({
           <button
             onClick={() => setStep("form")}
             disabled={loading || success}
-            className="flex-1 rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className={`flex-1 ${secondaryButtonClass}`}
           >
             Back
           </button>

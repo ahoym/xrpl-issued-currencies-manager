@@ -1,5 +1,10 @@
-import { useApiFetch } from "./use-api-fetch";
-import type { DomainInfo, PersistedState } from "../types";
+import type { DomainInfo } from "../types";
+import { createAccountFetchHook } from "./create-account-fetch-hook";
+
+const useDomainsFetch = createAccountFetchHook<DomainInfo>(
+  "domains",
+  "domains",
+);
 
 interface UseAccountDomainsResult {
   domains: DomainInfo[];
@@ -7,18 +12,14 @@ interface UseAccountDomainsResult {
   refresh: () => void;
 }
 
+/**
+ * Fetch permissioned domains for an account.
+ */
 export function useAccountDomains(
   address: string | null | undefined,
-  network: PersistedState["network"],
+  network: string,
 ): UseAccountDomainsResult {
-  const { data, loading, refresh } = useApiFetch<DomainInfo>(
-    () => {
-      if (!address) return null;
-      const params = new URLSearchParams({ network });
-      return `/api/accounts/${encodeURIComponent(address)}/domains?${params}`;
-    },
-    (json) => (json.domains as DomainInfo[]) ?? [],
-  );
+  const { data, loading, refresh } = useDomainsFetch(address, network);
 
   return { domains: data, loading, refresh };
 }

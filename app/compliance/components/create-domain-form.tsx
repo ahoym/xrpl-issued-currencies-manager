@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { WalletInfo, DomainInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import {
   labelClass,
   primaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 export interface EditingDomain {
@@ -37,12 +37,14 @@ export function CreateDomainForm({
   const [credentials, setCredentials] = useState<
     { issuer: string; credentialType: string }[]
   >([{ issuer: defaultCredentialIssuer ?? "", credentialType: "" }]);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { submitting, error, success, submit, clearError } = useFormSubmit();
 
-  // Pre-fill when editing a domain
-  useEffect(() => {
+  // Pre-fill when editing a different domain (render-time state adjustment)
+  const [prevEditingDomainID, setPrevEditingDomainID] = useState(
+    editingDomain?.domainID,
+  );
+  if (editingDomain?.domainID !== prevEditingDomainID) {
+    setPrevEditingDomainID(editingDomain?.domainID);
     if (editingDomain) {
       setCredentials(
         editingDomain.acceptedCredentials.map((ac) => ({
@@ -50,13 +52,16 @@ export function CreateDomainForm({
           credentialType: ac.credentialType,
         })),
       );
-      setError(null);
-      setSuccess(false);
+      clearError();
     }
-  }, [editingDomain]);
+  }
 
   // Update default issuer when it becomes available (only for new domains)
-  useEffect(() => {
+  const [prevDefaultIssuer, setPrevDefaultIssuer] = useState(
+    defaultCredentialIssuer,
+  );
+  if (defaultCredentialIssuer !== prevDefaultIssuer) {
+    setPrevDefaultIssuer(defaultCredentialIssuer);
     if (defaultCredentialIssuer && !editingDomain) {
       setCredentials((prev) =>
         prev.map((dc) => ({
@@ -65,24 +70,19 @@ export function CreateDomainForm({
         })),
       );
     }
-  }, [defaultCredentialIssuer, editingDomain]);
+  }
 
   function resetForm() {
     setCredentials([
       { issuer: defaultCredentialIssuer ?? "", credentialType: "" },
     ]);
-    setError(null);
-    setSuccess(false);
+    clearError();
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const valid = credentials.filter((dc) => dc.issuer && dc.credentialType);
     if (valid.length === 0) return;
-
-    setSubmitting(true);
-    setError(null);
-    setSuccess(false);
 
     const payload: Record<string, unknown> = {
       seed: domainOwner.seed,
@@ -94,26 +94,14 @@ export function CreateDomainForm({
       payload.domainID = editingDomain.domainID;
     }
 
-    try {
-      const res = await fetch("/api/domains/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to save domain");
-      } else {
-        setSuccess(true);
-        resetForm();
-        onSaved();
-        if (editingDomain && onCancelEdit) onCancelEdit();
-        setTimeout(() => setSuccess(false), SUCCESS_MESSAGE_DURATION_MS);
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setSubmitting(false);
+    const result = await submit("/api/domains/create", payload, {
+      errorFallback: "Failed to save domain",
+    });
+
+    if (result) {
+      resetForm();
+      onSaved();
+      if (editingDomain && onCancelEdit) onCancelEdit();
     }
   }
 

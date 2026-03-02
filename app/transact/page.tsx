@@ -5,6 +5,7 @@ import { useAppState } from "@/lib/hooks/use-app-state";
 import { LoadingScreen } from "../components/loading-screen";
 import { EmptyWallets } from "../components/empty-wallets";
 import { BalanceDisplay } from "../components/balance-display";
+import { CollapsibleSection } from "../components/collapsible-section";
 import { TransferModal } from "./components/transfer-modal";
 import type { WalletInfo } from "@/lib/types";
 import { ExplorerLink } from "../components/explorer-link";
@@ -72,25 +73,16 @@ function WalletCard({
   refreshKey: number;
   onSend: () => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-
   return (
     <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
-        aria-expanded={!collapsed}
-        className="flex w-full cursor-pointer items-center justify-between bg-transparent border-none p-4 text-left"
+      <CollapsibleSection
+        title={
+          <p className="min-w-0 truncate font-mono text-sm">
+            <ExplorerLink address={wallet.address} />
+          </p>
+        }
+        buttonClassName="flex w-full cursor-pointer items-center justify-between bg-transparent border-none p-4 text-left"
       >
-        <p className="min-w-0 truncate font-mono text-sm">
-          <ExplorerLink address={wallet.address} />
-        </p>
-        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
-          {collapsed ? "▸" : "▾"}
-        </span>
-      </button>
-
-      {!collapsed && (
         <div className="px-4 pb-4">
           <BalanceDisplay address={wallet.address} refreshKey={refreshKey} />
           <button
@@ -100,7 +92,7 @@ function WalletCard({
             Send
           </button>
         </div>
-      )}
+      </CollapsibleSection>
     </div>
   );
 }

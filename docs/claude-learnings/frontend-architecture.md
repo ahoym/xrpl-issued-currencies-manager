@@ -89,21 +89,57 @@ Pages follow a consistent pattern:
 
 ### Specialized Hooks
 
-All built on `useApiFetch` or `useApiMutation`:
+All built on `useApiFetch` or `useApiMutation`. Several thin wrappers use the `createAccountFetchHook` factory (see below).
 
 | Hook | Source | Wraps | Purpose |
 |---|---|---|---|
-| `useBalances` | `lib/hooks/use-balances.ts` | `useApiFetch` | Fetch XRP + issued currency balances |
-| `useFetchTrustLines` | `lib/hooks/use-trust-lines.ts` | `useApiFetch` | Fetch trust lines for an address |
+| `useBalances` | `lib/hooks/use-balances.ts` | `createAccountFetchHook` | Fetch XRP + issued currency balances |
+| `useFetchTrustLines` | `lib/hooks/use-trust-lines.ts` | `createAccountFetchHook` | Fetch trust lines for an address |
 | `useIssuerCurrencies` | `lib/hooks/use-issuer-currencies.ts` | `useFetchTrustLines` | Decode trust line currencies into a `Set<string>` |
 | `useAccountCredentials` | `lib/hooks/use-account-credentials.ts` | `useApiFetch` | Fetch credentials by role (issuer/subject) |
-| `useAccountDomains` | `lib/hooks/use-account-domains.ts` | `useApiFetch` | Fetch permissioned domains |
+| `useAccountDomains` | `lib/hooks/use-account-domains.ts` | `createAccountFetchHook` | Fetch permissioned domains |
 | `useTrustLineValidation` | `lib/hooks/use-trust-line-validation.ts` | direct fetch | Async trust line + DefaultRipple checks |
 | `useTradingData` | `lib/hooks/use-trading-data.ts` | `useBalances` + `useApiFetch` | Aggregates balances, orderbook, offers, trades, currency options |
 | `useDomainMode` | `lib/hooks/use-domain-mode.ts` | `useAccountDomains` | Domain selector state for permissioned DEX |
 | `useWalletGeneration` | `lib/hooks/use-wallet-generation.ts` | `useApiMutation` | Call `/api/accounts/generate`, invoke callback with `WalletInfo` |
 | `useMakeMarketExecution` | `lib/hooks/use-make-market-execution.ts` | `useApiMutation` | Batch offer placement with progress tracking |
+| `useFormSubmit<T>` | `lib/hooks/use-form-submit.ts` | — | Form submission state machine: `{ submitting, error, success, submit, clearError }` with auto-clearing success timer |
 | `useLocalStorage<T>` | `lib/hooks/use-local-storage.ts` | — | Generic localStorage sync with hydration flag |
+
+### createAccountFetchHook Factory
+
+**Source:** `lib/hooks/create-account-fetch-hook.ts`
+
+Factory for thin wrapper hooks that fetch a single resource scoped to an account address. Reduces boilerplate — each wrapper is a one-liner:
+
+```typescript
+export const useBalances = createAccountFetchHook<BalanceEntry>("balances", "balances");
+export const useFetchTrustLines = createAccountFetchHook<TrustLine>("trustlines", "trustLines");
+export const useAccountDomains = createAccountFetchHook<DomainInfo>("domains", "domains");
+```
+
+Signature: `createAccountFetchHook<T>(path: string, jsonField: string)` returns a hook `(address, network, refreshKey?) => { data: T[]; loading; error; refresh; refetch }`.
+
+**Exception:** `useAccountCredentials` is NOT a factory hook because it needs an extra `role` query parameter.
+
+### useFormSubmit
+
+**Source:** `lib/hooks/use-form-submit.ts`
+
+Encapsulates the form submission state machine pattern used by 7+ form components:
+
+```typescript
+const { submitting, error, success, submit, clearError } = useFormSubmit<ResponseType>();
+
+// submit(url, body, options?) — handles fetch, JSON parse, error/success state, auto-clear timer
+await submit("/api/some-endpoint", { ...formData }, {
+  onSuccess: (data) => { /* refresh, close modal, etc. */ },
+});
+```
+
+- Auto-clears success after `SUCCESS_MESSAGE_DURATION_MS` (from `lib/ui/ui.ts`)
+- Cleans up pending timers on unmount
+- Replaces the repeated `useState(false) + useState<string|null>(null) + try/catch/finally + setTimeout` pattern
 
 ## Page Responsibilities
 
@@ -217,3 +253,23 @@ Constructs `DexAmount` objects. Returns `{ currency: "XRP", value }` for XRP, or
 | `ModalShell` | `app/components/modal-shell.tsx` | Reusable modal with backdrop-close |
 | `ExplorerLink` | `app/components/explorer-link.tsx` | Address link to XRPL explorer + copy button |
 | `BalanceDisplay` | `app/components/balance-display.ts` | Fetches and groups balances by currency |
+| `CollapsibleSection` | `app/components/collapsible-section.tsx` | Toggle-able section with chevron indicator (▸/▾) and `aria-expanded` |
+| `TabBar` | `app/components/tab-bar.tsx` | Generic tab navigation with blue active indicator; accepts `TabBar<T extends string>` for type-safe tab values |
+
+### UI Constants
+
+**Source:** `lib/ui/ui.ts`
+
+Tailwind class constants for consistent styling:
+
+| Export | Purpose |
+|---|---|
+| `inputClass` | Standard text input |
+| `labelClass` | Form label |
+| `primaryButtonClass` | Blue primary action button |
+| `secondaryButtonClass` | Gray bordered secondary button |
+| `successButtonClass` | Green success/confirm button |
+| `dangerButtonClass` | Red destructive action button |
+| `errorTextClass` | Red error message text |
+| `successBannerClass` | Green success banner |
+| `SUCCESS_MESSAGE_DURATION_MS` | Auto-clear timer for success messages (used by `useFormSubmit`) |

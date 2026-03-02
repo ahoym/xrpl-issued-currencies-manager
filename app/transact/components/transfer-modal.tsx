@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { WalletInfo, BalanceEntry } from "@/lib/types";
-import { errorTextClass, SUCCESS_MESSAGE_DURATION_MS } from "@/lib/ui/ui";
+import { errorTextClass } from "@/lib/ui/ui";
 import { Assets } from "@/lib/assets";
 import { ModalShell } from "@/app/components/modal-shell";
 import { useBalances } from "@/lib/hooks/use-balances";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { useTrustLineValidation } from "@/lib/hooks/use-trust-line-validation";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 
 interface TransferModalProps {
   sender: WalletInfo;
@@ -36,26 +37,21 @@ export function TransferModal({
   );
   const [selectedRecipient, setSelectedRecipient] = useState("");
   const [customRecipient, setCustomRecipient] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { submitting, error, success, submit } = useFormSubmit();
 
   const otherRecipients = recipients.filter(
     (r) => r.address !== sender.address,
   );
 
-  // Auto-select first currency when balances arrive
-  useEffect(() => {
-    if (balances.length > 0 && !selectedCurrency) {
-      setSelectedCurrency("0");
-    }
-  }, [balances, selectedCurrency]);
+  // Auto-select first currency when balances arrive (render-time state adjustment)
+  if (balances.length > 0 && !selectedCurrency) {
+    setSelectedCurrency("0");
+  }
 
-  useEffect(() => {
-    if (otherRecipients.length > 0 && !selectedRecipient) {
-      setSelectedRecipient(otherRecipients[0].address);
-    }
-  }, [otherRecipients, selectedRecipient]);
+  // Auto-select first recipient when available
+  if (otherRecipients.length > 0 && !selectedRecipient) {
+    setSelectedRecipient(otherRecipients[0].address);
+  }
 
   const selectedBalance = balances[parseInt(selectedCurrency)] || null;
 
@@ -106,9 +102,6 @@ export function TransferModal({
     e.preventDefault();
     if (!canSubmit || !selectedBalance) return;
 
-    setSubmitting(true);
-    setError(null);
-
     const isXrp = selectedBalance.currency === Assets.XRP;
 
     const payload: Record<string, string> = {
@@ -123,25 +116,12 @@ export function TransferModal({
       payload.issuerAddress = selectedBalance.issuer;
     }
 
-    try {
-      const res = await fetch("/api/transfers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Transfer failed");
-      } else {
-        setSuccess(true);
-        setTimeout(() => {
-          onComplete();
-        }, SUCCESS_MESSAGE_DURATION_MS);
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setSubmitting(false);
+    const result = await submit("/api/transfers", payload, {
+      errorFallback: "Transfer failed",
+    });
+
+    if (result) {
+      onComplete();
     }
   }
 

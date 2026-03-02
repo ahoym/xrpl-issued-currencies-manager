@@ -9,6 +9,7 @@ import { Assets, WELL_KNOWN_CURRENCIES } from "@/lib/assets";
 import { useAppState } from "@/lib/hooks/use-app-state";
 import { errorTextClass } from "@/lib/ui/ui";
 import { BalanceDisplay } from "../../components/balance-display";
+import { CollapsibleSection } from "../../components/collapsible-section";
 import { ExplorerLink } from "../../components/explorer-link";
 import { SecretField } from "./secret-field";
 import { WalletSetupModal } from "./wallet-setup-modal";
@@ -33,7 +34,6 @@ export function RecipientCard({
   const {
     state: { network },
   } = useAppState();
-  const [collapsed, setCollapsed] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [showCustomTrust, setShowCustomTrust] = useState(false);
   const [trustingRlusd, setTrustingRlusd] = useState(false);
@@ -152,22 +152,16 @@ export function RecipientCard({
 
   return (
     <div className="rounded-md border border-zinc-200 dark:border-zinc-700">
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
-        aria-expanded={!collapsed}
-        className="flex w-full cursor-pointer items-center justify-between bg-transparent border-none p-4 text-left font-mono text-sm"
+      <CollapsibleSection
+        defaultCollapsed
+        title={
+          <div>
+            <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
+            <ExplorerLink address={recipient.address} />
+          </div>
+        }
+        buttonClassName="flex w-full cursor-pointer items-center justify-between bg-transparent border-none p-4 text-left font-mono text-sm"
       >
-        <div>
-          <span className="text-zinc-500 dark:text-zinc-400">Address: </span>
-          <ExplorerLink address={recipient.address} />
-        </div>
-        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
-          {collapsed ? "▸" : "▾"}
-        </span>
-      </button>
-
-      {!collapsed && (
         <div className="px-4 pb-4">
           <div className="font-mono text-sm">
             <SecretField label="Seed" value={recipient.seed} />
@@ -257,7 +251,7 @@ export function RecipientCard({
             </p>
           ) : null}
         </div>
-      )}
+      </CollapsibleSection>
     </div>
   );
 }

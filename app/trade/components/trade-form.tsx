@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import BigNumber from "bignumber.js";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
 import type { OfferFlag } from "@/lib/xrpl/types";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import {
   inputClass,
   labelClass,
   errorTextClass,
-  SUCCESS_MESSAGE_DURATION_MS,
+  successButtonClass,
+  dangerButtonClass,
 } from "@/lib/ui/ui";
 import { buildDexAmount } from "@/lib/xrpl/build-dex-amount";
 
@@ -63,21 +65,17 @@ export function TradeForm({
   const [sellMode, setSellMode] = useState(false);
   const [hybrid, setHybrid] = useState(false);
   const [expiration, setExpiration] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { submitting, error, success, submit, clearError } = useFormSubmit();
 
-  const lastPrefillKey = useRef(prefill?.key);
-  useEffect(() => {
-    if (prefill && prefill.key !== lastPrefillKey.current) {
-      lastPrefillKey.current = prefill.key;
-      setTab(prefill.tab);
-      setPrice(prefill.price);
-      setAmount(prefill.amount);
-      setError(null);
-      setSuccess(false);
-    }
-  }, [prefill]);
+  // Apply prefill from orderbook click (render-time state adjustment)
+  const [appliedPrefillKey, setAppliedPrefillKey] = useState(prefill?.key);
+  if (prefill && prefill.key !== appliedPrefillKey) {
+    setAppliedPrefillKey(prefill.key);
+    setTab(prefill.tab);
+    setPrice(prefill.price);
+    setAmount(prefill.amount);
+    clearError();
+  }
 
   const bnAmount = amount ? new BigNumber(amount) : null;
   const bnPrice = price ? new BigNumber(price) : null;
@@ -107,10 +105,6 @@ export function TradeForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-
-    setSubmitting(true);
-    setError(null);
-    setSuccess(false);
 
     // Buy: user wants to acquire selling currency, pays with buying currency
     //   takerGets = buying currency (what the creator offers up)
@@ -169,32 +163,18 @@ export function TradeForm({
       }
     }
 
-    try {
-      const res = await fetch("/api/dex/offers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to place offer");
-      } else {
-        setSuccess(true);
-        setAmount("");
-        setPrice("");
-        setExecutionType("");
-        setSellMode(false);
-        setHybrid(false);
-        setExpiration("");
-        setTimeout(() => {
-          setSuccess(false);
-          onSubmitted();
-        }, SUCCESS_MESSAGE_DURATION_MS);
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setSubmitting(false);
+    const result = await submit("/api/dex/offers", payload, {
+      errorFallback: "Failed to place offer",
+    });
+
+    if (result) {
+      setAmount("");
+      setPrice("");
+      setExecutionType("");
+      setSellMode(false);
+      setHybrid(false);
+      setExpiration("");
+      onSubmitted();
     }
   }
 
@@ -358,11 +338,7 @@ export function TradeForm({
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`w-full rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
-              tab === "buy"
-                ? "bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
-                : "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
-            }`}
+            className={`w-full ${tab === "buy" ? successButtonClass : dangerButtonClass}`}
           >
             {submitting
               ? "Placing..."

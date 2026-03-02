@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { WalletInfo } from "@/lib/types";
 import { useAppState } from "@/lib/hooks/use-app-state";
+import { useFormSubmit } from "@/lib/hooks/use-form-submit";
+import { CollapsibleSection } from "@/app/components/collapsible-section";
 import { toRippleEpoch } from "@/lib/xrpl/constants";
 import {
   inputClass,
@@ -10,7 +12,6 @@ import {
   primaryButtonClass,
   errorTextClass,
   successBannerClass,
-  SUCCESS_MESSAGE_DURATION_MS,
 } from "@/lib/ui/ui";
 
 interface IssueCredentialFormProps {
@@ -31,17 +32,11 @@ export function IssueCredentialForm({
   const [credType, setCredType] = useState("");
   const [expiration, setExpiration] = useState("");
   const [uri, setUri] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const { submitting, error, success, submit } = useFormSubmit();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!subject || !credType) return;
-    setSubmitting(true);
-    setError(null);
-    setSuccess(false);
 
     const payload: Record<string, unknown> = {
       seed: credentialIssuer.seed,
@@ -61,48 +56,29 @@ export function IssueCredentialForm({
       payload.uri = uri;
     }
 
-    try {
-      const res = await fetch("/api/credentials/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to issue credential");
-      } else {
-        setSuccess(true);
-        setSubject("");
-        setCredType("");
-        setExpiration("");
-        setUri("");
-        onIssued();
-        setTimeout(() => setSuccess(false), SUCCESS_MESSAGE_DURATION_MS);
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setSubmitting(false);
+    const result = await submit("/api/credentials/create", payload, {
+      errorFallback: "Failed to issue credential",
+    });
+
+    if (result) {
+      setSubject("");
+      setCredType("");
+      setExpiration("");
+      setUri("");
+      onIssued();
     }
   }
 
   return (
     <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
-        aria-expanded={!collapsed}
-        className="flex w-full items-center justify-between p-4 text-left"
+      <CollapsibleSection
+        title={
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Issue Credential
+          </h3>
+        }
       >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Issue Credential
-        </h3>
-        <span className="ml-4 text-zinc-400 dark:text-zinc-500">
-          {collapsed ? "▸" : "▾"}
-        </span>
-      </button>
-      {!collapsed &&
-        (success ? (
+        {success ? (
           <div className={`mx-4 mb-4 ${successBannerClass}`}>
             Credential issued!
           </div>
@@ -168,7 +144,8 @@ export function IssueCredentialForm({
               {submitting ? "Issuing..." : "Issue Credential"}
             </button>
           </form>
-        ))}
+        )}
+      </CollapsibleSection>
     </div>
   );
 }
