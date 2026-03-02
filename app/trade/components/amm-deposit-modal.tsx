@@ -104,7 +104,7 @@ export function AmmDepositModal({
 
     if (result) {
       onSuccess();
-      onClose();
+      setTimeout(() => onClose(), 1000);
     }
   }
 

@@ -87,7 +87,7 @@ export function AmmCreateModal({
 
     if (result) {
       onSuccess();
-      onClose();
+      setTimeout(() => onClose(), 1000);
     }
   }
 

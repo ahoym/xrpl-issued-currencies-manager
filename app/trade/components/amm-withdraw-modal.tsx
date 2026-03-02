@@ -112,7 +112,7 @@ export function AmmWithdrawModal({
           : "Withdrawal successful!";
       setSuccessMessage(message);
       onSuccess();
-      onClose();
+      setTimeout(() => onClose(), 1000);
     }
   }
 

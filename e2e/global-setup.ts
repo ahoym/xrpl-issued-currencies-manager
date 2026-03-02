@@ -5,7 +5,7 @@ import {
   waitForXrpBalance,
 } from "./helpers/wait-for-xrpl";
 
-setup("bootstrap devnet state", async ({ page }) => {
+setup("bootstrap testnet state", async ({ page }) => {
   setup.setTimeout(300_000);
 
   // Ensure .auth/ dir exists
@@ -14,8 +14,8 @@ setup("bootstrap devnet state", async ({ page }) => {
   // Navigate to setup page
   await page.goto("/setup");
 
-  // Switch network to devnet
-  await page.locator("#network").selectOption("devnet");
+  // Switch network to testnet
+  await page.locator("#network").selectOption("testnet");
 
   // Generate issuer wallet and wait for address link
   await page.getByRole("button", { name: "Generate Issuer Wallet" }).click();

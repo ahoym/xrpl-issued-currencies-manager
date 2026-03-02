@@ -121,7 +121,7 @@ export function TransferModal({
     });
 
     if (result) {
-      onComplete();
+      setTimeout(() => onComplete(), 1000);
     }
   }
 
